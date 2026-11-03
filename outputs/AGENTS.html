@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="c635175aa77b7b4de2331297bf2b26af4bf6bb49b90438d04c569134dfd11d06"><title>FlexSlot | 共同作業ルール</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
+.top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
+main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
+.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
+@media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html" aria-current="page">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
+<main><div class="meta">正本：AGENTS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 共同作業ルール</h1>
+<p>このフォルダはFlexSlot専用のローカルGitリポジトリ。別プロジェクトのコードを持ち込まない。</p>
+<h2 id="section">最初に読むファイル</h2>
+<ul>
+<li>SPEC.md：合意済みの範囲、設計案、完成条件。</li>
+<li>STATUS.md：実際に確認したこと、未確認のこと、次の作業。</li>
+<li>REVIEW.md：レビュー対象の版、重要度付き指摘、対応状況。</li>
+<li>CLAUDE_START.md：Claude Codeへの最初の依頼。</li>
+</ul>
+<h2 id="section-1">担当と変更</h2>
+<ul>
+<li>Claude Codeが実装・通常の修正・テストを担当する。Codexは仕様整理、設計と実コードの独立レビュー、テスト結果確認、提出資料改善を担当する。</li>
+<li>同じファイルを二者で同時に編集しない。Codexは通常の実装を並行修正しない。</li>
+<li>ユーザーはClaude側でOpus 5.5、Codex側で利用可能ならAstraを希望している。文章による指定をモデル切替成功として報告しない。</li>
+<li>節目でローカルコミットする。レビュー対象はコミットSHA、変更ファイル、実行コマンド、結果で特定する。既存の変更を上書きしない。</li>
+<li>テーマ再探索や機能追加をせず、一店舗・一担当者・二施術・一組一回の振替を完成させる。</li>
+</ul>
+<h2 id="section-2">文書と秘密情報</h2>
+<ul>
+<li>ユーザー指示：作業でmdファイルを作成する際、同内容で人の目で読みやすいHTML形式のファイルも追加で作成する。更新時も同期する。</li>
+<li>ルートのMarkdownを正本とする。現在のHTML版はoutputs配下。再生成はPowerShell 7で <code>pwsh -NoProfile -File tools/render-docs.ps1</code>。</li>
+<li>秘密情報の値をチャット、ログ、Git、公開資料へ出さない。<code>.env.example</code>には変数名と空欄・明白なプレースホルダーだけを置く。</li>
+<li><code>.gitignore</code>だけで安全と判断せず、コミット対象を確認する。認証済みか調べる場合もトークンや設定値を丸ごと表示しない。</li>
+<li>過去の共同開発コード・競合作品のコードを無断で再利用しない。</li>
+</ul>
+<h2 id="section-3">実接続と公開</h2>
+<ul>
+<li>決済はPayPal Sandboxのみ。Live接続を実装・実行しない。</li>
+<li>作品内AIはGoogle Cloudを利用する方針。Gemini on Vertex AIを第一候補にし、実際の利用可能モデル・認証方式は確認して記録する。</li>
+<li>モック、実API、実機、未実行の検証を区別する。失敗・未設定・未確認を混同しない。</li>
+<li>公開、デプロイ、GitHubへの公開、YouTube公開、応募は内容を準備してから本人確認を受ける。公開HTTPSトンネルも外部公開として扱う。</li>
+</ul>
+</article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

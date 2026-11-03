@@ -1,0 +1,37 @@
+# Local credentials and private configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+.secrets/
+secrets/
+credentials/
+*credentials*.json
+*service-account*.json
+*service_account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+.config/gcloud/
+.claude/settings.local.json
+
+# Runtime, local records and dependencies
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.cache/
+*.log
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+data/
+work/
+.playwright-cli/
+test-results/
+playwright-report/
+.DS_Store
+Thumbs.db

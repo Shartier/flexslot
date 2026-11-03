@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="742b627aa196eec8fffb81381098689e0c0bf69770341f32bc87c97531912aad"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
+.top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
+main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
+.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
+@media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
+<main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
+<p>更新日：2026-11-03（日本時間）/ 文書版：status-v0.1。</p>
+<h2 id="section">現在地</h2>
+<p>仕様と引き継ぎの準備段階。アプリ実装、AI実接続、PayPal Sandbox接続、公開、応募の成功はまだ確認していない。</p>
+<h2 id="section-1">確認済み</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>確認結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>作業場所</td>
+<td><code>C:\Users\ich30\Documents\Codex\2026-11-03\flexslot-paypal-ai-hackathon-web-codex</code></td>
+</tr>
+<tr>
+<td>着手時のファイル</td>
+<td>空のoutputs、workのみ。既存コード・設定ファイルなし。既存ファイルの上書きなし</td>
+</tr>
+<tr>
+<td>専用性</td>
+<td>今回指定のFlexSlot専用フォルダとして使用。別プロジェクトのコードはコピーしていない</td>
+</tr>
+<tr>
+<td>指示ファイル</td>
+<td>作業フォルダからCドライブまでの確認可能な各親にAGENTS.mdなし。ユーザー提示のMarkdown＋HTML作成ルールを新規AGENTS.mdへ記録</td>
+</tr>
+<tr>
+<td>Git</td>
+<td>着手時は親も含めGitリポジトリでない。<code>git init -b main</code>でローカル初期化。Git 2.53.0.windows.1。リモートなし。初期文書の基準タグはhandoff-v0.1</td>
+</tr>
+<tr>
+<td>以前の会話</td>
+<td>ChatGPT「PayPal☆ハッカソン」（ID: 6ae718f9-0e70-83ec-adf5-d76e746475dc）の取得できた直近5往復を確認。ローカル共有・実装担当一本化・実コードレビューを再確認</td>
+</tr>
+<tr>
+<td>作品内AI</td>
+<td>ユーザーはGoogle Cloud APIを希望、クレジットに余裕があると回答。Gemini on Vertex AIを第一候補とした。残高・利用権限の検証は未実施</td>
+</tr>
+<tr>
+<td>公式規約</td>
+<td>締切11月13日05:00 JST、公開コード＋OSSライセンス、動くデモ、英語/英訳、公開YouTube実演を公式ページで確認</td>
+</tr>
+<tr>
+<td>PayPal設計根拠</td>
+<td>公式のauthorize/capture、void、captureへのrefund、Webhook検証、冪等性と結果照会を確認。APIを実行した記録ではない</td>
+</tr>
+<tr>
+<td>作成物</td>
+<td>AGENTS.md、SPEC.md、STATUS.md、REVIEW.md、CLAUDE_START.md、同内容HTML、.gitignore、.gitattributes、文書生成スクリプト</td>
+</tr>
+</tbody>
+</table></div>
+<p>以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。</p>
+<p>Gitのuser.name/user.emailは未登録だったため、今回の初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定する。ユーザーのローカル/グローバルGit設定は変更しない。次回以降に使う本人のコミット作者設定は未設定のまま。</p>
+<p>参照：<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a>、<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal決済</a>、<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth">Google Cloud認証</a>。</p>
+<h2 id="section-2">実行した確認とテスト</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>区分</th>
+<th>実施内容</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>フォルダ</td>
+<td>Get-Location、Get-ChildItem、rg --files --hidden、親AGENTS確認</td>
+<td>既存コードなし、上書き対象なし</td>
+</tr>
+<tr>
+<td>Git事前確認</td>
+<td>git rev-parse / status / remote</td>
+<td>未初期化を確認。アプリ不具合ではない</td>
+</tr>
+<tr>
+<td>Git初期化</td>
+<td>git init -b main</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>文書検証</td>
+<td>PowerShellでMarkdown→HTML生成、render-docs.ps1 -Checkによる本文・SHA-256照合</td>
+<td>5組で一致。ナビゲーションのローカルリンク先も確認</td>
+</tr>
+<tr>
+<td>Git除外</td>
+<td>.env、入れ子.env、秘密鍵、DB、ログ、work等の除外</td>
+<td>除外10パターン合格、example設定と文書等の追跡可能4パターンも合格</td>
+</tr>
+<tr>
+<td>計算</td>
+<td>利益例の算術、PSTからJSTへの日時換算</td>
+<td>USD 20.50、締切2026-11-13 05:00 JSTを再計算</td>
+</tr>
+<tr>
+<td>HTML表示</td>
+<td>ローカルfile URLをブラウザで開く試行</td>
+<td>ブラウザのURLポリシーで拒否。PC/スマホの目視確認は未実施。画面表示成功とは扱わない</td>
+</tr>
+<tr>
+<td>アプリテスト</td>
+<td>単体・統合・E2E・実API・実機</td>
+<td>未実行。アプリコードなし</td>
+</tr>
+</tbody>
+</table></div>
+<p>補足：文書生成ツール確認時、WindowsAppsのpython.exeエイリアスは起動できなかった。Pythonをアプリの必須要件にしていない。HTML生成には利用可能なPowerShell 7のConvertFrom-Markdownを用いる。</p>
+<p>HTMLは外部スクリプト・画像・iframeを含まず、ローカルファイルとして直接開ける形で保存した。レスポンシブCSSと表の横スクロールを用意したが、その見た目を今回のブラウザで検証できたとは主張しない。</p>
+<h2 id="section-3">未確認事項</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>現時点の扱い</th>
+<th>確認担当/タイミング</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PayPal Sandbox準備</td>
+<td>ユーザーへ準備状況だけ質問中。未設定・失敗とは断定しない</td>
+<td>本人/Claude、第1段階</td>
+</tr>
+<tr>
+<td>Sandboxの店舗とA/Bアカウント、通貨</td>
+<td>未確認。競合作品の国・カード制約を転用しない</td>
+<td>Claude、公式仕様と実アカウントで確認</td>
+</tr>
+<tr>
+<td>Aの元capture</td>
+<td>未作成と断定しない。今回フォルダに証拠なし</td>
+<td>Claude、実接続デモの前提として照合</td>
+</tr>
+<tr>
+<td>Google Cloudプロジェクト・リージョン・モデル・認証</td>
+<td>未確認。秘密値の提出は求めていない</td>
+<td>本人/Claude、既存設定を値非表示で確認</td>
+</tr>
+<tr>
+<td>実装技術とDB排他設計</td>
+<td>Claudeが選定・設計を具体化する</td>
+<td>第1レビュー</td>
+</tr>
+<tr>
+<td>Devpost登録・参加資格</td>
+<td>未確認。規約を読んだことと登録済みは別</td>
+<td>本人、提出準備</td>
+</tr>
+<tr>
+<td>OSSライセンス・デモ公開先・審査アクセス</td>
+<td>未確定</td>
+<td>提出準備時に具体案を作る</td>
+</tr>
+<tr>
+<td>現在のCodex/Claudeモデル</td>
+<td>モデル切替を実行・検証していない</td>
+<td>各アプリのモデル選択で本人確認</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="section-4">次に行う作業</h2>
+<ol>
+<li>Claude Codeでこのフォルダを開き、CLAUDE_START.mdの依頼を渡す。</li>
+<li>Claudeは技術構成、DBの排他制御、役割別認証、決済状態と回復方法を具体化し、SPECの設計案との差分を記録する。</li>
+<li>最初の区切りは設計確定と接続検証計画。コミットSHAと変更点をCodexへ渡し、第1レビューを受ける。本体実装を一気に開始しない。</li>
+<li>その後、Claudeが小さなAI/Sandbox接続検証から開始し、一件全体、失敗時の回復、提出物の順に実装する。秘密情報が使えなければモックで進め、実接続未確認を残す。</li>
+</ol>
+<p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。詳細はSPECの計画を参照。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
+<h2 id="section-5">今後の検証記録の書式</h2>
+<p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
+</article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

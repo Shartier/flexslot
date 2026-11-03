@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="4fa47d1988505a6620f1eeec8a720955931356317b7246728b3b2237515deb5c"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
+.top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
+main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
+.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
+@media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="STATUS.html">進捗</a><a href="REVIEW.html" aria-current="page">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
+<main><div class="meta">正本：REVIEW.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — レビュー記録</h1>
+<p>更新日：2026-11-03（日本時間）/ 版：review-v0.1。</p>
+<h2 id="section">対象と今回の結論</h2>
+<p>対象：SPEC.mdのspec-v0.1と関連引き継ぎ文書。今回の文書基準はGitタグ <code>handoff-v0.1</code> で特定する。<code>git rev-parse handoff-v0.1</code> で正確なコミットSHAを取得できる。</p>
+<p>Codex自身が整理した文書の整合確認であり、Claudeの実装に対する独立レビューではない。実コード、実API、テスト結果の合格判定はしていない。仕様範囲は固定できたが、DB排他・認証・外部決済との回復処理はClaudeの設計確定後に第1レビューで確認する。</p>
+<h2 id="section-1">重要度</h2>
+<ul>
+<li>P0：秘密漏えい、意図しないLive決済、重大な不可逆被害。公開・実行を止める。</li>
+<li>P1：二重課金・二重返金・二重予約、本人承認なしの変更、誤った完了表示、回復不能など。次の節目までに解消する。</li>
+<li>P2：限定された条件での不整合、再現性や検証の不足。影響を示して優先順位を決める。</li>
+<li>提案：文言・見た目・好み。重大不具合と混ぜず、範囲を広げない。</li>
+</ul>
+<h2 id="section-2">初期レビュー論点</h2>
+<p>以下はコードの不具合を見つけた記録ではなく、実装前に具体化すべき設計・確認事項。重大度は未対処だった場合の影響を表す。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID / 重要度</th>
+<th>根拠と論点</th>
+<th>再現・確認方法</th>
+<th>対応と現状</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R01 / P1</td>
+<td>PayPalと予約DBは別系統。B売上後のDB失敗で課金だけ残る可能性</td>
+<td>capture直後、DB commit前後で停止。再起動し外部状態と処理済みマーカーを照合</td>
+<td>SPEC 7に再開/B全額返金の分岐を記載。実装未検証</td>
+</tr>
+<tr>
+<td>R02 / P1</td>
+<td>A返金は予約確定と別にpending/失敗し得る</td>
+<td>refundを保留・タイムアウト・確定失敗させ、画面とDB債務・再試行を確認</td>
+<td>予約維持、返金待ち、完了条件をSPEC 7に明記。実装未検証</td>
+</tr>
+<tr>
+<td>R03 / P1</td>
+<td>古い承認、枠競合、期限切れで別条件が実行される危険</td>
+<td>承認後の条件変更、期限境界、同時2要求、capture前の枠変更を試験</td>
+<td>SPEC 6–7に版照合、実行権、保留を記載。DB方式はClaude確定待ち</td>
+</tr>
+<tr>
+<td>R04 / P1</td>
+<td>Webhook再送とAPI結果不明で二重処理し得る</td>
+<td>同一通知2回、順不同、署名不正、応答喪失・再起動</td>
+<td>SPEC 8で受信箱・操作ID・結果照会を要求。各APIのID保持期間は実装時に確認</td>
+</tr>
+<tr>
+<td>R05 / P1</td>
+<td>役割切替UIだけでは他人の承認や支払いを操作可能</td>
+<td>別役割/別案件のID、金額・通貨・payeeの改ざんをAPIへ送る</td>
+<td>SPEC 6にサーバー権限と照合を記載。認証方式はClaude確定待ち</td>
+</tr>
+<tr>
+<td>R06 / P1</td>
+<td>Aの架空captureへの返金では実接続の証拠にならない</td>
+<td>Aの元captureを公式APIで照会し、店舗・金額・予約と照合</td>
+<td>実Sandbox準備決済をSPEC 7で必須化。認証情報と実行は未確認</td>
+</tr>
+<tr>
+<td>R07 / P2</td>
+<td>AIの確信した誤抽出や自由文内の指示が実行へ流れる危険</td>
+<td>曖昧な時間、存在しない施術、金額変更命令、不正JSON、AI停止</td>
+<td>SPEC 5にスキーマ検証・本人確認・通常コード検査を記載。Google Cloud接続未確認</td>
+</tr>
+<tr>
+<td>R08 / P2</td>
+<td>追加売上を追加利益と取り違えると説明が過大になる</td>
+<td>60−10−15−2.50−12=20.50と機会損失増加時の値を確認</td>
+<td>SPEC 9で式と仮定を区別。実店舗での成果は未検証</td>
+</tr>
+</tbody>
+</table></div>
+<p>公式根拠：<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal与信・売上確定</a>、<a href="https://developer.paypal.com/api/payments/v2/captures-refund">返金</a>、<a href="https://developer.paypal.com/api/rest/webhooks/">Webhook</a>、<a href="https://developer.paypal.com/api/rest/reference/idempotency/">冪等性</a>。</p>
+<h2 id="claude1">Claudeから第1レビューへ渡すもの</h2>
+<p>対象コミットSHA、SPECの設計案からの差分、採用技術と永続化、状態遷移と回復表、枠の排他方式、三者の操作権限、AI/Sandbox接続検証の順序、不明点。実装や接続を行っていない項目は未実行と書く。</p>
+<p>通常の修正担当はClaude。Codexは指摘、再現、確認結果を記録する。確認が済む前に「修正済み＝検証済み」と扱わない。</p>
+<h2 id="section-3">今後のレビュー記録テンプレート</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>記録内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>節目</td>
+<td>1: 設計確定 / 2: 一件完了 / 3: 提出前</td>
+</tr>
+<tr>
+<td>対象</td>
+<td>コミットSHA、ブランチ、未コミット差分の有無</td>
+</tr>
+<tr>
+<td>実行環境</td>
+<td>OS、ランタイム、DB、AI/決済モード、日時</td>
+</tr>
+<tr>
+<td>指摘</td>
+<td>ID、重要度、ファイル・箇所、根拠、影響</td>
+</tr>
+<tr>
+<td>再現</td>
+<td>入力・操作・コマンド、期待結果、実際の結果</td>
+</tr>
+<tr>
+<td>修正</td>
+<td>Claudeの対応内容と修正コミットSHA</td>
+</tr>
+<tr>
+<td>再確認</td>
+<td>Codexの実行結果と証拠、残る制限</td>
+</tr>
+<tr>
+<td>判定</td>
+<td>未対応 / 対応中 / 修正報告あり / 再確認済み / 明示的に保留</td>
+</tr>
+</tbody>
+</table></div>
+<p>提出前には、AC01–14の対応表、英語READMEの再現、モード表示、OSSライセンスと素材権利、公開内容の秘密情報、3分未満の動画、審査員アクセスを確認する。公開・デプロイ・応募は本人確認前に実行しない。</p>
+</article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
