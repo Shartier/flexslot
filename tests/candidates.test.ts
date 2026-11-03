@@ -259,6 +259,38 @@ describe('preconditions and time', () => {
   });
 });
 
+describe('B slot search starts from B’s own window (IP1-03, I02)', () => {
+  const longA: BookingSlot = { ...aBooking, serviceId: 'cut-color', ...L('2026-11-07', '14:00', '16:00') };
+  const evalB = (windows: Interval[], booking: BookingSlot = longA) =>
+    evaluateSwap(
+      input({ bookings: [booking], bRequest: { serviceId: 'cut', windows } }),
+      candidate([L('2026-11-10', '10:00', '12:00')], { booking }),
+    );
+
+  it('a 14:10-15:10 request inside a 14:00-16:00 origin is feasible at 14:10 (not snapped to 14:00/14:15)', () => {
+    expect(local(feasible(evalB([L('2026-11-07', '14:10', '15:10')])).bSlot)).toBe('2026-11-07 14:10-15:10');
+  });
+
+  it('with several windows, the earliest feasible start across windows wins', () => {
+    const e = feasible(evalB([L('2026-11-07', '14:20', '15:00'), L('2026-11-07', '15:05', '16:00'), L('2026-11-07', '14:50', '16:00')]));
+    expect(local(e.bSlot)).toBe('2026-11-07 14:50-15:50');
+  });
+
+  it('a window ending exactly at the origin end is accepted', () => {
+    expect(local(feasible(evalB([L('2026-11-07', '15:00', '16:00')])).bSlot)).toBe('2026-11-07 15:00-16:00');
+  });
+
+  it('a window wider than the origin is searched only inside the origin', () => {
+    expect(local(feasible(evalB([L('2026-11-07', '13:50', '15:20')], aBooking)).bSlot)).toBe('2026-11-07 14:00-15:00');
+  });
+
+  it('a window that leaves too little time inside the origin is rejected with its own reason', () => {
+    const e = infeasible(evalB([L('2026-11-07', '14:30', '15:30')], aBooking));
+    expect(e.reasons).toEqual(['B_WINDOW_OUTSIDE_ORIGIN_SLOT']);
+    expect(e.rejectedBSlots).toEqual([]);
+  });
+});
+
 describe('findSwapCandidates', () => {
   it('evaluates bookings that occupy B’s window', () => {
     const result = findSwapCandidates(input(), [candidate()]);

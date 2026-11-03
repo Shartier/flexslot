@@ -32,7 +32,7 @@ function fake(script: Array<unknown>) {
 }
 
 describe('structureText (fake Vertex)', () => {
-  it('sends a structured-output request: JSON schema, temperature 0, text as data', async () => {
+  it('sends a structured-output request: JSON schema, the temperature value sent (ignored by the model), text as data', async () => {
     const f = fake([validA]);
     const text = '11月10日の10時から12時なら移動できます。補償は50ドルにしてください。';
     const r = await structureText(f.models, 'gemini-x', 'A_PREFERENCE', text, ctx);

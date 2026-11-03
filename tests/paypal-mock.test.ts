@@ -65,6 +65,30 @@ describe('mock PayPal: idempotency', () => {
     expect(m.server.count('authorizations')).toBe(1);
   });
 
+  it('replay mode CURRENT for payments: a capture resend after a full refund returns REFUNDED, classified UNKNOWN', async () => {
+    const m = mockSetup(50, { payments: 'CURRENT' });
+    const { authorizationId } = await authorized(m);
+    const ctx = { requestId: rid() };
+    const first = expectKind(await m.paypal.captureAuthorization(authorizationId, { amount: usd(6000) }, ctx), 'SUCCEEDED');
+    await m.paypal.refundCapture(first.resource.id, { amount: usd(6000) }, { requestId: rid() });
+    const replay = expectKind(await m.paypal.captureAuthorization(authorizationId, { amount: usd(6000) }, ctx), 'UNKNOWN');
+    expect(replay).toMatchObject({ reason: 'UNEXPECTED_STATUS', externalStatus: 'REFUNDED' });
+    expect(replay.resource?.id).toBe(first.resource.id);
+    expect(m.server.count('captures')).toBe(1);
+  });
+
+  it('replay mode ORIGINAL for orders: an authorize resend after a void returns the stored CREATED answer', async () => {
+    const m = mockSetup(50, { orders: 'ORIGINAL' });
+    const created = expectKind(await m.paypal.createOrder(orderInput('AUTHORIZE'), { requestId: rid() }), 'SUCCEEDED');
+    m.server.approveOrder(created.resource.id);
+    const ctx = { requestId: rid() };
+    const first = expectKind(await m.paypal.authorizeOrder(created.resource.id, ctx), 'SUCCEEDED');
+    await m.paypal.voidAuthorization(first.resource.authorization.id, { requestId: rid() });
+    const replay = expectKind(await m.paypal.authorizeOrder(created.resource.id, ctx), 'SUCCEEDED');
+    expect(replay.resource.authorization).toMatchObject({ id: first.resource.authorization.id, status: 'CREATED' });
+    expect(m.server.statusOf(first.resource.authorization.id)).toBe('VOIDED');
+  });
+
   it('request ids are scoped per call type', async () => {
     const m = mockSetup();
     const shared = rid();

@@ -1,5 +1,8 @@
-// Minimal Gemini on Vertex AI call (DESIGN 9): ADC authentication, structured output, temperature 0,
+// Minimal Gemini on Vertex AI call (DESIGN 9): ADC authentication, structured output (response schema),
 // 20 s timeout, one retry on 5xx/429 only. The full AI adapter (mock mode, quotas, input source) comes later.
+// temperature 0 is sent, but Gemini 3.5 Flash-Lite ignores custom temperature/top-K/top-P (official model page,
+// checked 2026-11-03), so it is not a generation control or a reproducibility guarantee. Correctness rests on the
+// response schema, the server-side zod checks and the customer's confirmation.
 
 import { ApiError, GoogleGenAI, type GenerateContentParameters, type ThinkingLevel } from '@google/genai';
 import { MissingConfigError, present, type Env } from '../config-error.ts';

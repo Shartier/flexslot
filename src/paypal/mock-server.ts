@@ -109,7 +109,23 @@ export interface MockServerOptions {
    * mock ids) against this server without the network. The MOCK implementation always uses "MOCK-".
    */
   testIdPrefix?: string;
+  /**
+   * How a resend with a stored PayPal-Request-Id is answered, per API family: ORIGINAL = the stored answer,
+   * CURRENT = the resource as it is now. Defaults follow what Sandbox showed on 2026-11-03 (orders CURRENT,
+   * payments ORIGINAL); PayPal does not guarantee either, so executor tests should cover both (Codex IP1 review).
+   */
+  replay?: ReplayModes;
 }
+
+export type ReplayMode = 'ORIGINAL' | 'CURRENT';
+export interface ReplayModes {
+  /** ORDER_CREATE, ORDER_AUTHORIZE, ORDER_CAPTURE. */
+  orders?: ReplayMode;
+  /** AUTH_CAPTURE, AUTH_VOID, CAPTURE_REFUND. */
+  payments?: ReplayMode;
+}
+type ReplayKind = 'order' | 'auth' | 'capture' | 'refund';
+const ORDER_ROUTES: ReadonlySet<MockRoute> = new Set(['ORDER_CREATE', 'ORDER_AUTHORIZE', 'ORDER_CAPTURE']);
 
 const ROUTES: ReadonlyArray<[string, RegExp, MockRoute]> = [
   ['POST', /^\/v1\/oauth2\/token$/, 'TOKEN'],
@@ -136,11 +152,11 @@ export class MockPayPalServer {
   readonly #tokens = new Map<string, number>();
   readonly #faults = new Map<MockRoute, MockFault[]>();
   /**
-   * Stored 2xx answers per (route, PayPal-Request-Id). A resend of a Payments API call returns the original
-   * answer; a resend of order authorize / capture returns the order's current state (both seen in Sandbox,
-   * 2026-11-03, see STATUS). `orderId` marks the second kind.
+   * Stored 2xx answers per (route, PayPal-Request-Id), with the resource they are about. How a resend is
+   * answered is set per API family by `replay` (MockServerOptions).
    */
-  readonly #idempotent = new Map<string, { status: number; body: string; orderId?: string }>();
+  readonly #idempotent = new Map<string, { status: number; body: string; kind: ReplayKind; resourceId: string }>();
+  readonly #replay: Required<ReplayModes>;
   readonly #orders = new Map<string, MockOrder>();
   readonly #auths = new Map<string, MockAuthorization>();
   readonly #captures = new Map<string, MockCapture>();
@@ -152,6 +168,7 @@ export class MockPayPalServer {
     this.#basic = `Basic ${Buffer.from(`${opts.clientId ?? MOCK_CLIENT_ID}:${opts.clientSecret ?? MOCK_CLIENT_SECRET}`).toString('base64')}`;
     this.#tokenLifetimeSec = opts.tokenLifetimeSec ?? 32_400;
     this.#idPrefix = opts.testIdPrefix ?? 'MOCK-';
+    this.#replay = { orders: opts.replay?.orders ?? 'CURRENT', payments: opts.replay?.payments ?? 'ORIGINAL' };
   }
 
   // ---- test controls ---------------------------------------------------------
@@ -239,17 +256,45 @@ export class MockPayPalServer {
     const requestId = headers.get('paypal-request-id');
     const key = requestId ? `${route} ${requestId}` : null;
     const stored = key ? this.#idempotent.get(key) : undefined;
-    if (stored?.orderId) return jsonResponse(stored.status, this.#renderOrder(this.#orders.get(stored.orderId)!, full));
-    if (stored) return new Response(stored.body === '' ? null : stored.body, { status: stored.status, headers: JSON_HEADERS });
+    if (stored) {
+      const mode = ORDER_ROUTES.has(route) ? this.#replay.orders : this.#replay.payments;
+      if (mode === 'CURRENT' && stored.status !== 204) return jsonResponse(stored.status, this.#renderCurrent(stored.kind, stored.resourceId, full));
+      return new Response(stored.body === '' ? null : stored.body, { status: stored.status, headers: JSON_HEADERS });
+    }
 
     const response = this.#post(route, id, parseBody(body), full, fault);
     if (key && response.status >= 200 && response.status < 300) {
       const text = await response.text();
-      const replaysCurrentOrder = route === 'ORDER_AUTHORIZE' || route === 'ORDER_CAPTURE';
-      this.#idempotent.set(key, { status: response.status, body: text, ...(replaysCurrentOrder ? { orderId: id! } : {}) });
+      const createdId = (parseBody(text)?.id as string | undefined) ?? '';
+      const [kind, resourceId]: [ReplayKind, string] =
+        route === 'ORDER_CREATE' ? ['order', createdId]
+        : route === 'ORDER_AUTHORIZE' || route === 'ORDER_CAPTURE' ? ['order', id!]
+        : route === 'AUTH_VOID' ? ['auth', id!]
+        : route === 'AUTH_CAPTURE' ? ['capture', createdId]
+        : ['refund', createdId];
+      this.#idempotent.set(key, { status: response.status, body: text, kind, resourceId });
       return new Response(text === '' ? null : text, { status: response.status, headers: response.headers });
     }
     return response;
+  }
+
+  #renderCurrent(kind: ReplayKind, id: string, full: boolean): Record<string, unknown> {
+    switch (kind) {
+      case 'order':
+        return this.#renderOrder(this.#orders.get(id)!, full);
+      case 'auth': {
+        const a = this.#auths.get(id)!;
+        return full ? this.#renderAuth(a) : minimal(a.id, a.status);
+      }
+      case 'capture': {
+        const c = this.#captures.get(id)!;
+        return full ? this.#renderCapture(c) : minimal(c.id, c.status);
+      }
+      default: {
+        const r = this.#refunds.get(id)!;
+        return full ? this.#renderRefund(r) : minimal(r.id, r.status);
+      }
+    }
   }
 
   #token(headers: Headers, body: string): Response {

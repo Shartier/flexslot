@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { ManualClock } from '../src/clock.ts';
-import { MockPayPalServer, createMockPayPal } from '../src/paypal/mock-server.ts';
+import { MockPayPalServer, createMockPayPal, type ReplayModes } from '../src/paypal/mock-server.ts';
 import type { PayPalLogEntry } from '../src/paypal/port.ts';
 import type { CreateOrderInput } from '../src/paypal/requests.ts';
 
@@ -18,9 +18,9 @@ export const orderInput = (intent: 'CAPTURE' | 'AUTHORIZE', minor = 6000): Creat
 });
 
 /** Mock server + MOCK adapter sharing one manual clock, with a log sink. Short timeout for TIMEOUT faults. */
-export function mockSetup(timeoutMs = 50) {
+export function mockSetup(timeoutMs = 50, replay?: ReplayModes) {
   const clock = new ManualClock(T0);
-  const server = new MockPayPalServer({ clock });
+  const server = new MockPayPalServer({ clock, ...(replay ? { replay } : {}) });
   const logs: PayPalLogEntry[] = [];
   const paypal = createMockPayPal(server, { clock, logger: (e) => logs.push(e), timeoutMs });
   return { clock, server, paypal, logs };

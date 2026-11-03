@@ -1,26 +1,27 @@
-// Shared helpers for the connection checks (DESIGN 12). Output is limited to time, mode, check results,
-// anonymized external ids and the exit code. Secrets and raw ids are never printed.
-// Run state (raw ids, request ids) is kept in work/verify/, which Git ignores, so a step can be resumed or
-// resent with the same PayPal-Request-Id after an interruption.
+// Script-side helpers for the connection checks (DESIGN 12): .env, the Sandbox adapter, the file-backed run store,
+// and the console report. Output is limited to time, mode, check results, anonymized ids and the exit code.
+// Run state (raw ids, request ids, body hashes) lives in work/verify/runs.json, which Git ignores.
+// work/verify/state.json from the first runs (before IP1-01) is kept as it was and no longer read.
 
-import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createSandboxPayPal, loadPayPalConfig, type PayPalConfig } from '../../src/paypal/config.ts';
 import type { PayPalLogEntry } from '../../src/paypal/port.ts';
 import type { PayPalRestAdapter } from '../../src/paypal/rest.ts';
+import { EXIT, NotReady, Runs, type ReportLike, type RunsFile, type RunStore } from './core.ts';
+import type { StepContext } from './steps.ts';
+
+export { anon, EXIT, NotReady } from './core.ts';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATE_DIR = join(ROOT, 'work', 'verify');
-const STATE_FILE = join(STATE_DIR, 'state.json');
+const RUNS_FILE = join(STATE_DIR, 'runs.json');
 const RESULTS_FILE = join(STATE_DIR, 'results.jsonl');
 
 /** Return URLs for buyer approval. Nothing listens there; the browser shows a connection error after approval. */
 export const RETURN_URL = 'http://localhost:8799/flexslot-verify/return';
 export const CANCEL_URL = 'http://localhost:8799/flexslot-verify/cancel';
-
-export const EXIT = { PASS: 0, FAIL: 1, NOT_READY: 2, ERROR: 3 } as const;
 
 export function loadDotEnv(): boolean {
   const path = join(ROOT, '.env');
@@ -29,42 +30,17 @@ export function loadDotEnv(): boolean {
   return true;
 }
 
-/** Short, stable, non-reversible label for an external id, e.g. "order#1a2b3c4d". */
-export function anon(label: string, id: string | undefined): string {
-  if (!id) return `${label}#(none)`;
-  return `${label}#${createHash('sha256').update(id).digest('hex').slice(0, 8)}`;
-}
-
-// ---- state -------------------------------------------------------------------------
-
-export type State = Record<string, Record<string, unknown>>;
-
-export function readState(): State {
-  if (!existsSync(STATE_FILE)) return {};
-  return JSON.parse(readFileSync(STATE_FILE, 'utf8')) as State;
-}
-
-export function saveState(section: string, patch: Record<string, unknown>): void {
-  const state = readState();
-  state[section] = { ...(state[section] ?? {}), ...patch };
-  mkdirSync(STATE_DIR, { recursive: true });
-  writeFileSync(STATE_FILE, `${JSON.stringify(state, null, 2)}\n`);
-}
-
-export function str(v: unknown): string | undefined {
-  return typeof v === 'string' && v !== '' ? v : undefined;
-}
-
-// ---- report ------------------------------------------------------------------------
-
-export class NotReady extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'NotReady';
+class FileRunStore implements RunStore {
+  load(): RunsFile {
+    return existsSync(RUNS_FILE) ? (JSON.parse(readFileSync(RUNS_FILE, 'utf8')) as RunsFile) : { runs: {} };
+  }
+  save(file: RunsFile): void {
+    mkdirSync(STATE_DIR, { recursive: true });
+    writeFileSync(RUNS_FILE, `${JSON.stringify(file, null, 2)}\n`);
   }
 }
 
-export class Report {
+export class Report implements ReportLike {
   readonly #id: string;
   readonly #mode: string;
   readonly #checks: Array<{ name: string; ok: boolean }> = [];
@@ -82,7 +58,7 @@ export class Report {
     return ok;
   }
 
-  /** Records a value that is not pass/fail (observed shape, anonymized id, latency). Never pass secrets or raw ids. */
+  /** Records a value that is not pass/fail. Never pass secrets or raw ids. */
   note(key: string, value: string | number | boolean): void {
     this.#notes[key] = value;
     console.log(`  ${key}: ${value}`);
@@ -93,7 +69,7 @@ export class Report {
   }
 
   finish(forced?: number): number {
-    const exit = forced ?? (this.#checks.every((c) => c.ok) ? EXIT.PASS : EXIT.FAIL);
+    const exit = forced ?? (this.#checks.length > 0 && this.#checks.every((c) => c.ok) ? EXIT.PASS : EXIT.FAIL);
     const at = new Date().toISOString();
     console.log(`[${at}] ${this.#id} mode=${this.#mode} exit=${exit}`);
     mkdirSync(STATE_DIR, { recursive: true });
@@ -120,8 +96,6 @@ export async function run(id: string, mode: string, body: (r: Report) => Promise
   }
 }
 
-// ---- PayPal --------------------------------------------------------------------------
-
 function logLine(e: PayPalLogEntry): void {
   console.log(`  · ${e.event} ${e.route} ${e.httpStatus ?? '-'} ${e.outcome} ${e.durationMs}ms`);
 }
@@ -132,12 +106,15 @@ export function sandboxFromEnv(): { paypal: PayPalRestAdapter; config: PayPalCon
   return { paypal: createSandboxPayPal(config, { logger: logLine }), config };
 }
 
-/** Polls a query until `done` or the attempts run out (for PENDING results). */
-export async function poll<T>(query: () => Promise<T>, done: (v: T) => boolean, attempts = 10, intervalMs = 3000): Promise<T> {
-  let last = await query();
-  for (let i = 1; i < attempts && !done(last); i++) {
-    await new Promise((r) => setTimeout(r, intervalMs));
-    last = await query();
-  }
-  return last;
+/** Step context for V2-V7 against the Sandbox, with the file-backed run store. */
+export function sandboxStepContext(r: Report): StepContext {
+  const { paypal, config } = sandboxFromEnv();
+  return {
+    paypal,
+    expectedMerchantId: config.expectedMerchantId,
+    runs: new Runs(new FileRunStore()),
+    r,
+    returnUrl: RETURN_URL,
+    cancelUrl: CANCEL_URL,
+  };
 }

@@ -1,7 +1,7 @@
 // Swap candidate check (SPEC 4, DESIGN 6.1 step 4). Pure functions: no DB, no clock, no AI.
 // The caller passes the current time and every booking/hold of the shop; the result is decided here only.
 
-import { contains, interval, localMinuteOfDayToUtcMs, MINUTE_MS, overlaps, toLocal, type Interval } from '../time.ts';
+import { interval, localMinuteOfDayToUtcMs, MINUTE_MS, overlaps, toLocal, type Interval } from '../time.ts';
 
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED';
 export type HoldStatus = 'ACTIVE' | 'FROZEN' | 'RELEASED' | 'CONVERTED';
@@ -60,7 +60,10 @@ export interface SwapSearchInput {
   holds: SlotHold[];
   /** Holds of this case are ignored (re-checking a case that already holds its destination). */
   ownCaseId?: string;
-  /** Granularity of start times tried inside a window, counted from the window start. */
+  /**
+   * Granularity of start times tried inside a window. A's destinations count from the start of each acceptable
+   * window; B's slots count from the start of each (request window ∩ A's original slot). Times are never rounded.
+   */
   stepMinutes?: number;
 }
 
@@ -74,7 +77,7 @@ export const REASONS = [
   'B_STYLIST_MISMATCH',
   'B_SERVICE_LONGER_THAN_REQUEST_WINDOW',
   'B_SERVICE_LONGER_THAN_ORIGIN_SLOT',
-  'B_SLOT_OUTSIDE_REQUEST_WINDOW',
+  'B_WINDOW_OUTSIDE_ORIGIN_SLOT',
   'B_SLOT_OUTSIDE_BUSINESS_HOURS',
   'B_SLOT_CONFLICT',
   'A_SERVICE_LONGER_THAN_WINDOW',
@@ -154,17 +157,31 @@ export function evaluateSwap(input: SwapSearchInput, a: ACandidate): SwapEvaluat
   const aDurationMs = durationMsOf(input.services, aBooking.serviceId);
   const blockers = blockersFor(input, stylistId, aBooking.id);
 
-  // B's slot: start times inside A's original slot.
+  // B's slot (I01, I02): start times from the start of each (request window ∩ A's original slot), so B's slot
+  // always lies inside both. A requested 14:10 start is tried as 14:10, not snapped to a grid from 14:00.
   const bReasons: Reason[] = [];
-  if (!input.bRequest.windows.some((w) => w.endMs - w.startMs >= bDurationMs)) {
-    bReasons.push('B_SERVICE_LONGER_THAN_REQUEST_WINDOW');
+  const windowFits = input.bRequest.windows.some((w) => w.endMs - w.startMs >= bDurationMs);
+  const originFits = origin.endMs - origin.startMs >= bDurationMs;
+  if (!windowFits) bReasons.push('B_SERVICE_LONGER_THAN_REQUEST_WINDOW');
+  if (!originFits) bReasons.push('B_SERVICE_LONGER_THAN_ORIGIN_SLOT');
+  const bSeen = new Set<number>();
+  const bCandidates: Interval[] = [];
+  for (const w of input.bRequest.windows) {
+    const start = Math.max(w.startMs, origin.startMs);
+    const end = Math.min(w.endMs, origin.endMs);
+    if (end <= start) continue;
+    for (const slot of slotsWithin(interval(start, end), bDurationMs, stepMs)) {
+      if (bSeen.has(slot.startMs)) continue;
+      bSeen.add(slot.startMs);
+      bCandidates.push(slot);
+    }
   }
-  if (origin.endMs - origin.startMs < bDurationMs) bReasons.push('B_SERVICE_LONGER_THAN_ORIGIN_SLOT');
+  if (windowFits && originFits && bCandidates.length === 0) bReasons.push('B_WINDOW_OUTSIDE_ORIGIN_SLOT');
+  bCandidates.sort((x, y) => x.startMs - y.startMs);
   const feasibleB: Interval[] = [];
   const rejectedBSlots: RejectedSlot[] = [];
-  for (const slot of slotsWithin(origin, bDurationMs, stepMs)) {
+  for (const slot of bCandidates) {
     const reasons: Reason[] = [];
-    if (!input.bRequest.windows.some((w) => contains(w, slot))) reasons.push('B_SLOT_OUTSIDE_REQUEST_WINDOW');
     if (!withinBusinessHours(slot, input.shop)) reasons.push('B_SLOT_OUTSIDE_BUSINESS_HOURS');
     const conflictsWith = blockers.filter((b) => overlaps(b, slot)).map((b) => b.id);
     if (conflictsWith.length > 0) reasons.push('B_SLOT_CONFLICT');
