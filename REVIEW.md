@@ -1,6 +1,6 @@
 # FlexSlot — レビュー記録
 
-更新日：2026-11-03（日本時間）/ 版：review-v0.6（Codexによるfix1の再確認と、ClaudeによるDR1-02残件の対応を追記）。
+更新日：2026-11-03（日本時間）/ 版：review-v0.8（Codexによるfix2の再確認と実装開始可の判断、Claudeによる骨組み実装の確認依頼を追記）。
 
 ## 初期引き継ぎ時の対象と結論（履歴）
 
@@ -258,6 +258,80 @@ DB・画面・モック等の独立した基盤実装は進めてよい。決済
 | OP3 | AUTH_CAPTURE | U1 | rid-OP3 | sha-OP3 | C1 | SUCCEEDED |
 
 3つの操作は同じ試行AT1（案件C7・版3）に属し、債務OB1（B_CHARGE）は`settled_by_operation_id`＝OP3でSETTLED。操作種別が違うため一意制約に衝突せず、OP2はOP1の成功後、OP3はOP2の成功後に作るため、未確定の操作は常に1つまで。
+
+## 第1レビュー完了・実装開始可（Codex、2026-11-03）
+
+**判定：DR1-02の残件は設計上解消。DR1-01〜05を設計上再確認済みとし、第1レビューを完了する。design-v0.3を基準にClaude Codeの実装開始を可とする。** アプリの動作・安全性・実接続の合格判定ではない。これらは実コードと試験結果で第2レビュー以降に確認する。
+
+| 項目 | 今回の独立確認 |
+| --- | --- |
+| 対象 | ブランチ`design/review-1`、タグ`design-review-1-fix2`、コミット`79e64c69232483771cbf74f3acc8434bf69e32b7` |
+| 親 | `design-review-1-fix1`＝`0b8134bf5691c7b939ff958f7d7eab1396c0cb60`。直接の親であること、HEADと対象タグの一致を確認 |
+| 作業開始時 | 追跡ファイルの未コミット変更なし。既存の`outputs/codex-prep/`のみ未追跡 |
+| 読んだ範囲 | fix1からfix2へのDESIGN差分、3章・E1–E6・6.3・7.1–7.5・8章・AC08の関連箇所、REVIEWの対応記録、STATUSの未確認事項と次の作業 |
+| 実行した検証 | `git rev-parse HEAD design-review-1-fix2 design-review-1-fix2^ design-review-1-fix1`は上記と一致。`pwsh -NoProfile -File tools/render-docs.ps1 -Check`は6組PASS。`git diff --check design-review-1-fix1 design-review-1-fix2`は問題なし |
+| 未実行 | アプリ試験、DB制約の実行検証、障害注入、PayPal Sandbox・Vertex AIの接続、Webhook実配送。HTMLは同期確認のみで、今回の目視検証はしていない |
+
+### DR1-02残件の再確認根拠
+
+| 修正要求 | 判定と根拠 |
+| --- | --- |
+| チェックアウトと各API操作を区別する | 3章・7.1で債務、チェックアウト試行、API操作の3階層に分離。案件版・期限は試行、リクエストID・対象/結果の外部ID・本文ハッシュ・状態は操作へ配置され、保存単位の矛盾が解消された |
+| 履歴と再送条件を維持する | 操作ごとに独立したIDを持ち、同じ操作の再送だけが同じID/本文を使う。7.2のleaseと結果反映は操作単位、6.3の期限終了は試行と配下の操作の有無を条件としており、関連箇所も整合している |
+| 成功した操作の後に別操作へ進める | 成功の一意制約が「試行・操作種別」単位になった。7.5のOP1・OP2・OP3は成功状態で共存でき、未確定操作を順に一つずつ作る構造。注文・与信ではB_CHARGEを完了にせず、capture COMPLETEDでだけSETTLEDにする |
+| 中断からの回復を説明する | 7.5で各API成功後・DB保存前の中断と、capture保存後・E7前の中断を区別。その操作の照会または同じIDの再送で回復し、結果不明中は予約確定へ進まない。AC08へ試験を対応付けた |
+| 返金の制約を維持する | 7.1・8章でPENDING/UNKNOWNの間は新しい操作・試行を作らず、確定失敗後の回復と成功試行の一意性・残額確認を維持している |
+
+今回確認した範囲に、実装開始を止める新しい指摘はない。保存例は設計の説明として確認したもので、SQL制約や外部APIが実際に通った証拠ではない。
+
+### Claudeへの実装開始指示
+
+最初の区切りは、画面で準備されている「FlexSlot 骨組み・候補判定・利益計算の実装」とする。同じFlexSlot専用フォルダで、SPECとDESIGN 14章に沿って、パッケージ構成・DBスキーマ/トリガー・サンプルデータ・時計・候補判定・利益計算と、その意味のある単体/DB試験を実装する。金額は通貨の最小単位の整数を使い、7.5の6000はUSD 60.00として扱う。初期段階は模擬モードと明示する。
+
+基盤の検証と節目のコミット後は、設計済みのPayPalアダプター・実行器・回復、Vertex AI、三画面へ進めてよい。設計レビューの再承認待ちを挟む必要はない。認証情報が未準備の部分は模擬検証を進め、Sandbox/Vertexの実接続が未確認であることを記録する。公開・デプロイ・公開HTTPS経路・応募は従来どおり内容を準備して本人確認を受ける。
+
+STATUSをこの判断に更新し、節目ごとに対象SHA・実行コマンド・終了コード・結果・未確認範囲を残す。既存のAC05–09の競合/拒否/重複/切断/返金失敗は実装後に試験し、見た目の完了で代替しない。次の正式レビューは、一件の振替が最後まで動いた時点の第2レビューとする。
+
+Codexは今回、REVIEW.mdとそのHTMLおよびClaudeへの伝文だけを変更した。この完了記録はfix2より後の未コミット追記であり、Claudeの次のコミットへ内容を保持して含める。アプリ実装・DESIGN・STATUS・Gitのステージ・コミット・タグはCodexから変更していない。
+
+## 骨組み実装の確認依頼（Claude Code → Codex、2026-11-03）
+
+| 項目 | 内容 |
+| --- | --- |
+| 節目 | DESIGN 14章の1（骨組み）。正式な第2レビューは一件が最後まで動いた時点で別に依頼する |
+| 対象 | ブランチ`impl/skeleton`、タグ`impl-skeleton-1`（`git rev-parse impl-skeleton-1`でSHAを取得）。親は`design-review-1-fix2`（付け替えていない） |
+| 差分の確認 | `git diff design-review-1-fix2 impl-skeleton-1 --stat` |
+| 変更ファイル | 新規：`package.json`、`package-lock.json`、`.nvmrc`、`.npmrc`、`tsconfig.json`、`vitest.config.ts`、`src/clock.ts`、`src/time.ts`、`src/domain/candidates.ts`、`src/domain/profit.ts`、`src/db/schema.ts`、`src/db/database.ts`、`src/sample.ts`、`tests/`の7ファイル（試験6、補助1）。更新：STATUS.md、REVIEW.md（この節と版の行）、`outputs/STATUS.html`、`outputs/REVIEW.html` |
+| 取り込んだCodexの変更 | この文書の「第1レビュー完了・実装開始可」の節とそのHTML（未コミットだったものを、内容を変えずにこのコミットへ含めた）。`outputs/codex-prep/`は未追跡のまま触れていない |
+| 実行方法 | Node.js 24.22.1以上・25未満（`.npmrc`の`engine-strict`で強制）。`npm ci` → `npm run typecheck` → `npm test`（まとめて`npm run check`）。外部への接続はなく、DBは試験ごとのメモリ上のDBと一時フォルダのファイル |
+| Claude側の結果 | `npm run typecheck`は終了コード0。`npm test`は終了コード0、6ファイル・80件成功。スキーマを一時的に壊す変異の確認で、試験が失敗することも確かめた。詳細はSTATUSの「骨組みの実装」 |
+| モード | 模擬モードのみ。サンプルのAの支払いは模擬のcapture ID（`MOCK-`で始まる）で、Sandboxの決済ではない |
+| 判定（Claude側） | 修正報告ありに相当する「確認依頼」。Codexの確認まで再確認済みとは扱わない |
+| 未実行 | 実行器・回復・PayPalアダプター・AI・画面・セッション・Webhookの処理（範囲外）。同時実行、障害注入、時計を進める状態遷移、権限の試験。Sandbox・Vertex AIの接続 |
+
+### 見てほしい点
+
+| 観点 | 場所 | 内容 |
+| --- | --- | --- |
+| 枠の二重防御 | `src/db/schema.ts`のトリガー4つ、`tests/db-slots.test.ts` | INSERTと、時刻・担当者・状態のUPDATEの両方で検査し、UPDATEでは自分自身を除く。期限切れのACTIVE保留はDBでは時間で無効にならない（アプリが先に解放する、DESIGN 4.3） |
+| 部分一意インデックス | `src/db/schema.ts`、`tests/db-payments.test.ts` | 「未確定」「未終了」「成功」の状態集合が、DESIGN 7.1の意味と一致しているか |
+| 債務の完了条件 | `money_obligations_settlement_matches`トリガー | B_CHARGEは売上確定の成功した操作でだけSETTLEDにできる。AFTERトリガーにして、`settled_by_operation_id`の一意制約が先に働くようにした |
+| E7のロールバック | `tests/db-slots.test.ts`の「E7 booking commit」 | 本番のE7のコードはまだなく、同じ順の手書きのトランザクションで確認した。本番のE7を実装したら、そのコードで試験し直す |
+| 候補判定の規則 | `src/domain/candidates.ts`、`tests/candidates.test.ts` | SPEC 4の規則、C10の境界、タイムゾーンの扱い。AIやブラウザの値は入力に使っていない |
+
+### DESIGNに明記がなく、実装で決めた点（確認を求める）
+
+DESIGNの本文は変更していない。詳細と理由はSTATUSの「実装で具体化した点」。
+
+| ID | 内容 |
+| --- | --- |
+| I01 | Bの枠をAの元の枠の内側に限った。元枠の外へはみ出す部分を保留する仕組みがDESIGNにないため。Bの施術がAより長い場合は不成立になる |
+| I02 | 候補の開始時刻は許容時間の開始から15分刻み（設定可）。最も早い成立枠を案にする |
+| I03 | ACTIVEの保留は「現在時刻 < 期限」の間だけ有効 |
+| I04 | `shops`に営業時間の列を、`swap_cases`に元枠・Bの枠・移動先の開始/終了と担当者の列を追加 |
+| I05 | 試行・操作・案件の状態名の一覧と、案件の終端状態（COMPLETED・REJECTED・EXPIRED・COMPENSATED） |
+| I06 | DBの追加制約（モード変更不可、債務の作成時OPEN・金額不変・SETTLEDは終端・完了の操作の照合、検証済み配信からだけのWebhookイベント登録、STRICTテーブル） |
+| I07 | 申し送り：支払い期限で試行がEXPIREDになったときに残る、結果不明の注文作成の操作の扱いは、実行器（14章の3）で決める |
 
 ## 今後のレビュー記録テンプレート
 
