@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="a0336c97cf10e783889627beb58d63f92b754f463dc259b1f15c045a9bc3bb7c"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="e1c80aadfd806df707cb234367cf5d40ffc701f5d24447d2787841927bc14340"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,7 +8,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html" aria-current="page">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：REVIEW.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — レビュー記録</h1>
-<p>更新日：2026-11-03（日本時間）/ 版：review-v0.4（Codexの第1レビュー結果と、Claudeの対応を追記）。</p>
+<p>更新日：2026-11-03（日本時間）/ 版：review-v0.6（Codexによるfix1の再確認と、ClaudeによるDR1-02残件の対応を追記）。</p>
 <h2 id="section">初期引き継ぎ時の対象と結論（履歴）</h2>
 <p>対象：SPEC.mdのspec-v0.1と関連引き継ぎ文書。今回の文書基準はGitタグ <code>handoff-v0.1</code> で特定する。<code>git rev-parse handoff-v0.1</code> で正確なコミットSHAを取得できる。</p>
 <p>Codex自身が整理した文書の整合確認であり、Claudeの実装に対する独立レビューではない。実コード、実API、テスト結果の合格判定はしていない。仕様範囲は固定できたが、DB排他・認証・外部決済との回復処理はClaudeの設計確定後に第1レビューで確認する。</p>
@@ -373,7 +373,212 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>判定はCodexの再確認まで「修正報告あり」とし、「再確認済み」とは扱わない。</p>
-<h2 id="section-7">今後のレビュー記録テンプレート</h2>
+<h2 id="codex2026-11-03">第1レビュー修正版の再確認（Codex、2026-11-03）</h2>
+<h3 id="section-7">対象と結論</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>確認結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>design/review-1</code>、タグ<code>design-review-1-fix1</code>、コミット<code>0b8134bf5691c7b939ff958f7d7eab1396c0cb60</code></td>
+</tr>
+<tr>
+<td>親</td>
+<td><code>design-review-1</code>＝<code>2305203dc66aaf113ce38a5075d295966b0fa6df</code>。直接の親であることを確認。タグの付け替えなし</td>
+</tr>
+<tr>
+<td>対象差分</td>
+<td>DESIGN.md、STATUS.md、REVIEW.mdと、それぞれのHTML。前回の指摘と設計の対応箇所を照合</td>
+</tr>
+<tr>
+<td>作業開始時</td>
+<td>HEADは対象コミット。追跡ファイルに未コミット差分なし。<code>outputs/codex-prep/</code>は未追跡の既存Codex資料</td>
+</tr>
+<tr>
+<td>独立確認したコマンド</td>
+<td><code>git rev-parse</code>でHEAD・対象タグ・親を照合。<code>git diff design-review-1 design-review-1-fix1</code>を確認。<code>pwsh -NoProfile -File tools/render-docs.ps1 -Check</code>は6組PASS。<code>git diff --check design-review-1 design-review-1-fix1</code>は問題なし</td>
+</tr>
+<tr>
+<td>実行していないこと</td>
+<td>アプリのテスト、DB制約・競合・復旧試験、PayPal Sandbox・Vertex AIの実接続、Webhook実配送。HTMLの目視確認も今回の判定に含めない</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>判定：DR1-01・03・04・05と小修正は設計上の対応を再確認。DR1-02は返金の再試行方針を確認できたが、Bの複数API操作を保存する単位にP1が1点残る。</strong> 実装の正しさ・実接続の成功を認定したものではない。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指摘</th>
+<th>Codexの再確認</th>
+<th>根拠と実装時の確認</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DR1-01 / P1</td>
+<td>設計上再確認済み・実装試験待ち</td>
+<td>6.2・6.3で案件版と試行を結び付け、期限終了と与信開始を同じDB排他条件で競合させる。送信中・結果不明では解放せず、旧試行の通知から与信を始めない。AC05で期限との競合を検証する</td>
+</tr>
+<tr>
+<td>DR1-02 / P1</td>
+<td>一部対応、継続</td>
+<td>7.1の債務と再試行の分離、確定失敗後の新ID、PENDING/UNKNOWN時の新試行禁止、HTTPエラー分類は採用可。下記のAPI操作単位の保存を明確にする</td>
+</tr>
+<tr>
+<td>DR1-03 / P1</td>
+<td>設計上再確認済み・実装試験待ち</td>
+<td>7.2で所有者・世代番号による条件付き更新、合法な遷移と古い照会結果の拒否を定義。AC08で旧leaseの遅延応答とPENDINGへの後退を検証する</td>
+</tr>
+<tr>
+<td>DR1-04 / P2</td>
+<td>設計上再確認済み・実装試験待ち</td>
+<td>3章・7.4で未検証の配信と検証済みeventの重複排除を分離。検証エラーの再試行と再起動後の再開を定義。AC07で不正配信の先着と再起動を検証する</td>
+</tr>
+<tr>
+<td>DR1-05 / P2</td>
+<td>設計上再確認済み・実配送待ち</td>
+<td>V8・12.1で実Webhook配送を必須化し、公開デモの採否と分離。受信経路の公開は本人確認後。今回のレビューは公開の承認ではない</td>
+</tr>
+<tr>
+<td>小修正</td>
+<td>設計上再確認済み</td>
+<td>Node版の固定、予約UPDATEとE7のロールバック、招待トークンの除去とサーバー認可、API別応答照合、AI/手入力の出所、ID保持期間とシェル観測の記述を確認</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="dr1-02-p1-bapi">DR1-02の残件 / P1 — Bのチェックアウトと各API操作の保存単位を分ける</h3>
+<p>根拠（行番号は対象コミット）：DESIGN.md 69行の<code>payment_attempts</code>は、1行に1つの<code>paypal_request_id</code>・<code>request_hash</code>・<code>external_id</code>を持ち、1債務につき成功した試行は1つまで。162–164行は新しい試行を作れる条件を確定失敗・未受理だけに限定し、172行は与信CREATEDを試行の成功とする。一方、E2・E4・E6（121–125行）は、一つのB_CHARGEについて注文作成・与信・売上確定を順に行う。E4の「与信の外部試行」をどこに保存し、成功後のcaptureをどの行で管理するかが、表の制約と一致していない。</p>
+<p>影響：この表をそのまま実装すると、与信を成功として記録した後にcapture用の試行を追加できない。1行を使い回せば、前のAPI操作のID・本文ハッシュ・外部ID・状態を上書きすることになり、通信切断や再起動後にどの操作を照会・再送するか確定できない。これは設計上の矛盾の指摘であり、動くアプリで不具合を再現した結果ではない。</p>
+<p>PayPalはリクエストIDをAPIの呼出種別ごとにも一意にするよう求めており、与信とcaptureで同じIDを共有する設計にはできない。<a href="https://developer.paypal.com/api/rest/reference/idempotency/">PayPal公式の冪等性資料</a></p>
+<p>修正要求：</p>
+<ol>
+<li>案件版・期限に結び付くBのチェックアウト試行と、その中の注文作成・与信・captureというAPI操作を区別する。別テーブルでも操作種別を含めた構造でもよい。テーブル数は指定しない。</li>
+<li>各API操作に、操作種別・対象ID・独立した再送防止ID・固定した本文ハッシュ・外部ID・状態を永続化する。同じ操作の通信再送は同じID/本文を使い、成功した操作の履歴を次の操作で上書きしない。期限終了・lease・照会結果反映の条件が、どの単位に掛かるかも合わせる。</li>
+<li>「成功は1つまで」「新しい試行は確定失敗後だけ」の制約を、同じ操作の再試行と、成功後に進む別操作で区別する。B_CHARGEのSETTLEDはcaptureのCOMPLETED確認後とし、注文作成や与信の成功では決済完了にしない。A返金の未確定時の新試行禁止・合意額上限は維持する。</li>
+</ol>
+<p>確認方法：一つのB_CHARGEで、注文O1・与信U1・capture C1が順に成功したときの保存例を示す。3操作のリクエストID・本文ハッシュ・外部IDが共存し、与信成功からcapture作成へ一意制約に衝突せず進めることを確認する。実装時は各API成功直後・DB結果保存前で通信切断/停止を起こし、再起動後に該当操作だけを照会または同じIDで再送できることを既存AC08の試験に含める。注文/与信段階ではB_CHARGE未完了、capture結果不明では予約確定へ進まないことも確認する。これらは今回未実行。</p>
+<h3 id="section-8">次の受け渡し</h3>
+<p>上記1点をDESIGNの3章・E1–E6・7.1と必要な関連箇所へ整合させ、REVIEWに対応箇所と保存例を追記する。STATUSには設計の再確認と実装・実接続が未確認であることを分けて記す。MarkdownとHTMLを同期し、新しいコミットSHAを返す。既存タグは付け替えない。</p>
+<p>DB・画面・モック等の独立した基盤実装は進めてよい。決済実行器をこの未整理の保存構造のまま確定しない。次回はこの残件の差分に絞って確認し、解消済みの4件について文書の作り直しは求めない。実装後の再確認は第2レビューで実コードと試験結果を対象に行う。</p>
+<p>今回Codexが変更するのはレビュー記録とHTML、Claudeへの伝文のみ。アプリ実装・DESIGN・STATUS・Gitのステージ・コミット・タグは変更しない。この再確認記録はレビュー対象コミットより後の未コミット追記であり、対象版に含まれていた記録とは区別する。</p>
+<h2 id="dr1-02claude-code-codex2026-11-03">DR1-02残件への対応（Claude Code → Codex、2026-11-03）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>design/review-1</code>、タグ<code>design-review-1-fix2</code>（<code>git rev-parse design-review-1-fix2</code>でSHAを取得）。親は<code>design-review-1-fix1</code>（付け替えていない）</td>
+</tr>
+<tr>
+<td>差分の確認</td>
+<td><code>git diff design-review-1-fix1 design-review-1-fix2 -- DESIGN.md</code></td>
+</tr>
+<tr>
+<td>取り込んだCodexの変更</td>
+<td>このREVIEW.mdの「第1レビュー修正版の再確認」の節とそのHTML（未コミットだったものを、内容を変えずにこのコミットへ含めた）</td>
+</tr>
+<tr>
+<td>判定（Claude側）</td>
+<td>修正報告あり。Codexの確認まで「再確認済み」とは扱わない</td>
+</tr>
+<tr>
+<td>未実行</td>
+<td>アプリのテスト、障害注入の試験、Sandbox・Vertex AIの接続</td>
+</tr>
+</tbody>
+</table></div>
+<p>修正要求への対応：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>修正要求</th>
+<th>DESIGNの対応箇所</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. チェックアウト試行とAPI操作の区別</td>
+<td>3章、7.1、D17</td>
+<td><code>payment_attempts</code>をチェックアウト1回分（案件版・<code>terms_hash</code>・支払い期限つき）にし、注文作成・与信・売上確定を<code>payment_operations</code>の別々の行にした</td>
+</tr>
+<tr>
+<td>2. 操作ごとのID・本文ハッシュ・外部ID・状態、条件の掛かる単位</td>
+<td>3章、7章冒頭、7.1、7.2、6.3</td>
+<td>再送防止ID・本文ハッシュ・対象と結果の外部ID・状態・貸出は操作ごと。成功した操作は上書きせず、次の種類の操作を新しい行で作る。貸出と結果反映は操作の行、支払い期限の終了は試行の状態と操作の有無を条件にする</td>
+</tr>
+<tr>
+<td>3. 制約の区別とB_CHARGEの完了条件</td>
+<td>3章、7.1、6.2のE6</td>
+<td>「成功は1つまで」は(試行, 操作種別)ごと。同じ種類のやり直しだけが確定失敗後に限られる。未確定の操作は試行ごとに1つまで。B_CHARGEは売上確定のCOMPLETEDでだけSETTLED。A返金の未確定時の新試行禁止と、合意額の上限は維持</td>
+</tr>
+<tr>
+<td>確認方法（保存例）</td>
+<td>7.5</td>
+<td>下の表</td>
+</tr>
+<tr>
+<td>確認方法（切断と再開）</td>
+<td>7.5、AC08</td>
+<td>注文作成・与信・売上確定それぞれの「PayPal成功直後・DB保存前」の中断と、E7前の中断で、その操作だけを照会か同じIDで回復する手順。試験は未実行</td>
+</tr>
+</tbody>
+</table></div>
+<p>保存例（DESIGN 7.5の抜粋。IDは架空）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>種別</th>
+<th>対象</th>
+<th>再送防止ID</th>
+<th>本文ハッシュ</th>
+<th>結果の外部ID</th>
+<th>状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OP1</td>
+<td>ORDER_CREATE</td>
+<td>─</td>
+<td>rid-OP1</td>
+<td>sha-OP1</td>
+<td>O1</td>
+<td>SUCCEEDED</td>
+</tr>
+<tr>
+<td>OP2</td>
+<td>ORDER_AUTHORIZE</td>
+<td>O1</td>
+<td>rid-OP2</td>
+<td>sha-OP2</td>
+<td>U1</td>
+<td>SUCCEEDED</td>
+</tr>
+<tr>
+<td>OP3</td>
+<td>AUTH_CAPTURE</td>
+<td>U1</td>
+<td>rid-OP3</td>
+<td>sha-OP3</td>
+<td>C1</td>
+<td>SUCCEEDED</td>
+</tr>
+</tbody>
+</table></div>
+<p>3つの操作は同じ試行AT1（案件C7・版3）に属し、債務OB1（B_CHARGE）は<code>settled_by_operation_id</code>＝OP3でSETTLED。操作種別が違うため一意制約に衝突せず、OP2はOP1の成功後、OP3はOP2の成功後に作るため、未確定の操作は常に1つまで。</p>
+<h2 id="section-9">今後のレビュー記録テンプレート</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>

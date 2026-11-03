@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="866d0c59f96e43c1794422b6d1586b1426c76bca016ddf06872bfde09ee6437b"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="2ab6aa3cd562f4af0a36ee5f6c0dfc2b4bc95e6f6b4a0a270631267f0c574b28"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,9 +8,10 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html" aria-current="page">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：DESIGN.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-1">FlexSlot — 技術設計（第1レビュー対象）</h1>
-<p>版：design-v0.2 / 作成日：2026-11-03（日本時間）/ 作成：Claude Code / 状態：設計のみ。アプリ本体は未実装、AI・PayPalは未接続。</p>
+<p>版：design-v0.3 / 作成日：2026-11-03（日本時間）/ 作成：Claude Code / 状態：設計のみ。アプリ本体は未実装、AI・PayPalは未接続。</p>
 <p>SPEC.md（spec-v0.1）の「設計案」を検証し、実装できる粒度まで具体化した文書。合意済みの範囲は変えない。SPECの条件を弱めた箇所はない。追加・具体化した箇所は「1. SPECとの差分」に列挙する。</p>
 <p>design-v0.2の変更：Codexの第1レビュー指摘DR1-01〜05と小修正を反映した。対応箇所の一覧は15章。</p>
+<p>design-v0.3の変更：DR1-02の残件に対応し、支払いの保存単位を「債務・試行・API操作」の3階層に分けた（D17、3章、6.2、6.3、7章、7.5）。</p>
 <h2 id="spec">1. SPECとの差分</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -134,6 +135,13 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>V8は公開工程</td>
 <td>V8を必須の接続検証にし、公開デモの採否とは独立して、本人確認後の限定的なHTTPS受信経路で行う</td>
 <td>12章、DR1-05</td>
+</tr>
+<tr>
+<td>D17</td>
+<td>変更</td>
+<td>試行1行に再送防止ID・外部IDを1つ（design-v0.2）</td>
+<td>「債務」「試行（Bはチェックアウト1回分）」「API操作」の3階層に分ける。再送防止ID・本文ハッシュ・外部ID・状態・貸出はAPI操作ごとに持つ</td>
+<td>7.1、7.5、DR1-02の残件</td>
 </tr>
 </tbody>
 </table></div>
@@ -280,13 +288,18 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>money_obligations</td>
-<td>id, case_id, kind（B_CHARGE / B_AUTH_VOID / A_COMPENSATION_REFUND / B_RECOVERY_REFUND）, amount_minor, currency, target_external_id, status（OPEN / SETTLED / NEEDS_ATTENTION / CANCELLED）</td>
-<td>(case_id, kind)は一意。金額は作成時に固定（7.1）</td>
+<td>id, case_id, kind（B_CHARGE / B_AUTH_VOID / A_COMPENSATION_REFUND / B_RECOVERY_REFUND）, amount_minor, currency, target_external_id, status（OPEN / SETTLED / NEEDS_ATTENTION / CANCELLED）, settled_by_operation_id</td>
+<td>(case_id, kind)は一意。金額は作成時に固定。<code>settled_by_operation_id</code>は一意（7.1）</td>
 </tr>
 <tr>
 <td>payment_attempts</td>
-<td>id, obligation_id, attempt_no, previous_attempt_id, paypal_request_id（一意）, request_hash, status, external_id, external_status, external_update_time, lease_owner, lease_gen, lease_until, sends, next_send_at, last_error_class</td>
-<td>1つの債務に未確定の試行は1つまで、成功した試行も1つまで（部分一意インデックス）</td>
+<td>id, obligation_id, attempt_no, previous_attempt_id, case_version, terms_hash, expires_at, status</td>
+<td>1つの債務に未終了の試行は1つまで、成功した試行も1つまで（部分一意インデックス）。Bの試行はチェックアウト1回分で、案件版・<code>terms_hash</code>・支払い期限に紐付く</td>
+</tr>
+<tr>
+<td>payment_operations</td>
+<td>id, attempt_id, op_kind, op_seq, previous_operation_id, target_external_id, paypal_request_id（一意）, request_hash, status, result_external_id, external_status, external_update_time, lease_owner, lease_gen, lease_until, sends, next_send_at, last_error_class</td>
+<td>1つの試行に未確定の操作は1つまで。(試行, 操作種別)ごとに成功した操作は1つまで（どちらも部分一意インデックス）。(試行, 操作種別, op_seq)は一意</td>
 </tr>
 <tr>
 <td>webhook_deliveries</td>
@@ -404,12 +417,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tbody>
 <tr>
 <td>E1 実行開始</td>
-<td>Bが条件を承認して支払いボタンを押す。<code>BEGIN IMMEDIATE</code>で版・期限・三者の承認・予約・保留・金額・通貨・受取先を再検査し、保留をFROZENにして条件を凍結する。同じトランザクションで、B_CHARGEの債務と、その最初の支払い試行（支払い期限つき）を作る</td>
+<td>Bが条件を承認して支払いボタンを押す。<code>BEGIN IMMEDIATE</code>で版・期限・三者の承認・予約・保留・金額・通貨・受取先を再検査し、保留をFROZENにして条件を凍結する。同じトランザクションで、B_CHARGEの債務と、その最初のチェックアウト試行（支払い期限つき）と、注文作成の操作（ORDER_CREATE、PREPARED）を作る</td>
 <td>PAYMENT_STARTED</td>
 </tr>
 <tr>
 <td>E2 注文作成</td>
-<td><code>POST /v2/checkout/orders</code>（<code>intent=AUTHORIZE</code>、金額、<code>custom_id=case:{id}:v{版}:att:{試行ID}</code>、<code>invoice_id=FS-{id}-B-{試行番号}</code>）。order IDを試行に保存してから、ブラウザに返す</td>
+<td>ORDER_CREATE操作として<code>POST /v2/checkout/orders</code>（<code>intent=AUTHORIZE</code>、金額、<code>custom_id=case:{id}:v{版}:att:{試行ID}</code>、<code>invoice_id=FS-{id}-B-{試行番号}</code>）を送る。order IDを操作の<code>result_external_id</code>に保存してから、ブラウザに返す</td>
 <td>同上</td>
 </tr>
 <tr>
@@ -419,7 +432,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>E4 与信</td>
-<td>試行が有効（期限内で終了していない）であることを条件付き更新で確かめ、与信の外部試行をSENDINGで記録してから<code>POST /v2/checkout/orders/{id}/authorize</code>を送る。応答で金額・通貨・custom_id（案件・版・試行）・受取先・与信の状態（CREATED）を照合する</td>
+<td>試行が有効（期限内で終了していない）であることを条件付き更新で確かめ、同じトランザクションで与信の操作（ORDER_AUTHORIZE、対象はorder ID）を作り、SENDINGを記録してから<code>POST /v2/checkout/orders/{id}/authorize</code>を送る。応答で金額・通貨・custom_id（案件・版・試行）・受取先・与信の状態（CREATED）を照合し、authorization IDを操作に保存する。B_CHARGEはまだ未完了</td>
 <td>AUTHORIZED</td>
 </tr>
 <tr>
@@ -429,7 +442,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>E6 売上確定</td>
-<td><code>POST /v2/payments/authorizations/{id}/capture</code>（金額を明示、<code>final_capture=true</code>）。COMPLETEDを確認する。PENDINGなら照会を続け、予約確定へ進まない</td>
+<td>売上確定の操作（AUTH_CAPTURE、対象はauthorization ID）を作り、<code>POST /v2/payments/authorizations/{id}/capture</code>（金額を明示、<code>final_capture=true</code>）を送る。COMPLETEDを確認したときだけ、試行をCAPTUREDに、B_CHARGEの債務をSETTLED（<code>settled_by_operation_id</code>＝この操作）にする。PENDINGなら照会を続け、予約確定へ進まない</td>
 <td>CAPTURED / PAYMENT_PENDING</td>
 </tr>
 <tr>
@@ -456,18 +469,18 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </table></div>
 <p><strong>実行権は1つだけ</strong>：E1は<code>UPDATE swap_cases SET status='PAYMENT_STARTED' ... WHERE id=? AND status='A_ACCEPTED' AND version=?</code>の条件付き更新で行い、更新件数が1のときだけ実行権を得る。同じ案件への確定要求が同時に2つ来ても、<code>BEGIN IMMEDIATE</code>で直列化されるため、2つ目は更新件数0となって拒否される（AC06、C04）。</p>
 <p><strong>予約確定の処理済みマーカー</strong>：E7では「案件の状態をBOOKING_COMMITTEDにする」「<code>compensation_grants</code>の行を挿入する」「A_COMPENSATION_REFUNDの債務を挿入する」を、予約の更新と同じトランザクションで書く。SQLiteのコミットは原子的なので、これらは全部あるか全部ないかのどちらかになる。再起動後はこの3つの有無で、予約確定済みか未確定かを判定する（C06）。</p>
-<p>状態名はSPEC 7の表をそのまま使い、PAYMENT_STARTED（実行開始・凍結済み）を追加する。予約、Bの与信、Bの売上確定、Aへの返金、Bへの回復返金の状態は、案件とは別に<code>payments</code>、<code>money_obligations</code>、<code>payment_attempts</code>に保存する。PayPalの状態名は加工せずに保存し、未知の状態は成功として扱わない。</p>
+<p>状態名はSPEC 7の表をそのまま使い、PAYMENT_STARTED（実行開始・凍結済み）を追加する。予約、Bの与信、Bの売上確定、Aへの返金、Bへの回復返金の状態は、案件とは別に<code>payments</code>、<code>money_obligations</code>、<code>payment_attempts</code>、<code>payment_operations</code>に保存する。PayPalの状態名は加工せずに保存し、未知の状態は成功として扱わない。</p>
 <h3 id="bd04d12dr1-01">6.3 Bが支払いを完了しない場合（D04、D12、DR1-01）</h3>
 <p>PayPal側の注文が「未承認」と照会できても、その直後にBが古い画面で承認する可能性がある。そこで、PayPal側の状態ではなく、<strong>FlexSlot側で試行を終了させ、終了した試行では与信を送らない</strong>ことで安全を確保する。与信はサーバーの認証情報でしか実行できないため、FlexSlotが送らなければ、承認済みの注文があってもお金は動かない。</p>
 <ol>
 <li><strong>試行と版の紐付け</strong>：支払い試行は、案件・案件版・<code>terms_hash</code>に紐付く。注文の<code>custom_id</code>に試行IDを含め、与信・売上確定の応答で照合する。</li>
 <li><strong>期限で終了させる条件</strong>：支払い期限（初期値15分、設定で変更可。Codex第1レビューで採用）を過ぎた時点で、<code>BEGIN IMMEDIATE</code>の中で次をすべて満たすときだけ、試行をEXPIRED（終端）にし、案件をEXPIRED（終端）にし、保留をRELEASEDにする。
 <ul>
-<li>その試行に、与信の外部試行が一度も記録されていない（SENDING・結果不明・成功のいずれもない）。</li>
-<li>その案件に、与信・売上確定の記録がない。</li>
+<li>その試行に、与信の操作（ORDER_AUTHORIZE）が1件も記録されていない（PREPARED・SENDING・結果不明・成功のいずれもない）。</li>
+<li>その試行に、売上確定の操作（AUTH_CAPTURE）がない。</li>
 </ul>
 </li>
-<li><strong>送信中・結果不明なら解放しない</strong>：与信の外部試行がSENDINGまたは結果不明なら、期限を過ぎても終了させない。照会で与信の有無を確定させてから進める。</li>
+<li><strong>送信中・結果不明なら解放しない</strong>：与信の操作がSENDINGまたは結果不明なら、期限を過ぎても終了させない。照会で与信の有無を確定させてから進める。注文作成の操作（ORDER_CREATE）だけが結果不明の場合は、お金が動かないため、期限で終了させてよい。</li>
 <li><strong>遅れて来た承認・応答の拒否</strong>：E4は「試行が有効」を条件付き更新で確かめてから与信を記録するため、期限処理と与信開始は<code>BEGIN IMMEDIATE</code>で直列化され、どちらか一方しか成立しない。終了した試行への承認通知、ブラウザからの再開要求、Webhookは、与信を開始せず「支払い期限切れ」を返す。</li>
 <li><strong>防御</strong>：照会や通知で、終了した試行に紐付く与信が見つかった場合（本来は起きない）は、ただちに取消（B_AUTH_VOID）の債務を作り、店主に要対応として表示する。</li>
 <li><strong>再開</strong>：期限切れの後は、同じ依頼から新しい案件（新しい版、新しい保留）を作り、店主・A・Bの承認からやり直す。古い試行や古い注文を再利用しない。</li>
@@ -476,34 +489,39 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <h2 id="paypal">7. PayPal呼び出しの共通規則</h2>
 <ul>
 <li><strong>Sandbox専用</strong>：接続先は<code>https://api-m.sandbox.paypal.com</code>に固定し、起動時にSandbox以外のURLを設定していれば起動を拒否する（SPEC、AGENTS）。</li>
-<li><strong>試行を先に書く</strong>：外部呼び出しの前に、<code>payment_attempts</code>の行（再送防止ID＝UUID、リクエスト本文のハッシュ、案件の版、試行ID）を状態SENDINGでコミットする。再起動後にSENDINGの行が残っていれば「送ったか不明」として扱い、送っていないとはみなさない。</li>
+<li><strong>操作を先に書く</strong>：外部呼び出しの前に、<code>payment_operations</code>の行（操作種別、対象の外部ID、再送防止ID＝UUID、リクエスト本文のハッシュ）を状態SENDINGでコミットする。再起動後にSENDINGの行が残っていれば「送ったか不明」として扱い、送っていないとはみなさない。</li>
 <li><strong>再送防止IDの保持期間</strong>：PayPalのRESTリクエストの資料は、IDを「最大45日」保存すると説明している（2026-11-03確認）。これは各APIで45日間の保持を保証する記述ではないため、各APIの保証、実接続で確認した範囲、未確認を区別して記録する。設計としては、数分以内の再送だけを前提にし、長期間後の再送に頼らない（STATUS U05）。</li>
 <li><strong>結果の照合</strong>：成功と判断する前に、金額・通貨・<code>custom_id</code>・受取先のmerchant ID・状態を、条件スナップショットと照合する。</li>
-<li><strong>再試行</strong>：同じ試行の通信の再送は、通信エラー、5xx、429のときだけ、間隔を2秒から倍にして最大6回まで行う。上限に達しても、外部の取引が失敗したとはみなさない。試行は結果不明のまま残し、照会での回復と店主の要対応表示に回す。</li>
+<li><strong>再試行</strong>：同じ操作の通信の再送は、通信エラー、5xx、429のときだけ、間隔を2秒から倍にして最大6回まで行う。上限に達しても、外部の取引が失敗したとはみなさない。操作は結果不明のまま残し、照会での回復と店主の要対応表示に回す。</li>
 </ul>
-<h3 id="d13dr1-02">7.1 債務と試行の分離（D13、DR1-02）</h3>
+<h3 id="apid13d17dr1-02">7.1 債務・試行・API操作の分離（D13、D17、DR1-02）</h3>
 <ul>
 <li><strong>債務（<code>money_obligations</code>）</strong>：1つの案件で動かすお金の論理的な単位。種類はB_CHARGE、B_AUTH_VOID、A_COMPENSATION_REFUND、B_RECOVERY_REFUNDの4つで、(案件, 種類)は一意。金額は作成時に固定し、後から変えない。Aへの補償はさらに<code>compensation_grants</code>で予約単位に1回へ制限する。</li>
-<li><strong>試行（<code>payment_attempts</code>）</strong>：債務をPayPalへ送る1回分の処理。試行ごとに新しい再送防止IDを持つ。同じ試行の通信の再送は、同じIDと同じ本文で行う。</li>
-<li><strong>新しい試行を作れる条件</strong>：直前の試行が「確定失敗」か「受理されなかった」と判定できたときだけ。新しい試行は新しいIDを持ち、直前の試行を<code>previous_attempt_id</code>で参照する。古い試行の行と外部IDは上書きせずに残す。</li>
-<li><strong>未確定の試行は1つまで</strong>：SENDING、結果不明、PayPal側PENDINGの試行がある間は、新しい試行を作れない（部分一意インデックスで強制）。成功した試行も1つまで（同じく部分一意インデックス）。そのため、返金の合計が債務の金額を超えない。</li>
+<li><strong>試行（<code>payment_attempts</code>）</strong>：債務を実現するための1回分の手続き。B_CHARGEの試行はチェックアウト1回分で、案件版・<code>terms_hash</code>・支払い期限に紐付き、注文作成→与信→売上確定の3つのAPI操作を含む。返金・取消の試行は、API操作を1つだけ含む。試行の状態（B_CHARGEではOPEN → ORDER_CREATED → AUTHORIZED → CAPTURED、または終端のEXPIRED / FAILED）は、操作の結果から条件付き更新で進める。</li>
+<li><strong>API操作（<code>payment_operations</code>）</strong>：PayPalへのPOSTの1種類分。操作種別（ORDER_CREATE / ORDER_AUTHORIZE / AUTH_CAPTURE / AUTH_VOID / CAPTURE_REFUND）、対象の外部ID（注文・与信・captureのID）、独立した再送防止ID、作成時に固定した本文ハッシュ、結果の外部ID、外部の状態、貸出を、操作ごとに持つ。PayPalは再送防止IDをAPIの呼び出し種別ごとに一意にするよう求めているため、与信と売上確定で同じIDを使わない。照会（GET）は操作として数えず、監査ログに記録する。</li>
+<li><strong>同じ操作の再送</strong>：通信の再送は、同じ操作の行で、同じIDと同じ本文を使う。</li>
+<li><strong>次の種類の操作へ進む</strong>：ある操作が成功したら、同じ試行の中に次の種類の操作の行を新しく作る（注文作成の成功 → 与信の操作、与信の成功 → 売上確定の操作）。成功した操作の行は上書きしない。「(試行, 操作種別)ごとに成功は1つまで」の制約なので、種類の違う操作は衝突しない。</li>
+<li><strong>同じ種類の操作をやり直す</strong>：同じ種類の直前の操作が「確定失敗」か「受理されなかった」と判定できたときだけ、<code>op_seq</code>を1つ上げた新しい操作（新しいID、直前の操作を<code>previous_operation_id</code>で参照）を作れる。</li>
+<li><strong>新しい試行を作れる条件</strong>：直前の試行が終端の失敗（FAILED、またはお金が動いていないEXPIRED）のときだけ。新しい試行は直前の試行を<code>previous_attempt_id</code>で参照する。B_CHARGEでは、支払い期限の切れた案件では新しい試行を作らず、新しい案件からやり直す（6.3）。古い試行・操作の行と外部IDは上書きせずに残す。</li>
+<li><strong>未確定は1つまで</strong>：1つの試行に、未確定（PREPARED・SENDING・結果不明・PayPal側PENDING）の操作は1つまで。1つの債務に、未終了の試行は1つまで（どちらも部分一意インデックスで強制）。成功した試行も1つの債務に1つまでなので、返金の合計が債務の金額を超えない。</li>
+<li><strong>債務の完了</strong>：B_CHARGEをSETTLEDにするのは、売上確定の操作でCOMPLETEDを確認したときだけ。注文作成や与信の成功では完了にしない。返金の債務は、返金の操作でCOMPLETEDを確認したときにSETTLEDにする。</li>
 <li><strong>返金の前の残額確認</strong>：Aへの返金の新しい試行を作る前に、元captureを照会し、返金できる残額が債務の金額以上であることを確かめる。</li>
 <li><strong>店主の操作</strong>：店主にできるのは「既存の債務の回復」だけ。金額や返金先を指定する任意の返金は作れない。</li>
 </ul>
-<p>外部の結果を、次のように分類してから試行の状態を決める。HTTPの4xxをすべて「返金FAILED」と同じには扱わない。</p>
+<p>外部の結果を、次のように分類してから操作の状態を決める。HTTPの4xxをすべて「返金FAILED」と同じには扱わない。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>観測</th>
-<th>試行の状態</th>
-<th>新しい試行</th>
+<th>操作の状態</th>
+<th>同じ種類の新しい操作</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>2xxで、リソースの状態がCOMPLETED（与信はCREATED）</td>
+<td>2xxで、リソースの状態が期待どおり（注文作成はCREATEDまたはPAYER_ACTION_REQUIRED、与信はCREATED、売上確定・返金はCOMPLETED）</td>
 <td>成功</td>
-<td>不要</td>
+<td>不要（次の種類の操作へ進む）</td>
 </tr>
 <tr>
 <td>2xxまたは照会で、リソースの状態がPENDING</td>
@@ -516,13 +534,13 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>作れる（原因を確認してから）</td>
 </tr>
 <tr>
-<td>この試行の最初の送信で、入力エラー（400 / 422）が返り、それ以前に結果不明の送信がない</td>
+<td>この操作の最初の送信で、入力エラー（400 / 422）が返り、それ以前に結果不明の送信がない</td>
 <td>受理されなかった</td>
 <td>原因を直したうえで作れる</td>
 </tr>
 <tr>
 <td>認証エラー（401 / 403）</td>
-<td>処理されていないが、試行は終わらせない。認証を直して同じ試行を再送</td>
+<td>処理されていないが、操作は終わらせない。認証を直して同じ操作を再送</td>
 <td>作れない</td>
 </tr>
 <tr>
@@ -537,15 +555,16 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<p>注文作成だけは例外で、注文は承認されるまでお金を動かさないため、確定失敗の判定ができない注文作成の試行は、案件の支払い期限（6.3）で終了させてよい。</p>
+<p>注文作成だけは例外で、注文は承認されるまでお金を動かさないため、結果が確定しない注文作成の操作は、試行の支払い期限（6.3）で試行ごと終了させてよい。</p>
 <h3 id="d14dr1-03">7.2 貸出と書き戻しの防止（D14、DR1-03）</h3>
 <ul>
-<li><strong>貸出の取得</strong>：実行器も画面からの操作も、試行を処理する前に<code>UPDATE payment_attempts SET lease_owner=?, lease_gen=lease_gen+1, lease_until=? WHERE id=? AND (lease_until IS NULL OR lease_until &lt; ?) AND status IN (処理中に移れる状態)</code>で貸出を取り、更新後の世代番号を手元に持つ。更新件数が0なら処理しない。</li>
+<li><strong>貸出の単位</strong>：貸出はAPI操作（<code>payment_operations</code>）の行に掛ける。試行と債務の状態は、操作の結果を反映するときに、同じトランザクション内の条件付き更新で進める。支払い期限による試行の終了（6.3）は、試行の状態と、その試行の操作の有無を条件にする。</li>
+<li><strong>貸出の取得</strong>：実行器も画面からの操作も、操作を送る前に<code>UPDATE payment_operations SET lease_owner=?, lease_gen=lease_gen+1, lease_until=? WHERE id=? AND (lease_until IS NULL OR lease_until &lt; ?) AND status IN (送信できる状態)</code>で貸出を取り、更新後の世代番号を手元に持つ。更新件数が0なら処理しない。</li>
 <li><strong>結果の書き込み</strong>：外部応答の保存は<code>... WHERE id=? AND lease_gen=? AND lease_owner=?</code>と、許される状態遷移の条件をつけた更新だけで行う。更新件数が0なら、その応答は古いものとして業務状態に採用しない（監査ログには残す）。案件の状態の更新も、<code>WHERE status=? AND version=?</code>の条件付き更新で行う。</li>
 <li><strong>時間の関係</strong>：PayPalへの1回の通信は20秒でタイムアウトさせ、貸出は60秒とする。通常は貸出が切れる前に終わる。切れた場合でも、上の世代の条件で古い書き込みを防ぐ。</li>
-<li><strong>状態を後退させない</strong>：試行の状態には順位を付け（準備 &lt; 送信中・結果不明 &lt; PayPal側PENDING &lt; 終端）、終端から非終端へ、PENDINGから送信中へは戻さない。外部リソースの状態は、PayPalの<code>update_time</code>が保存済みのもの以上で、かつ順位が下がらない場合だけ反映する。照会Q1（PENDING）がQ2（COMPLETED）の後に届いても、状態は戻らない。</li>
+<li><strong>状態を後退させない</strong>：操作の状態には順位を付け（準備 &lt; 送信中・結果不明 &lt; PayPal側PENDING &lt; 終端）、終端から非終端へ、PENDINGから送信中へは戻さない。試行の状態（OPEN &lt; ORDER_CREATED &lt; AUTHORIZED &lt; CAPTURED、終端の失敗）も同じく前にしか進めない。外部リソースの状態は、PayPalの<code>update_time</code>が保存済みのもの以上で、かつ順位が下がらない場合だけ反映する。照会Q1（PENDING）がQ2（COMPLETED）の後に届いても、状態は戻らない。</li>
 <li><strong>正当な進行との区別</strong>：COMPLETEDの売上確定がのちに返金されるなど、別のリソース（返金・取消）による変化は、そのリソースの試行・債務として記録し、元のリソースの状態を書き換えない。</li>
-<li><strong>結果不明は新しい試行にしない</strong>：結果不明の試行は、新しい試行としては送らず、照会と同じIDでの再送による回復に回す（7.1）。</li>
+<li><strong>結果不明は新しい操作にしない</strong>：結果不明の操作は、新しい操作・新しい試行としては送らず、照会と同じIDでの再送による回復に回す（7.1）。</li>
 </ul>
 <h3 id="section-6">7.3 操作ごとの応答形式</h3>
 <p><code>Prefer: return=representation</code>を付けても、操作によって応答の形は違う（D07）。応答に含まれない情報は、紐付いた注文・決済の照会で確認する。</p>
@@ -592,7 +611,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>実際の応答の形はV2〜V7で記録し、この表と違えば更新する。</p>
-<p>結果が不明な試行の確認方法：</p>
+<p>結果が不明な操作の確認方法：</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -634,9 +653,163 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>受信の保存</strong>：届いた配信は、署名を検証する前に<code>webhook_deliveries</code>へ保存する。この表の<code>event_id</code>には一意制約を置かない。保存できたときだけ200を返し、保存できなければ成功を返さない。本文は64KBまでとし、送信元ごとの受信数にも上限を置く。</li>
 <li><strong>検証</strong>：保存した配信を、<code>POST /v1/notifications/verify-webhook-signature</code>（Webhook ID、受信ヘッダー、本文）で検証する。結果はVERIFIED（成功）、INVALID（失敗、終端）、VERIFY_ERROR（検証APIの通信エラー・5xx）に分ける。VERIFY_ERRORと未検証の配信は、間隔を空けて自分で検証を再試行し、再起動時にも再開する。</li>
 <li><strong>重複の排除</strong>：VERIFIEDになった配信だけを<code>webhook_events</code>（<code>event_id</code>一意）へ登録する。同じ<code>event_id</code>の不正な配信が先に届いていても、未検証・INVALIDの行は<code>webhook_events</code>に入らないため、あとから届いた正規の配信は検証され、処理される。正規の配信が2回届いた場合は、2回目が一意制約で登録されず、1回だけ処理される。</li>
-<li><strong>反映</strong>：登録したイベントは、該当する試行の照会のきっかけにだけ使う。Webhookの内容で状態を直接書き換えないため、古い通知で状態が後退しない（7.2）。</li>
+<li><strong>反映</strong>：登録したイベントは、該当する操作の照会のきっかけにだけ使う。Webhookの内容で状態を直接書き換えないため、古い通知で状態が後退しない（7.2）。</li>
 <li><strong>実配送の確認</strong>：実際の配送には到達可能なHTTPSのURLが必要。V8は必須の接続検証として12章の計画で行う。</li>
 </ul>
+<h3 id="b_charged17">7.5 B_CHARGEの保存例と、途中で切断した場合の再開（D17）</h3>
+<p>以下のIDと値は説明用の架空のもの。案件C7（版3）で、Bの60.00 USDのチェックアウトが3つのAPI操作とも成功した後の保存状態。</p>
+<p><code>money_obligations</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>case_id</th>
+<th>kind</th>
+<th>amount</th>
+<th>status</th>
+<th>settled_by_operation_id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OB1</td>
+<td>C7</td>
+<td>B_CHARGE</td>
+<td>6000 USD</td>
+<td>SETTLED</td>
+<td>OP3</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>payment_attempts</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>obligation_id</th>
+<th>attempt_no</th>
+<th>case_version</th>
+<th>terms_hash</th>
+<th>expires_at</th>
+<th>status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AT1</td>
+<td>OB1</td>
+<td>1</td>
+<td>3</td>
+<td>h-v3</td>
+<td>支払い期限</td>
+<td>CAPTURED</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>payment_operations</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>attempt_id</th>
+<th>op_kind</th>
+<th>op_seq</th>
+<th>target_external_id</th>
+<th>paypal_request_id</th>
+<th>request_hash</th>
+<th>result_external_id</th>
+<th>external_status</th>
+<th>status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OP1</td>
+<td>AT1</td>
+<td>ORDER_CREATE</td>
+<td>1</td>
+<td>─</td>
+<td>rid-OP1</td>
+<td>sha-OP1</td>
+<td>O1（注文）</td>
+<td>CREATED</td>
+<td>SUCCEEDED</td>
+</tr>
+<tr>
+<td>OP2</td>
+<td>AT1</td>
+<td>ORDER_AUTHORIZE</td>
+<td>1</td>
+<td>O1</td>
+<td>rid-OP2</td>
+<td>sha-OP2</td>
+<td>U1（与信）</td>
+<td>CREATED</td>
+<td>SUCCEEDED</td>
+</tr>
+<tr>
+<td>OP3</td>
+<td>AT1</td>
+<td>AUTH_CAPTURE</td>
+<td>1</td>
+<td>U1</td>
+<td>rid-OP3</td>
+<td>sha-OP3</td>
+<td>C1（capture）</td>
+<td>COMPLETED</td>
+<td>SUCCEEDED</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>rid-OP*</code>は操作ごとに別々のUUID、<code>sha-OP*</code>は作成時に固定した本文のハッシュ。3つの操作のID・本文ハッシュ・外部IDが、上書きされずに共存する。</p>
+<p><strong>進み方</strong></p>
+<ol>
+<li>E1：OB1（OPEN）、AT1（OPEN）、OP1（PREPARED）を1つのトランザクションで作る。</li>
+<li>E2：OP1をSENDINGにしてから送る。O1を保存してOP1をSUCCEEDEDにし、同じトランザクションでAT1をORDER_CREATEDにする。OB1はOPENのまま。</li>
+<li>E4：Bの承認後、AT1が期限内でORDER_CREATEDであることを条件に、OP2をSENDINGで作ってから送る。U1を保存してOP2をSUCCEEDEDにし、AT1をAUTHORIZEDにする。OB1はまだOPEN。</li>
+<li>E6：OP3をSENDINGで作ってから送る。C1がCOMPLETEDなら、1つのトランザクションでOP3をSUCCEEDED、AT1をCAPTURED、OB1をSETTLED（<code>settled_by_operation_id</code>＝OP3）にし、<code>payments</code>にC1を記録する。そのあとE7へ進む。</li>
+</ol>
+<p><strong>制約に衝突しないこと</strong>：OP1・OP2・OP3は操作種別が違うため、「(試行, 操作種別)ごとに成功は1つまで」に衝突しない。OP2はOP1の成功後、OP3はOP2の成功後に作るため、「1つの試行に未確定の操作は1つまで」も守られる。B_CHARGEが完了（SETTLED）になるのは、OP3がCOMPLETEDになったときだけ。</p>
+<p><strong>同時に与信が要求された場合</strong>：ブラウザの承認通知、Webhook、実行器が同時にE4を始めても、OP2の作成は<code>BEGIN IMMEDIATE</code>の中で「この試行にORDER_AUTHORIZEの操作がまだない」ことを条件に行い、部分一意インデックスも未確定の操作を1つに制限する。2つ目以降はOP2を作れず、既存のOP2の結果を待つ。</p>
+<p><strong>途中で切断した場合の再開</strong></p>
+<p>PayPal側では成功したが、その結果をDBに保存する前に通信が切れた、またはプロセスが止まった場合を示す。再起動時に、SENDINGまたは結果不明の操作を走査して、その操作だけを回復する。新しい操作・新しい試行は作らない。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>中断した操作</th>
+<th>再起動後に見つかる状態</th>
+<th>再開の手順</th>
+<th>案件・債務の扱い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OP1（注文作成）</td>
+<td>OP1がSENDING、注文IDなし</td>
+<td>同じrid-OP1と同じ本文で再送し、同じO1が返れば保存する。結果不明が続いても、お金は動いていないので、支払い期限でAT1をEXPIREDにしてよい</td>
+<td>B_CHARGEは未完了。Bの画面が支払いをやり直しても、OP1の結果を使い、新しい注文は作らない</td>
+</tr>
+<tr>
+<td>OP2（与信）</td>
+<td>OP2がSENDING、O1あり</td>
+<td>注文O1を照会し、<code>payments.authorizations[]</code>にcustom_id（C7・版3・AT1）が一致する与信U1があれば、再送せずに保存する。注文が承認済みで与信がなければ、同じrid-OP2で再送する。期限を過ぎていてもAT1は終了させない</td>
+<td>B_CHARGEは未完了。枠はFROZENのまま</td>
+</tr>
+<tr>
+<td>OP3（売上確定）</td>
+<td>OP3がSENDING、U1あり</td>
+<td>与信U1を照会する。CAPTUREDなら、注文O1の照会か同じrid-OP3の再送でC1を特定して保存する。CREATEDのままなら同じrid-OP3で再送する。PENDINGなら照会を続ける。決まらなければ要対応</td>
+<td>予約確定（E7）へ進まない。枠はFROZENのまま</td>
+</tr>
+<tr>
+<td>OP3の保存後、E7の前</td>
+<td>AT1がCAPTURED、OB1がSETTLED、BOOKING_COMMITTEDの印なし</td>
+<td>6.2の処理済みマーカーで未確定と判定し、E7を再実行する</td>
+<td>─</td>
+</tr>
+</tbody>
+</table></div>
+<p>再送の前に、保存してある本文ハッシュと再送する本文が一致することを確かめる。一致しなければ不具合として送らず、要対応にする。この4つの中断点は、AC08の障害注入テストに含める（未実行）。</p>
 <h2 id="spec-7">8. 失敗時の回復（SPEC 7の具体化）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -687,13 +860,13 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>A返金の結果不明・PENDING</td>
 <td>応答・照会</td>
-<td>予約は変更後のまま維持し、Aへの補償の債務を未完了として残す。照会と、同じ試行・同じIDでの再送だけを行い、新しい試行は作らない</td>
+<td>予約は変更後のまま維持し、Aへの補償の債務を未完了として残す。照会と、同じ返金操作・同じIDでの再送だけを行い、新しい試行は作らない</td>
 <td>予約変更済み・補償の返金待ち</td>
 </tr>
 <tr>
 <td>A返金の確定失敗</td>
 <td>照会でFAILED / CANCELLED、または7.1の「受理されなかった」</td>
-<td>要対応として店主に表示する。原因を直したあと、店主の「回復」操作で新しい試行（新しいID、旧試行を参照）を作る。作る前に元captureの残額を確認する。予約は戻さない</td>
+<td>要対応として店主に表示する。原因を直したあと、店主の「回復」操作で新しい試行と、その返金操作（新しいID、旧試行を参照）を作る。作る前に元captureの残額を確認する。予約は戻さない</td>
 <td>予約変更済み・補償は要対応</td>
 </tr>
 <tr>
@@ -854,7 +1027,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>AC08</td>
-<td>模擬PayPalでの障害注入（売上確定・返金・コミットの前後で停止）と再起動テスト。貸出の期限切れ後に届いた古い応答、遅れて届いたPENDINGの照会結果が状態を後退させないこと（DR1-03）</td>
+<td>模擬PayPalでの障害注入（売上確定・返金・コミットの前後で停止）と再起動テスト。貸出の期限切れ後に届いた古い応答、遅れて届いたPENDINGの照会結果が状態を後退させないこと（DR1-03）。注文作成・与信・売上確定それぞれの「PayPal成功直後・DB保存前」の停止から、その操作だけを照会か同じIDで回復し、注文・与信の段階ではB_CHARGEが未完了、売上確定が結果不明なら予約確定へ進まないこと（7.5）</td>
 </tr>
 <tr>
 <td>AC09</td>
@@ -891,7 +1064,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>三画面（店主・A・B）とセッション。</li>
 <li>第2レビュー：Sandboxで一件が最後まで通った時点。</li>
 </ol>
-<h2 id="design-v0.2">15. 第1レビュー指摘への対応（design-v0.2）</h2>
+<h2 id="design-v0.2v0.3">15. 第1レビュー指摘への対応（design-v0.2、v0.3）</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -933,5 +1106,6 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
+<p>| DR1-02の残件 / P1（design-v0.3） | 3章の<code>money_obligations</code>・<code>payment_attempts</code>・<code>payment_operations</code>、6.2のE1・E2・E4・E6、6.3、7章冒頭、7.1、7.2、7.5、8章、D17、AC08 | 債務・試行（Bはチェックアウト1回分）・API操作の3階層に分離。再送防止ID・本文ハッシュ・外部ID・状態・貸出はAPI操作ごと。成功した操作は上書きせず、次の種類の操作を新しい行で作る。B_CHARGEは売上確定のCOMPLETEDでだけ完了。保存例と再開手順は7.5 |</p>
 <p>すべて設計上の対応であり、試験・実接続はまだ行っていない。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
