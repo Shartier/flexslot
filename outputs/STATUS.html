@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="238035cff91ff032fbec5fcbb6ad3a1b657d06d580a1c99bfbc2fe8966b67c6e"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="4ee65a008150e0160801913ca8c982c63323db9271936e233a98832d53b22627"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,10 +8,10 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
-<p>更新日：2026-11-03（日本時間）/ 文書版：status-v0.2。</p>
+<p>更新日：2026-11-03（日本時間）/ 文書版：status-v0.3。</p>
 <h2 id="section">現在地</h2>
-<p>技術設計の段階。Claude Codeが技術構成、予約枠の競合防止、三者の権限、決済の順序と回復、接続検証の計画をDESIGN.md（design-v0.1）にまとめ、Codexの第1レビューを待っている。アプリ本体の実装、AIの実接続、PayPal Sandboxの接続、公開、応募の成功はまだ確認していない。</p>
-<p>第1レビューの対象は、ブランチ<code>design/review-1</code>のタグ<code>design-review-1</code>が指すコミット。<code>git rev-parse design-review-1</code>で正確なSHAを取得できる。</p>
+<p>技術設計の修正段階。Codexの第1レビュー（対象：タグ<code>design-review-1</code>、判定：設計修正を依頼）の指摘DR1-01〜05と小修正を、DESIGN.md（design-v0.2）に反映した。対応箇所はDESIGN 15章とREVIEWの「第1レビュー指摘への対応」。修正版はタグ<code>design-review-1-fix1</code>で特定する（<code>git rev-parse design-review-1-fix1</code>）。元のタグ<code>design-review-1</code>は付け替えていない。</p>
+<p>決済回復に依存しない骨組み・候補判定・利益計算は、Codexの判断で着手してよいことになった。アプリ本体の実装、AIの実接続、PayPal Sandboxの接続、公開、応募の成功はまだ確認していない。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -55,7 +55,15 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>PayPalの公式資料</td>
-<td>与信・売上確定・返金・取消の応答は既定で最小の形式（<code>return=minimal</code>）で、完全な応答には<code>Prefer: return=representation</code>が必要。部分返金では金額の指定が必要（省略すると全額返金）。<code>PayPal-Request-Id</code>の保持期間は、一般資料と各APIのページのどちらにも記載がなかった。2026-11-03に確認</td>
+<td>与信・売上確定・返金・取消の応答は既定で最小の形式（<code>return=minimal</code>）で、完全な応答には<code>Prefer: return=representation</code>が必要。部分返金では金額の指定が必要（省略すると全額返金）。2026-11-03に確認</td>
+</tr>
+<tr>
+<td>再送防止IDの保持期間（訂正）</td>
+<td>status-v0.2では「記載なし」と書いたが誤り。冪等性の資料と各APIのページには期間の記載がない一方、RESTリクエストの資料（developer.paypal.com/api/make-api-requests/）に「最大45日」保存するとの記述がある（Codexの指摘を受けて2026-11-03に確認）。これは各APIで45日間の保持を保証する記述ではない</td>
+</tr>
+<tr>
+<td>観測の範囲</td>
+<td>上のPowerShell・Cloud SDK・環境変数の結果は、Claude Codeのシェルから見た観測。PC全体での不存在や導入履歴まで確認したものではない</td>
 </tr>
 </tbody>
 </table></div>
@@ -185,6 +193,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>結果はREVIEWの第1レビュー依頼に記載</td>
 </tr>
 <tr>
+<td>11-03 Claude</td>
+<td>設計修正</td>
+<td>DR1-01〜05と小修正をDESIGN（design-v0.2）・STATUS・REVIEWへ反映し、HTMLを再生成して<code>-Check</code>で照合</td>
+<td>結果はREVIEWの「第1レビュー指摘への対応」と報告メッセージに記載</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
 <td>単体・統合・E2E・実API・実機</td>
@@ -230,14 +244,14 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>U05</td>
 <td><code>PayPal-Request-Id</code>の保持期間</td>
-<td>公式資料に記載なし。数分以内の再送だけを前提にし、長期間後の再送には頼らない</td>
+<td>RESTリクエストの資料に「最大45日」の記述あり。各APIでの保証は未確認。数分以内の再送だけを前提にし、長期間後の再送には頼らない。短時間の再送試験から長期間の安全性を結論しない</td>
 <td>V4・V6で短時間の再送だけ確認</td>
 </tr>
 <tr>
 <td>U06</td>
 <td>Webhookの実配送と署名検証</td>
-<td>公開HTTPSのURLが必要。ローカルでは照会で代替</td>
-<td>V8（公開工程、本人確認後）</td>
+<td>必須の接続検証（V8）。公開デモの採否とは別に、本人確認後の限定的なHTTPS受信経路で行う。承認がなければ未確認のまま残す</td>
+<td>V8（11月7日目標、本人確認後）</td>
 </tr>
 <tr>
 <td>U07</td>
@@ -279,8 +293,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </ol>
 <h2 id="section-3">次に行う作業</h2>
 <ol>
-<li>Codexの第1レビュー（DESIGN.md、SPEC.mdの差分、接続検証の計画）。指摘はREVIEW.mdに記録し、通常の修正はClaudeが行う。</li>
-<li>レビュー後、DESIGN 14章の順で実装する。最初は模擬モードだけで動く骨組みと単体テスト。認証情報がそろい次第、V1〜V7とV9を実行する。</li>
+<li>Codexによる修正版（<code>design-review-1-fix1</code>）の再確認。</li>
+<li>並行して、決済回復に依存しない骨組み・候補判定・利益計算と、その単体テストを実装する（Codexの判断で着手可）。決済の実行器と回復は、再確認の後に実装する。認証情報がそろい次第、V1〜V7とV9を実行する。</li>
 <li>本人の準備（V0）は並行して進められる。準備が遅れても、模擬モードで進めた部分と、実接続が未確認の部分を区別して記録する。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>

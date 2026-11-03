@@ -1,12 +1,12 @@
 # FlexSlot — 状況と次の作業
 
-更新日：2026-11-03（日本時間）/ 文書版：status-v0.2。
+更新日：2026-11-03（日本時間）/ 文書版：status-v0.3。
 
 ## 現在地
 
-技術設計の段階。Claude Codeが技術構成、予約枠の競合防止、三者の権限、決済の順序と回復、接続検証の計画をDESIGN.md（design-v0.1）にまとめ、Codexの第1レビューを待っている。アプリ本体の実装、AIの実接続、PayPal Sandboxの接続、公開、応募の成功はまだ確認していない。
+技術設計の修正段階。Codexの第1レビュー（対象：タグ`design-review-1`、判定：設計修正を依頼）の指摘DR1-01〜05と小修正を、DESIGN.md（design-v0.2）に反映した。対応箇所はDESIGN 15章とREVIEWの「第1レビュー指摘への対応」。修正版はタグ`design-review-1-fix1`で特定する（`git rev-parse design-review-1-fix1`）。元のタグ`design-review-1`は付け替えていない。
 
-第1レビューの対象は、ブランチ`design/review-1`のタグ`design-review-1`が指すコミット。`git rev-parse design-review-1`で正確なSHAを取得できる。
+決済回復に依存しない骨組み・候補判定・利益計算は、Codexの判断で着手してよいことになった。アプリ本体の実装、AIの実接続、PayPal Sandboxの接続、公開、応募の成功はまだ確認していない。
 
 ## Claude Codeの確認（2026-11-03、第1区切り）
 
@@ -20,7 +20,9 @@
 | 環境変数 | `PAYPAL_CLIENT_ID`、`PAYPAL_CLIENT_SECRET`、`PAYPAL_WEBHOOK_ID`、`GOOGLE_CLOUD_PROJECT`、`GOOGLE_CLOUD_LOCATION`、`GOOGLE_APPLICATION_CREDENTIALS`、`GEMINI_API_KEY`、`GOOGLE_API_KEY`は、このシェルではいずれも未設定（値は表示していない）。フォルダ内に`.env`はない。別の場所に設定がある可能性は否定していない |
 | Gitの作者 | `user.name`と`user.email`は未設定のまま。ユーザーの選択で、今回のコミットだけ仮の作者`Claude Code <claude-code@local.invalid>`を指定した。Gitの設定は変更していない |
 | SQLiteの事前確認 | Node内蔵の`node:sqlite`（メモリ上のDB）で、重なる予約・FROZENの保留と重なる予約をトリガーが`SLOT_CONFLICT`で拒否し、同じA予約への2件目の案件を部分一意インデックスが拒否した。隣接する予約は許可された。`BEGIN IMMEDIATE`も実行できた。使い捨ての確認であり、本番スキーマのテストではない |
-| PayPalの公式資料 | 与信・売上確定・返金・取消の応答は既定で最小の形式（`return=minimal`）で、完全な応答には`Prefer: return=representation`が必要。部分返金では金額の指定が必要（省略すると全額返金）。`PayPal-Request-Id`の保持期間は、一般資料と各APIのページのどちらにも記載がなかった。2026-11-03に確認 |
+| PayPalの公式資料 | 与信・売上確定・返金・取消の応答は既定で最小の形式（`return=minimal`）で、完全な応答には`Prefer: return=representation`が必要。部分返金では金額の指定が必要（省略すると全額返金）。2026-11-03に確認 |
+| 再送防止IDの保持期間（訂正） | status-v0.2では「記載なし」と書いたが誤り。冪等性の資料と各APIのページには期間の記載がない一方、RESTリクエストの資料（developer.paypal.com/api/make-api-requests/）に「最大45日」保存するとの記述がある（Codexの指摘を受けて2026-11-03に確認）。これは各APIで45日間の保持を保証する記述ではない |
+| 観測の範囲 | 上のPowerShell・Cloud SDK・環境変数の結果は、Claude Codeのシェルから見た観測。PC全体での不存在や導入履歴まで確認したものではない |
 
 ## 以前の確認（Codex、2026-11-03）
 
@@ -57,6 +59,7 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | 11-03 Claude | 文書検証 | `pwsh -NoProfile -File tools/render-docs.ps1 -Check`（導入直後、変更前） | 5組すべてPASS |
 | 11-03 Claude | DB事前確認 | `node:sqlite`の使い捨てスクリプト（トリガー、部分一意インデックス、BEGIN IMMEDIATE） | 期待どおり拒否・許可。スクリプトは削除済みでリポジトリに含めていない |
 | 11-03 Claude | 文書生成 | DESIGN.mdを追加し、`render-docs.ps1`の対象に加えて全HTMLを再生成、`-Check`で照合 | 結果はREVIEWの第1レビュー依頼に記載 |
+| 11-03 Claude | 設計修正 | DR1-01〜05と小修正をDESIGN（design-v0.2）・STATUS・REVIEWへ反映し、HTMLを再生成して`-Check`で照合 | 結果はREVIEWの「第1レビュー指摘への対応」と報告メッセージに記載 |
 | ─ | アプリテスト | 単体・統合・E2E・実API・実機 | 未実行。アプリコードなし |
 
 ## 未確認事項
@@ -67,8 +70,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | U02 | Sandboxの事業者アカウントの国と通貨、与信（AUTHORIZE）の利用可否 | 未確認。USDで進める案。競合作品の国の制約は転用しない | V1〜V3 |
 | U03 | 与信・注文の照会から、売上確定IDを取得できるか | 未確認。できない場合は同じ再送防止IDでの再送に頼る | V4 |
 | U04 | 返金の状態の種類と、元captureの照会で返金済みの額が分かるか | 未確認。返金ID・照会の組み合わせで設計 | V6 |
-| U05 | `PayPal-Request-Id`の保持期間 | 公式資料に記載なし。数分以内の再送だけを前提にし、長期間後の再送には頼らない | V4・V6で短時間の再送だけ確認 |
-| U06 | Webhookの実配送と署名検証 | 公開HTTPSのURLが必要。ローカルでは照会で代替 | V8（公開工程、本人確認後） |
+| U05 | `PayPal-Request-Id`の保持期間 | RESTリクエストの資料に「最大45日」の記述あり。各APIでの保証は未確認。数分以内の再送だけを前提にし、長期間後の再送には頼らない。短時間の再送試験から長期間の安全性を結論しない | V4・V6で短時間の再送だけ確認 |
+| U06 | Webhookの実配送と署名検証 | 必須の接続検証（V8）。公開デモの採否とは別に、本人確認後の限定的なHTTPS受信経路で行う。承認がなければ未確認のまま残す | V8（11月7日目標、本人確認後） |
 | U07 | Google Cloudのプロジェクト、課金、Vertex AI APIの有効化、リージョン、利用できるGeminiのモデル | 未確認。gcloudとADCはこのPCにない | 本人の準備後にV9 |
 | U08 | `node:sqlite`の安定性（Node 24） | 事前確認では警告なく動作。問題があれば`better-sqlite3`に差し替える | 骨組みの実装時 |
 | U09 | 公開デモの置き場所と審査員のアクセス方法（Sandboxの買い手アカウントの共有方法を含む） | 未確定。第一候補はCompute Engine | 提出準備時、本人確認後 |
@@ -83,8 +86,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 
 ## 次に行う作業
 
-1. Codexの第1レビュー（DESIGN.md、SPEC.mdの差分、接続検証の計画）。指摘はREVIEW.mdに記録し、通常の修正はClaudeが行う。
-2. レビュー後、DESIGN 14章の順で実装する。最初は模擬モードだけで動く骨組みと単体テスト。認証情報がそろい次第、V1〜V7とV9を実行する。
+1. Codexによる修正版（`design-review-1-fix1`）の再確認。
+2. 並行して、決済回復に依存しない骨組み・候補判定・利益計算と、その単体テストを実装する（Codexの判断で着手可）。決済の実行器と回復は、再確認の後に実装する。認証情報がそろい次第、V1〜V7とV9を実行する。
 3. 本人の準備（V0）は並行して進められる。準備が遅れても、模擬モードで進めた部分と、実接続が未確認の部分を区別して記録する。
 
 11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。

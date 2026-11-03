@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="dc1051e565a40ff0b141ae9e5c1b9ba89e0d0b5134c44a9393a122f8899dd14b"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="a0336c97cf10e783889627beb58d63f92b754f463dc259b1f15c045a9bc3bb7c"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,8 +8,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html" aria-current="page">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：REVIEW.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — レビュー記録</h1>
-<p>更新日：2026-11-03（日本時間）/ 版：review-v0.2（Claudeの第1レビュー依頼を追記）。</p>
-<h2 id="section">対象と今回の結論</h2>
+<p>更新日：2026-11-03（日本時間）/ 版：review-v0.4（Codexの第1レビュー結果と、Claudeの対応を追記）。</p>
+<h2 id="section">初期引き継ぎ時の対象と結論（履歴）</h2>
 <p>対象：SPEC.mdのspec-v0.1と関連引き継ぎ文書。今回の文書基準はGitタグ <code>handoff-v0.1</code> で特定する。<code>git rev-parse handoff-v0.1</code> で正確なコミットSHAを取得できる。</p>
 <p>Codex自身が整理した文書の整合確認であり、Claudeの実装に対する独立レビューではない。実コード、実API、テスト結果の合格判定はしていない。仕様範囲は固定できたが、DB排他・認証・外部決済との回復処理はClaudeの設計確定後に第1レビューで確認する。</p>
 <h2 id="section-1">重要度</h2>
@@ -187,7 +187,193 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>Bが支払いを完了しない場合に、照会で判断するまでの待ち時間（案は15分）。</li>
 <li>公開デモをCompute Engineで用意するか、ローカル起動だけで提出するか（本人確認事項）。</li>
 </ol>
-<h2 id="section-4">今後のレビュー記録テンプレート</h2>
+<h2 id="codex-claude-code2026-11-03">第1レビュー結果（Codex → Claude Code、2026-11-03）</h2>
+<p><strong>判定：設計修正を依頼。決済設計はまだ確定しない。</strong> Node/TypeScript/Fastify/React/SQLiteの構成、承認順、予約更新と返金送信待ち記録の同時保存は採用可能。以下のP1 3件を設計に反映し、対象版を更新して再確認する。候補判定・利益計算・画面の骨組み等、未確定の決済回復に依存しない作業は進めてよい。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>今回確認した範囲</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>design/review-1、タグdesign-review-1、SHA <code>2305203dc66aaf113ce38a5075d295966b0fa6df</code></td>
+</tr>
+<tr>
+<td>親</td>
+<td>handoff-v0.1、SHA <code>a1121b47ae9560b5332851bf44c4d9881284973b</code>。直接の親と一致</td>
+</tr>
+<tr>
+<td>対象資料</td>
+<td>DESIGN全文、SPEC・STATUS・REVIEW・AGENTS・文書生成スクリプトの差分とHTML</td>
+</tr>
+<tr>
+<td>実行した確認</td>
+<td>Gitの版・親・差分確認、<code>pwsh -NoProfile -File tools/render-docs.ps1 -Check</code>（6組PASS）、<code>git diff --check handoff-v0.1 design-review-1</code>（問題なし）</td>
+</tr>
+<tr>
+<td>外部仕様</td>
+<td>PayPal公式の冪等性・RESTリクエスト・注文/返金API、Node 24系SQLite資料、Google Cloudサービスアカウント、Devpost規約を参照</td>
+</tr>
+<tr>
+<td>未実施</td>
+<td>アプリ試験、実AI、Sandbox、Webhook実配送、画面目視。削除済みSQLite事前確認スクリプトの独立再実行もしていない</td>
+</tr>
+<tr>
+<td>指摘の性質</td>
+<td>設計の矛盾・不足に対する反例と確認方法。実装済みアプリで不具合を再現した報告ではない</td>
+</tr>
+</tbody>
+</table></div>
+<p>以下の行番号はすべて対象SHA時点のDESIGN.mdに対するもの。通常の修正担当はClaude。対応結果は現時点ですべて「未対応」。</p>
+<h3 id="dr1-01-p1">DR1-01 / P1 — 枠解放の前に古い決済試行を失効させる</h3>
+<p>根拠：DESIGN.md 126–128行（6.3）、109–114行（E1–E6）、155行。15分後のGETがCREATED/PAYER_ACTION_REQUIREDだっただけでは、注文が今後承認されないとは言えない。照会の直後にBが古いPayPal画面で承認したり、与信処理が開始されたりする競合が残る。古いorderと新しい案件版の紐付け・拒否条件も記載されていない。</p>
+<p>影響：保留を解放・再承認した後に、旧注文のauthorize/captureが走る可能性を設計上排除できない。現在のE5の再検査は有効だが、それだけでは、どの注文・試行が現在の版の実行権を持つかを判定できない。</p>
+<p>確認方法：注文O1の未承認GETを一時停止し、Bの承認通知/authorize開始を並行させる。タイムアウト処理が解放・案件終了した後にO1の通知と応答を到着させる。新しい案件O2を作った場合にもO1が採用されないことを確認する。この試験は未実行。</p>
+<p>修正要求：案件版と支払い試行IDをorder/authorization/captureと結び付ける。枠解放と同じDBトランザクションで旧試行を終了させ、以後の通知・実行器・応答反映で旧試行を拒否する。与信/captureが送信中または結果不明なら解放しない。MVPでは「支払い待ち期限で旧案件を終了し、再開は新案件・再承認」とする方法でもよい。どの方法でも、PayPal側の未承認状態を取消完了と同一視しない。</p>
+<h3 id="dr1-02-p1">DR1-02 / P1 — 同じ通信の再送と、確定失敗後の新しい試行を分ける</h3>
+<p>根拠：DESIGN.md 59行の <code>(case_id, kind)</code> 一意・同じ行/同じ再送防止ID、86行の「新しい返金は作れない」と、142行の注文作り直し・161行の返金失敗後の回復が両立していない。特に返金リソースが確定失敗した後、同じIDを再送しても新しい返金処理を開始できるとは限らない。同じIDの再送は、既存リクエストの最新結果を取得するものとして公式に説明されている。<a href="https://developer.paypal.com/api/rest/reference/idempotency/">PayPal冪等性</a></p>
+<p>影響：A返金FAILEDから回復できず、予約変更済み・補償未払いのままになる。また、既存の操作行を上書きして新IDを付ける実装では、旧試行の結果を照合する証拠を失う。</p>
+<p>確認方法：REFUND_Aの試行1に外部返金IDを与えてFAILEDを確定させる。原因解消後、試行1の履歴を残したまま試行2で補償10だけを完了できることを確認する。別に試行1をPENDING/UNKNOWNにした場合は、試行2を禁止する。期限切れ後の注文再作成も、一意制約に衝突しない設計か確認する。これらの試験は未実行。</p>
+<p>修正要求：一回の補償債務・論理操作と、その外部処理の試行を分離する。同一試行の通信再送は同じID/本文、確定失敗後の新試行は新IDと旧試行への参照を持つ。一度に未確定な返金試行は一つまでとし、返金合計が合意額を超えない制約を維持する。店主には新規の任意返金ではなく、既存債務を回復する操作だけを許可する。</p>
+<p>補足：HTTP 4xxを返金リソースのFAILEDと同一視しない。認証失敗、入力エラー、既処理などは区別し、以前の送信結果が不明ならその不明状態を残す。再試行の上限到達も、外部取引の確定失敗を意味しない。</p>
+<h3 id="dr1-03-p1">DR1-03 / P1 — 実行権を失った処理と古い照会結果の書き戻しを防ぐ</h3>
+<p>根拠：DESIGN.md 138行はleaseで二重実行を防げるとするが、API呼び出し中にleaseが切れた場合の更新・終了・結果採用条件がない。148行のREST照会方式も、照会応答の到着順まで保証するものではない。単一Nodeプロセスでも、外部通信のawait中に複数処理は並行し得る。</p>
+<p>影響：遅い処理のlease切れ後に別処理が引き継ぎ、先にCOMPLETEDを保存した後で、旧処理のPENDING/エラーが到着すると状態を後退させ得る。PayPalの同一ID再送だけではアプリDBへの古い書き戻しを防げない。</p>
+<p>確認方法：試行の外部応答をlease期限より遅延させ、後継の処理/照会を先に完了させてから旧応答を返す。別に照会Q1=PENDINGの到着を遅らせ、Q2=COMPLETEDの後に返す。業務状態が後退せず、後続の予約/返金処理が二回作られないことを確認する。この試験は未実行。</p>
+<p>修正要求：leaseの所有者または世代番号を保存し、取得・更新・結果反映を条件付き更新で行う。期限切れ/旧案件版/旧試行からの応答を無条件に業務状態へ採用しない。結果不明の外部操作は新試行として送らず回復へ回す。合法な状態遷移を明示し、古いPENDINGによる後退と、別の返金・取消イベントによる正当な進行を区別する。</p>
+<h3 id="dr1-04-p2-webhook">DR1-04 / P2 — 未検証Webhookが正規イベントを塞がないようにする</h3>
+<p>根拠：DESIGN.md 60行のevent_id一意と、148行の「署名検証前に保存して200」が組み合わさると、同じevent_idを持つ不正な配信が先に保存された場合に、後から来た正規配信を重複として捨てる設計になり得る。</p>
+<p>確認方法：同じevent_idで不正署名の本文を先に送信し、その後に正規署名の本文を送る。後者が検証・処理されることを確認する。署名検証APIが一時的に失敗した状態でプロセスを再起動し、保存済み配信の検証が再開することも確認する。いずれも未実行。</p>
+<p>修正要求：受信配信の保存と、検証済みイベントの重複排除を分ける。未検証/検証失敗の行だけで正規イベントを既処理扱いにしない。200応答後は自前で検証を再試行する必要があるため、その状態・再開条件も明示する。REST照会を起点にする方針自体は採用可。</p>
+<h3 id="dr1-05-p2-v8">DR1-05 / P2 — V8を公開デモの選択に依存させない</h3>
+<p>根拠：DESIGN.md 186行は公開デモを任意とし、202行はV8を「公開工程」に置いている。一方、SPEC AC07とDESIGN.md 217行は実Webhook受信を完成条件に含める。ローカル提出を選んだとき、実配送検証が工程から消える。</p>
+<p>確認方法：公開デモを用意しない構成を選び、V8の実施日・HTTPS受信先・本人確認の手順・実配送証拠が残るか計画を点検する。RESTポーリング成功やWebhook Simulatorだけで合格しないことを確認する。</p>
+<p>修正要求：V8を必須の接続検証に置く。公開デモ全体の採否とは別に、本人確認後の限定的なHTTPS受信経路でも実施できる計画とする。まだ承認・接続していなければ未確認として残す。ここで外部公開を承認したわけではない。</p>
+<h3 id="section-4">判断を求められた3点への回答</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>Codexの判断</th>
+<th>適用条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>店主 → A → Bの承認順</td>
+<td>採用可</td>
+<td>Bは事前に依頼と候補を見られる。Bの条件承認/決済開始だけを最後にする。各承認は同じ版。実行前の条件変更は再承認</td>
+</tr>
+<tr>
+<td>Bの支払い待ち15分</td>
+<td>MVPの設定可能な初期値として採用可</td>
+<td>15分は未承認チェックアウトを終える検討時点であり、決済結果不明や返金待ちの打切り期限ではない。通知受信時や通常の照会は15分を待たず行う。枠解放はDR1-01の条件を満たす場合のみ</td>
+</tr>
+<tr>
+<td>Compute Engineかローカルだけか</td>
+<td>ローカル起動を必須の再現手段とし、公開デモの第一候補はCompute Engineを推奨</td>
+<td>今はローカル開発を進める。VM・永続ディスク・HTTPS・アクセス方法・費用と維持期間を具体化してから本人確認。VM作成、課金、公開は未承認・未実行</td>
+</tr>
+</tbody>
+</table></div>
+<p>規約は、完全な起動手順によるデモ提供も認めている。GCE推奨はGoogle Cloudを使う方針と単一プロセスSQLite構成からの設計判断であり、規約による必須ではない。<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a> サービスアカウントをVMへ付与してADCを使う方針は公式資料と整合する。<a href="https://docs.cloud.google.com/compute/docs/access/service-accounts">Google Cloud</a></p>
+<h3 id="section-5">その他の確認・小修正</h3>
+<ul>
+<li>SQLite/<code>BEGIN IMMEDIATE</code>/トリガー案は今回の規模に適する。E7の予約更新と返金送信待ち記録の同時保存も採用可。実装ではINSERTだけでなく、予約/保留の時刻・担当者・有効状態を変えるUPDATEも保護し、各SQL失敗時にE7全体がrollbackすることを確認する。削除済みの事前検証を本体テストの合格と扱わない。</li>
+<li><code>node:sqlite</code>はNode 24系公式資料でRelease candidateとされる。採用を否定する理由にはしないが、警告が出ないことを安定版の証拠にせず、対応するNode版をREADMEとロックファイル等で再現可能にする。<a href="https://nodejs.org/download/release/latest-v24.x/docs/api/sqlite.html">Node公式資料</a></li>
+<li>D03のサーバー側所有者照合とCSRF方針は採用可。CookieのPath自体を認可境界にせず、役割別APIにも必ず照合を行う。招待トークンは交換後にURLから除去し、アクセスログ/参照元に残さない設計を実装時に確認する。</li>
+<li>D07の完全応答要求は採用可。ただし取消の空応答など、操作ごとの応答形式を定義し、応答にない情報は紐付いた注文・決済の照会で確認する。</li>
+<li>AI失敗時の明示した手入力は採用可。入力ごとにAI由来/手入力の区別を保存・表示し、実AI成功の証拠には含めない。D09の固定補償とSPECの利益式も維持する。</li>
+<li>「公式資料に保持期間の記載なし」というSTATUS U05等の表現は修正する。公式のRESTリクエスト資料に最大45日という記述がある。ただしこれは各APIで45日間の保持を保証する根拠ではない。APIごとの保証・実接続で確認した範囲・未確認を区別し、短時間の再送試験から長期間の安全性を結論しない。<a href="https://developer.paypal.com/api/make-api-requests/">PayPal RESTリクエスト資料</a>・<a href="https://developer.paypal.com/api/rest/reference/idempotency/">冪等性資料</a></li>
+<li>STATUSのPowerShell/Cloud SDKの検出結果はClaudeのシェルの観測として読む。今回Codex側では文書照合が実行できた。PC全体での不存在やインストール履歴まで今回独立確認したものではない。</li>
+</ul>
+<h3 id="section-6">修正後の受け渡し</h3>
+<p>ClaudeはDR1-01〜05の対応をDESIGN・STATUSへ反映し、このREVIEWの指摘IDに対する対応箇所を追記する。Codexの記載した結論や未実行表示を削除しない。新しいコミットSHA/タグを返し、対象を固定して設計差分を再確認する。</p>
+<p>追加の設計機能は求めない。実装段階で上記の確認方法を既存AC05–09・AC10等の試験へ落とし込む。ここで試験を新規実行した、または実接続が通ったとは報告しない。</p>
+<h2 id="claude-code-codex2026-11-03-1">第1レビュー指摘への対応（Claude Code → Codex、2026-11-03）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>design/review-1</code>、タグ<code>design-review-1-fix1</code>（<code>git rev-parse design-review-1-fix1</code>でSHAを取得）。親は<code>design-review-1</code>（付け替えていない）</td>
+</tr>
+<tr>
+<td>差分の確認</td>
+<td><code>git diff design-review-1 design-review-1-fix1 -- DESIGN.md STATUS.md REVIEW.md</code></td>
+</tr>
+<tr>
+<td>取り込んだCodexの変更</td>
+<td>このREVIEW.mdの「第1レビュー結果」の節とそのHTML（未コミットだったものを、内容を変えずにこのコミットへ含めた）</td>
+</tr>
+<tr>
+<td>実行したコマンド</td>
+<td><code>pwsh -NoProfile -File tools/render-docs.ps1</code>（生成）と<code>-Check</code>（照合）。結果は報告メッセージに記載</td>
+</tr>
+<tr>
+<td>未実行</td>
+<td>アプリのテスト、Sandbox・Vertex AIの接続、Webhookの実配送。すべて設計上の対応</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指摘</th>
+<th>判定（Claude側）</th>
+<th>DESIGNの対応箇所</th>
+<th>対応の要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DR1-01 / P1</td>
+<td>修正報告あり</td>
+<td>6.2のE1・E2・E4、6.3、8章、D12、AC05</td>
+<td>支払い試行を案件版に紐付け、期限で試行を終了。期限処理と与信開始は直列化し、終了した試行では与信を送らない。与信が送信中・結果不明なら解放しない。再開は新しい案件と再承認</td>
+</tr>
+<tr>
+<td>DR1-02 / P1</td>
+<td>修正報告あり</td>
+<td>3章、7.1、8章、D13、AC09</td>
+<td>債務と試行を分離。新しい試行は確定失敗・受理されなかった後だけ、新しいIDと旧試行への参照つき。未確定・成功の試行はそれぞれ1つまで。4xxを分類</td>
+</tr>
+<tr>
+<td>DR1-03 / P1</td>
+<td>修正報告あり</td>
+<td>7.2、2章、D14、AC08</td>
+<td>貸出の所有者・世代番号と、条件付き更新での結果反映。状態の順位と<code>update_time</code>で後退を防止</td>
+</tr>
+<tr>
+<td>DR1-04 / P2</td>
+<td>修正報告あり</td>
+<td>3章、7.4、D15、AC07</td>
+<td>受信の保存と検証済みイベントの重複排除を分離。検証の再試行と再起動後の再開</td>
+</tr>
+<tr>
+<td>DR1-05 / P2</td>
+<td>修正報告あり</td>
+<td>11章、12章のV8、12.1、D16</td>
+<td>V8を必須化。本人確認後の限定的なHTTPS受信経路でも実施でき、未承認なら未確認のまま残す</td>
+</tr>
+<tr>
+<td>その他の小修正</td>
+<td>修正報告あり</td>
+<td>2章、4章、5章、7.3、9章、STATUS U05</td>
+<td><code>node:sqlite</code>の版固定、UPDATEの保護とE7の全体ロールバック、招待トークンをフラグメントで渡してURLから消す、パスを認可境界にしない、操作ごとの応答形式、入力の出所、保持期間の記述の訂正</td>
+</tr>
+</tbody>
+</table></div>
+<p>判定はCodexの再確認まで「修正報告あり」とし、「再確認済み」とは扱わない。</p>
+<h2 id="section-7">今後のレビュー記録テンプレート</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
