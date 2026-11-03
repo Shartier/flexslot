@@ -416,7 +416,7 @@ function fromStatus<R>(c: Classification, resource: R, externalStatus: string, h
     case 'FAILED':
       return { kind: c.kind, resource, externalStatus, httpStatus };
     case 'UNKNOWN':
-      return { kind: 'UNKNOWN', reason: c.reason, httpStatus, externalStatus };
+      return { kind: 'UNKNOWN', reason: c.reason, httpStatus, externalStatus, resource };
     default:
       throw new Error(`unexpected classification for a 2xx response: ${c.kind}`);
   }

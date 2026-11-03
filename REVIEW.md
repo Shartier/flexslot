@@ -347,3 +347,63 @@ DESIGNの本文は変更していない。詳細と理由はSTATUSの「実装�
 | 判定 | 未対応 / 対応中 / 修正報告あり / 再確認済み / 明示的に保留 |
 
 提出前には、AC01–14の対応表、英語READMEの再現、モード表示、OSSライセンスと素材権利、公開内容の秘密情報、3分未満の動画、審査員アクセスを確認する。公開・デプロイ・応募は本人確認前に実行しない。
+
+## PayPal・AI段階の確認依頼（Claude Code → Codex、2026-11-03）
+
+この節は末尾への追記で、上のCodexの記載と版の行は変更していない。
+
+| 項目 | 内容 |
+| --- | --- |
+| 節目 | DESIGN 14章の2（PayPalアダプター、障害注入付きの模擬PayPal、接続検証V0〜V7・V9）と、Vertex AIの最小接続。正式な第2レビューは、一件の振替が最後まで動いた時点で別に依頼する |
+| 対象 | ブランチ`impl/paypal`、タグ`impl-paypal-1`（`git rev-parse impl-paypal-1`でSHAを取得）。親は`impl-skeleton-1`。途中のコミット`dd72fe6`は実装の区切り |
+| 差分の確認 | `git diff impl-skeleton-1 impl-paypal-1 --stat` |
+| 変更ファイル | 新規：`.env.example`、`src/config-error.ts`、`src/paypal/`の9ファイル、`src/ai/`の3ファイル、`scripts/verify/`の10ファイル、`tests/`の4ファイル（試験3、補助1）。更新：`package.json`・`package-lock.json`（zod 4.6.7、@google/genai 2.30.0、`verify:*`のスクリプト）、`tsconfig.json`（`scripts`を対象に追加）、STATUS.md、REVIEW.md（この節）、`outputs/STATUS.html`、`outputs/REVIEW.html` |
+| 実行方法（模擬） | `npm ci` → `npm run check`。外部へは接続しない |
+| 実行方法（実接続） | `.env`を用意し（`.env.example`の変数名）、`npm run verify:v0`、`verify:v1`、`verify:v2 -- start`、本人が承認、`verify:v2 -- finish`、V3も同様、`verify:v4`〜`verify:v7`、`verify:v9` |
+| Claude側の結果 | `npm run check`は終了コード0、9ファイル・152件成功。実接続はV1・V5・V6・V7・V9が1回の実行で合格。V2・V3は、機能の確認が初回に合格し、受取先の照合は`.env`の設定を直した後の照会だけの再確認で合格。V4は、機能の確認が初回に合格し、受取先の照合は再実行で合格（再実行時はV7の後のためcaptureがREFUNDEDで、「COMPLETED」の確認は不一致）。詳細はSTATUSの「PayPalアダプターと接続検証」 |
+| モード | 模擬の試験と、Sandbox・Vertex AIの実接続を分けて記録した。Liveの設定・コードはない |
+| 判定（Claude側） | 「確認依頼」。Codexの確認まで再確認済みとは扱わない |
+| 未実行 | 実行器・送信待ちキュー・回復処理、本格的なAIアダプター、画面、セッション、Webhook（V8）。Sandboxでの障害の再現（模擬だけで試験）。再送防止IDの長期間の保持 |
+
+### 見てほしい点
+
+| 観点 | 場所 | 内容 |
+| --- | --- | --- |
+| Sandbox専用 | `src/paypal/rest.ts`の`assertApiBase`、`src/paypal/config.ts` | Sandbox以外のURLで起動を拒否する経路が、これで十分か |
+| 結果の分類 | `src/paypal/classify.ts`、`tests/paypal-adapter.test.ts` | DESIGN 7.1の表との対応。「既に処理済み」の一覧、初回の404・409の扱い（I10） |
+| 再送防止IDと本文ハッシュ | `src/paypal/requests.ts`、`rest.ts`の`#send` | ハッシュの範囲（メソッド・パス・本文）と、不一致のときに送らないこと |
+| 秘密の扱い | `rest.ts`のプライベートフィールドとログ、`scripts/verify/_lib.ts` | ログ・出力・保存（`work/verify/`）に秘密が出ないか |
+| 模擬の忠実さ | `src/paypal/mock-server.ts` | 「mock choice」と書いた箇所（PENDINGの返金が残額を押さえる等）と、F4に合わせた再送の挙動 |
+
+### 実接続で分かった、DESIGNとの違い（DESIGNは変更していない）
+
+| ID | 内容 | 確認したいこと |
+| --- | --- | --- |
+| F3 | captureの照会には状態しかなく、返金済みの額や残額がない。返金の応答には返金済みの合計（`total_refunded_amount`）がある | DESIGN 7.1の「元captureを照会し、返金できる残額を確かめる」を、「captureの状態の照会」と「capture金額 − FlexSlotが記録した返金済みの合計（返金の応答の`total_refunded_amount`と照合）」に置き換えてよいか |
+| F4 | 同じ再送防止IDの再送で、Payments API（与信のcapture・返金・取消）は元の結果を返すが、Orders API（注文の与信・capture）は、状態が変わった後は注文の現在の状態を返す。アダプターは「結果不明（想定外の状態）」に分類し、資源は返す（I16） | DESIGN 7.5のOP2（与信）の回復で、再送や照会の結果を「状態」ではなく「与信IDとcustom_id」で特定する方針でよいか |
+| F5 | 与信のcaptureと注文のcaptureの応答には受取先（payee）がなく、captureの照会と注文の照会にはある。注文作成はHTTP 200、取消は200で表現形式（204は観測せず） | DESIGN 7.3の「売上確定の応答で受取先を確かめる」を、「成功と判断する前にcaptureを照会して受取先を照合する」に変えてよいか（売上確定ごとにGETが1回増える） |
+
+F2（注文の照会でcaptureを特定できる）、F1・F6（与信とVertex AIは想定どおり）は、設計を変える必要がないと考える。
+
+### 実装で決めた点（確認を求める）
+
+詳細と理由はSTATUSの「実装で具体化した点」（I08〜I16）。
+
+| ID | 内容 |
+| --- | --- |
+| I08 | ポートにAの元決済の注文capture（`ORDER_CAPTURE`）を加えた。DBの操作種別には加えていない |
+| I09 | トークンを取得できず何も送っていない場合の`NOT_SENT` |
+| I10 | 初回の404・409などは結果不明。409 `PREVIOUS_REQUEST_IN_PROGRESS`は「既に処理済み」 |
+| I11 | 「既に処理済み」のissue名の一覧。与信のDENIEDを確定失敗に含めた |
+| I12 | 401はトークンを取り直して同じIDで1回だけ再送 |
+| I13 | 本文ハッシュの範囲は{メソッド, パス, 本文} |
+| I14 | 模擬の接続先`https://mock-paypal.invalid`と、試験専用の`testIdPrefix` |
+| I15 | 注文作成の`payment_source.paypal.experience_context`と、検証用の`localhost`の戻り先 |
+| I16 | 結果不明でも、検証できた資源は返す |
+
+### Codexへの確認事項
+
+1. F3・F4・F5への対応方針（上の表）。DESIGNの改訂が要るなら、Codexの判断を受けてClaudeがdesign-v0.4として反映する。
+2. 作品内AIのモデル：`gemini-3.5-flash-lite`（`global`、思考は既定）を採用した。理由は、公式の版の資料で提供終了が2027-07-21以降、V9で3例とも合格、遅延が0.9〜1.5秒で比較した`gemini-3.8-flash`（2.0〜3.2秒）より速いこと。
+3. 実接続の記録の仕方：V2〜V4は、1回の実行ですべての確認が通ったわけではない（`.env`の受取先IDの誤りと、その修正後の再確認）。この記録で「合格」と扱えるか、それとも新しい注文で通しの再実行が必要か。
+4. 模擬PayPalの再送の挙動を、Sandboxで観測したとおり（Payments APIは元の結果、Orders APIは現在の状態）にした。実行器の試験（14章の3）をこの模擬で行ってよいか。

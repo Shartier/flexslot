@@ -40,17 +40,28 @@ describe('mock PayPal: ids and representation', () => {
 });
 
 describe('mock PayPal: idempotency', () => {
-  it('the same request id on the same call returns the original result, even after the state moved on', async () => {
+  it('Payments API: the same request id returns the original answer, even after the state moved on', async () => {
+    const m = mockSetup();
+    const { authorizationId } = await authorized(m);
+    const ctx = { requestId: rid() };
+    const first = expectKind(await m.paypal.captureAuthorization(authorizationId, { amount: usd(6000) }, ctx), 'SUCCEEDED');
+    await m.paypal.refundCapture(first.resource.id, { amount: usd(6000) }, { requestId: rid() });
+    expect(m.server.statusOf(first.resource.id)).toBe('REFUNDED');
+    const replay = expectKind(await m.paypal.captureAuthorization(authorizationId, { amount: usd(6000) }, ctx), 'SUCCEEDED');
+    expect(replay.resource).toMatchObject({ id: first.resource.id, status: 'COMPLETED' }); // stored answer, not REFUNDED
+    expect(m.server.count('captures')).toBe(1);
+  });
+
+  it('Orders API: a replay of authorize returns the current order, classified UNKNOWN with the resource kept', async () => {
     const m = mockSetup();
     const created = expectKind(await m.paypal.createOrder(orderInput('AUTHORIZE'), { requestId: rid() }), 'SUCCEEDED');
     m.server.approveOrder(created.resource.id);
     const ctx = { requestId: rid() };
     const first = expectKind(await m.paypal.authorizeOrder(created.resource.id, ctx), 'SUCCEEDED');
     await m.paypal.voidAuthorization(first.resource.authorization.id, { requestId: rid() });
-    const replay = expectKind(await m.paypal.authorizeOrder(created.resource.id, ctx), 'SUCCEEDED');
-    expect(replay.resource.authorization.id).toBe(first.resource.authorization.id);
-    expect(replay.resource.authorization.status).toBe('CREATED'); // the stored answer, not the current VOIDED state
-    expect(m.server.statusOf(first.resource.authorization.id)).toBe('VOIDED');
+    const replay = expectKind(await m.paypal.authorizeOrder(created.resource.id, ctx), 'UNKNOWN');
+    expect(replay).toMatchObject({ reason: 'UNEXPECTED_STATUS', externalStatus: 'VOIDED', httpStatus: 201 });
+    expect(replay.resource?.authorization.id).toBe(first.resource.authorization.id);
     expect(m.server.count('authorizations')).toBe(1);
   });
 

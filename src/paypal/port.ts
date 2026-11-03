@@ -29,7 +29,8 @@ export type OperationOutcome<R> =
   | { kind: 'FAILED'; resource: R; externalStatus: string; httpStatus: number }
   | { kind: 'NOT_ACCEPTED'; httpStatus: number; error: PayPalErrorInfo }
   | { kind: 'AUTH_ERROR'; httpStatus: number; error?: PayPalErrorInfo }
-  | { kind: 'UNKNOWN'; reason: UnknownReason; httpStatus?: number; error?: PayPalErrorInfo; externalStatus?: string }
+  /** `resource` is set when a 2xx body parsed but its status was unexpected (e.g. an Orders API replay, STATUS). */
+  | { kind: 'UNKNOWN'; reason: UnknownReason; httpStatus?: number; error?: PayPalErrorInfo; externalStatus?: string; resource?: R }
   | { kind: 'NOT_SENT'; reason: TokenFailureReason };
 
 export type SendResult<R> = OperationOutcome<R> & {

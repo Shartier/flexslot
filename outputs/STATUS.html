@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="fe5dc61358171012d4cf9c48be4201d119e93e76a60cdfc053edcc2a1c8d0c23"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="5fea7137ddbea739c6ab2fb2b1e5e8852ac224c6bd631ddfcb445f6407cf4f44"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,9 +8,9 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
-<p>更新日：2026-11-03（日本時間）/ 文書版：status-v0.5。</p>
+<p>更新日：2026-11-03（日本時間）/ 文書版：status-v0.6。</p>
 <h2 id="section">現在地</h2>
-<p>実装の第1段階（DESIGN 14章の1）を終えた段階。状況を「設計の再確認」と「実装・実接続」に分けて記す。</p>
+<p>実装の第2段階（DESIGN 14章の2）を終えた段階。状況を「設計の再確認」と「実装・実接続」に分けて記す。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -25,11 +25,11 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>実装</td>
-<td>14章の1（骨組み：パッケージ構成、DBスキーマとトリガー、時計、候補判定、利益計算、サンプルデータ、単体・DB試験）を実装した。ブランチ<code>impl/skeleton</code>、タグ<code>impl-skeleton-1</code>（<code>git rev-parse impl-skeleton-1</code>）。模擬モードのみで、外部へは接続していない。Codexの確認待ち。14章の2以降（PayPalアダプター、実行器、回復、AI、画面、セッション、Webhook）は未着手</td>
+<td>14章の1（骨組み）はタグ<code>impl-skeleton-1</code>。14章の2（PayPalアダプター、障害注入付きの模擬PayPal、Vertex AIの最小接続、接続検証スクリプトV0〜V7・V9）を実装した。ブランチ<code>impl/paypal</code>、タグ<code>impl-paypal-1</code>（<code>git rev-parse impl-paypal-1</code>）。Codexの確認待ち。14章の3以降（実行器、送信待ちキュー、回復、本格的なAIアダプター、画面、セッション、Webhook）は未着手</td>
 </tr>
 <tr>
 <td>実接続</td>
-<td>AI、PayPal Sandbox、Webhookの実配送は、いずれも未確認。公開・応募も未実施</td>
+<td>PayPal SandboxでV1〜V7を、Vertex AIでV9を実行した（結果は「PayPalアダプターと接続検証」の節）。Webhookの実配送（V8）は未実施。アプリ本体による一件の振替はまだ動いていない。公開・応募も未実施</td>
 </tr>
 </tbody>
 </table></div>
@@ -187,6 +187,298 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </table></div>
 <h3 id="section-3">未実施の範囲</h3>
 <p>実行器・回復処理・PayPalアダプター・模擬PayPal・AI・画面・セッション・Webhookの処理は作っていない。E7の試験は手書きのトランザクションでの確認で、本番のE7のコードはまだない。同時実行（AC06）、障害注入（AC08）、時計を進める状態遷移（AC05）、権限（AC11）の試験は未実施。サンプルの日付はSPECの固定値で、デモ日に合わせた再生成は後の工程。Sandbox・Vertex AIへの接続、公開・応募は行っていない。</p>
+<h2 id="paypalclaude-code2026-11-03">PayPalアダプターと接続検証（Claude Code、2026-11-03）</h2>
+<p>対象：ブランチ<code>impl/paypal</code>（<code>impl-skeleton-1</code>から作成）、タグ<code>impl-paypal-1</code>。途中のコミット<code>dd72fe6</code>は実装の区切りで、タグはない。Windows 11、Node.js v24.22.1、npm 11.19.1。追加した依存はzod 4.6.7と@google/genai 2.30.0で、どちらも公開から2週間以上たった版に固定した。npmの<code>allowScripts</code>により、@google/genaiのpreinstall（何もしない処理）とprotobufjsのpostinstallは実行されていない。試験と実接続はこの状態で動いた。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PayPalアダプター</td>
+<td><code>src/paypal/</code>：ポート（<code>port.ts</code>）、REST実装（<code>rest.ts</code>）、要求の組み立てと本文ハッシュ（<code>requests.ts</code>）、結果の分類（<code>classify.ts</code>）、zodの応答検証（<code>schemas.ts</code>）、金額変換（<code>money.ts</code>）、照合（<code>match.ts</code>）、設定（<code>config.ts</code>）。接続先は<code>https://api-m.sandbox.paypal.com</code>に固定し、それ以外は起動時に拒否する。POSTごとに<code>PayPal-Request-Id</code>と<code>Prefer: return=representation</code>を付け、1回20秒でタイムアウトさせる。トークンは期限の60秒前までキャッシュする。認証情報とトークンはプライベートフィールドに置き、ログ・エラー文に出さない</td>
+</tr>
+<tr>
+<td>模擬PayPal</td>
+<td><code>src/paypal/mock-server.ts</code>：同じRESTアダプターを、プロセス内のfetch互換の模擬サーバーにつないでポートを実装する。IDはすべて<code>MOCK-</code>で始まる。障害注入：応答喪失（処理後に切断）、HTTPエラー（5xx・429、処理あり／なし）、タイムアウト（処理あり／なし）、PENDING、返金FAILED、401。残額超過は422 <code>REFUND_AMOUNT_EXCEEDED</code>。同じ再送防止IDの再送は、実接続で分かった挙動（下のF4）に合わせた</td>
+</tr>
+<tr>
+<td>Vertex AI</td>
+<td><code>src/ai/</code>：<code>@google/genai</code>を<code>vertexai: true</code>とADCで使う。<code>responseSchema</code>（JSONスキーマ）、<code>temperature: 0</code>、20秒のタイムアウト、5xxと429だけ1回再試行。出力はzodの<code>strictObject</code>で検査し、日付（今日から60日以内）・営業時間・施術ID・担当者IDを確かめる。出力に金額・承認・決済の項目はない。本格的なAIアダプター（模擬モード、回数上限、入力の出所の保存）は14章の4で作る</td>
+</tr>
+<tr>
+<td>接続検証</td>
+<td><code>scripts/verify/</code>のV0〜V7・V9（<code>npm run verify:v0</code>など）。値は表示せず、出力は日時・モード・確認結果・匿名化したID（SHA-256の先頭8桁）・終了コードだけ。生のIDと再送防止IDは、Git対象外の<code>work/verify/</code>に保存して再実行に使う。V2・V3は<code>start</code>で承認URLを表示し、本人の承認後に<code>finish</code>を実行する。<code>finish</code>を再実行すると、済んだ操作は送らずに照会だけで確かめる</td>
+</tr>
+<tr>
+<td><code>.env.example</code></td>
+<td>変数名：<code>PAYPAL_CLIENT_ID</code>、<code>PAYPAL_CLIENT_SECRET</code>、<code>PAYPAL_EXPECTED_MERCHANT_ID</code>、<code>PAYPAL_WEBHOOK_ID</code>（V8用、空欄）、<code>GOOGLE_CLOUD_PROJECT</code>、<code>GOOGLE_CLOUD_LOCATION</code>、<code>FLEXSLOT_AI_MODEL</code>。値はすべて空欄。<code>.env</code>は、秘密でない3項目だけを入れた枠をClaudeが作り、PayPalの3項目を本人が記入した。Gitの対象外であることは<code>git check-ignore</code>で確認した</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-4">実行したコマンドと結果（模擬・単体）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>コマンド</th>
+<th>終了コード</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>npm install --save-exact zod@4.6.7 @google/genai@2.30.0</code></td>
+<td>0</td>
+<td>install-scriptsが未承認という警告（上記）だけ</td>
+</tr>
+<tr>
+<td><code>npm run check</code>（型チェックと<code>vitest run</code>）</td>
+<td>0</td>
+<td>9ファイル・152件すべて成功（骨組みの80件と今回の72件）</td>
+</tr>
+</tbody>
+</table></div>
+<p>試験の内容（すべて模擬PayPalと偽のVertexクライアントで行い、外部へは接続しない）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>確認内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sandbox以外の拒否</td>
+<td>Live（<code>api-m.paypal.com</code>）、http、似た名前のホスト、パス付き、模擬のURLでの起動を拒否する。<code>.env</code>の<code>PAYPAL_API_BASE</code>がSandbox以外なら、設定の読み込みで拒否する。送信先がすべてSandboxのホストであること</td>
+</tr>
+<tr>
+<td>モードの分離（AC12の一部）</td>
+<td>Sandboxのアダプターは<code>MOCK-</code>のIDを、模擬のアダプターはそれ以外のIDを、送信前に拒否する。パスを変えうるIDも拒否する</td>
+</tr>
+<tr>
+<td>ヘッダーとトークン</td>
+<td>POSTごとに指定どおりの再送防止IDと<code>Prefer: return=representation</code>が付く。GETには再送防止IDを付けない。トークンのキャッシュと期限前の更新。401のとき新しいトークンを取得し、同じIDで1回だけ再送する</td>
+</tr>
+<tr>
+<td>再送防止IDと本文ハッシュ</td>
+<td>ハッシュは正規化した{メソッド, パス, 本文}のSHA-256。保存したハッシュと違う本文は送らない（送信記録が増えない）。同じIDの再送では資源が増えない。応答喪失の後、同じIDの再送で回復する</td>
+</tr>
+<tr>
+<td>結果の分類（DESIGN 7.1）</td>
+<td>成功、PENDING、確定失敗（返金FAILED）、受理されなかった（初回の422）、結果不明（結果不明の後の4xx、「既に処理済み」、5xx・429・タイムアウト・通信断・404・不正な本文・想定外の状態）、認証エラー、未送信（トークン取得の失敗）。取消が本文なしの204なら照会で確認する</td>
+</tr>
+<tr>
+<td>模擬の障害</td>
+<td>4種類の操作での応答喪失と同じIDでの回復、5xx（処理なし／あり）、タイムアウト（処理なし／あり）、PENDINGと後からの確定、返金FAILEDの後の新しい返金、残額超過と全額返金後の拒否、障害の消費順、Payments APIとOrders APIの再送の違い（F4）</td>
+</tr>
+<tr>
+<td>ログ</td>
+<td>ログ・エラー・アダプターのオブジェクトの表示に、クライアントID・シークレット・Basic認証の文字列・発行されたトークン・注文やcaptureのIDが含まれない</td>
+</tr>
+<tr>
+<td>AI（偽のクライアント）</td>
+<td>要求に<code>temperature: 0</code>・JSON・スキーマ・「文はデータ」の指示が入る。補償額など余分な項目を含む出力、営業時間外・過去・存在しない日付・未知の施術を拒否する。JSONでない応答の扱い。5xx・429は1回だけ再試行し、400は再試行しない。タイムアウト</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="paypal-sandboxvertex-ai">実接続の結果（PayPal Sandbox・Vertex AI）</h3>
+<p>模擬の試験とは別の記録。2026-11-03、時刻は日本時間。3件の注文は、本人がSandboxの買い手アカウントでログインしてブラウザで承認した（ログインとパスワードの入力は本人）。IDは匿名化した表記。金額はすべてUSD。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>実行時刻（終了コード）</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V0</td>
+<td>20:43（0）</td>
+<td>必須の6変数があり、<code>.env</code>はGit対象外、<code>PAYPAL_API_BASE</code>はなし、ADCの資格情報ファイルはあり、<code>GOOGLE_APPLICATION_CREDENTIALS</code>は未設定。値は表示していない</td>
+</tr>
+<tr>
+<td>V1</td>
+<td>20:43（0）</td>
+<td>アクセストークンを取得。<code>expires_in</code>は32400秒</td>
+</tr>
+<tr>
+<td>V2</td>
+<td>start 20:43（0）、finish 20:50・21:00（1）、21:09（1）、照会だけの再確認 21:12（0）</td>
+<td>注文（<code>order#c10f1c79</code>）の作成はHTTP 200・PAYER_ACTION_REQUIRED。承認後の売上確定はHTTP 201・COMPLETED（<code>capture#17b0d7f5</code>）。金額60.00・通貨・custom_idが一致し、注文の照会はCOMPLETEDでcaptureを含む。20:50・21:00は受取先の照合だけが不一致で、原因は<code>.env</code>の<code>PAYPAL_EXPECTED_MERCHANT_ID</code>の値の誤り（1回目は別の13文字、2回目は事業者アカウントのメールアドレス。2回目の値は、PayPalの応答にある受取先のメールアドレスと完全に一致した）。21:09は同じIDでの再送が注文の現在の状態を返して結果不明になった（F4）。本人がPayPal Merchant IDに直した後、21:12の照会だけの再確認で、captureと注文の受取先・金額が一致した（7/7）</td>
+</tr>
+<tr>
+<td>V3</td>
+<td>start 20:43（0）、finish 21:00（1）、21:09（1）、照会だけの再確認 21:12（0）</td>
+<td>与信用の注文2件（b1 <code>order#82c7dcbc</code>、b2 <code>order#8b99b1d0</code>）を、承認後に与信した。HTTP 201で、与信はCREATED（<code>auth#8944072a</code>、<code>auth#7e041d2a</code>）。表現形式の応答に、与信ID・状態・<code>expiration_time</code>・金額・custom_idがある。21:00の受取先の不一致はV2と同じ設定の誤り。21:09はV2と同じくF4。21:12の再確認で受取先が一致した（4/4）</td>
+</tr>
+<tr>
+<td>V4</td>
+<td>21:01（1）、21:10（1）</td>
+<td>b1の与信を、金額を明示し<code>final_capture</code>で売上確定した。HTTP 201・COMPLETED（<code>capture#586258d7</code>）。同じ再送防止IDの再送はHTTP 200で、同じcapture IDが返った。与信の照会はCAPTURED。注文の照会で売上確定を特定できた（F2）。21:01の不一致は受取先の設定の誤りだけ。設定を直した21:10の再実行では受取先が一致したが、その時点のcaptureはV7の全額返金の後でREFUNDEDだったため、「COMPLETED」の確認だけが不一致になった（想定どおり）。1回の実行で全項目が通ったわけではない</td>
+</tr>
+<tr>
+<td>V5</td>
+<td>21:01（0）</td>
+<td>b2の与信を取り消した。HTTP 200で与信の表現（VOIDED）が返った（204ではなかった）。照会でもVOIDED</td>
+</tr>
+<tr>
+<td>V6</td>
+<td>21:01（0）</td>
+<td>Aのcapture（V2）へ10.00を返金した。HTTP 201・COMPLETED（<code>refund#c5f65b9e</code>）。同じIDの再送はHTTP 200で、同じ返金IDが返った。返金の照会はCOMPLETED、元のcaptureの照会はPARTIALLY_REFUNDED。残額を超える50.01の返金は、HTTP 422（<code>REFUND_AMOUNT_EXCEEDED</code>）で拒否され、「受理されなかった」に分類された</td>
+</tr>
+<tr>
+<td>V7</td>
+<td>21:01（0）</td>
+<td>Bのcapture（V4）へ60.00を全額返金した（金額を明示）。HTTP 201・COMPLETED（<code>refund#119abcdf</code>）。返金の照会はCOMPLETED、元のcaptureはREFUNDED</td>
+</tr>
+<tr>
+<td>V9</td>
+<td>19:35（シェルの環境変数）、21:01（<code>.env</code>）、いずれも0</td>
+<td>下の表</td>
+</tr>
+</tbody>
+</table></div>
+<p>F4の確認として、21:11に5種類の操作（注文のcapture、注文の与信2件、与信のcapture、返金、取消）を、保存してあった同じ再送防止ID・同じ本文で再送した。リポジトリ外の使い捨てのスクリプトで行い、新しい資源は作られていない。</p>
+<p>V9（プロジェクト<code>kazoku-baton-20261015</code>、リージョン<code>global</code>）：</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>モデル</th>
+<th>A（11/10 10:00–12:00、担当の変更なし）</th>
+<th>B（11/7 14:00–15:00、カット）</th>
+<th>曖昧な文（来週の午後、カラーも？）</th>
+<th>遅延</th>
+<th>トークン（1回）</th>
+<th>1ミリ秒のタイムアウト</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gemini-3.5-flash-lite</code>（採用、思考は既定）</td>
+<td>一致。文中の「補償は50ドルに」は、スキーマに項目がないため出力されない</td>
+<td>一致</td>
+<td>時間区間を作らず、施術はnull、確認質問2件</td>
+<td>0.9〜1.5秒</td>
+<td>約820〜860（思考トークンなし）</td>
+<td>2〜5ミリ秒でTIMEOUT</td>
+</tr>
+<tr>
+<td><code>gemini-3.8-flash</code>（比較、思考はLOW）</td>
+<td>一致</td>
+<td>一致</td>
+<td>同上</td>
+<td>2.0〜3.2秒</td>
+<td>約820〜960（Aで思考138）</td>
+<td>2ミリ秒でTIMEOUT</td>
+</tr>
+</tbody>
+</table></div>
+<p>モデルの選定：公式のモデル一覧と版の資料（2026-11-03に確認）では、<code>gemini-2.5-flash</code>は2026-10-20に提供終了。<code>gemini-3.5-flash-lite</code>は構造化出力に対応し、<code>global</code>で使え、提供終了は2027-07-21以降。審査期間（12月16日まで）を通じて使え、実呼び出しで最も速かったため採用した。タイムアウトはこちら側で待つのをやめるだけで、Vertex側では処理と課金が続く可能性がある。</p>
+<h3 id="designdesign">実接続で分かった、DESIGN・資料との違い（DESIGNは変更していない）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+<th>影響</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F1（U02）</td>
+<td>米国・USDのSandbox事業者アカウントで<code>intent=AUTHORIZE</code>が使えた。与信の表現形式の応答に、与信ID・状態・期限・金額が含まれた</td>
+<td>想定どおり</td>
+</tr>
+<tr>
+<td>F2（U03）</td>
+<td>与信のcapture後、与信の照会（CAPTURED）のlinksにはcapture IDがない。注文の照会の<code>purchase_units[0].payments.captures[]</code>にはcaptureがあり、captureのlinksの<code>up</code>は与信を指す</td>
+<td>売上確定の結果が不明なときは、注文の照会でcaptureを特定できる（DESIGN 7.3の第1案が使える）</td>
+</tr>
+<tr>
+<td>F3（U04）</td>
+<td>返金の応答に<code>seller_payable_breakdown.total_refunded_amount</code>（返金済みの合計）がある。captureの照会には状態（PARTIALLY_REFUNDED・REFUNDED）しかなく、返金済みの額や残額の項目はない（<code>seller_receivable_breakdown</code>はgross・net・手数料だけ）。観測した返金の状態はCOMPLETEDだけで、PENDING・FAILEDはSandboxでは再現していない（模擬だけ）</td>
+<td>DESIGN 7.1の「元captureを照会し、返金できる残額を確かめる」は、captureの照会だけではできない。残額は「capture金額 − 返金済みの合計（FlexSlotの記録、または最新の返金の<code>total_refunded_amount</code>）」で求める必要がある。REVIEWで確認を求める</td>
+</tr>
+<tr>
+<td>F4（U05）</td>
+<td>同じ再送防止IDの再送：数分以内は、与信のcapture・返金・注文のcaptureとも同じIDの資源が返った（初回はHTTP 201、再送は与信のcapture・返金が200、注文のcaptureが201）。資源の状態が後で変わった後（約10〜30分後）は、Payments API（与信のcapture・返金・取消）は<strong>元の結果</strong>（COMPLETED・VOIDED、同じID、HTTP 200）を返し、Orders API（注文の与信・capture）は<strong>注文の現在の状態</strong>（PARTIALLY_REFUNDED、CAPTURED、VOIDED、HTTP 201）を返した。お金は動いていない。アダプターはこれを「結果不明（想定外の状態）」に分類し、成功とはしない</td>
+<td>与信（ORDER_AUTHORIZE）と注文のcaptureを同じIDの再送で回復するときは、状態ではなくIDとcustom_idで特定する必要がある。アダプターは、結果不明でも応答の資源を返すようにした（I16）。45日の保持は確認していない（短時間の再送だけ）</td>
+</tr>
+<tr>
+<td>F5（7.3の表）</td>
+<td>注文作成（<code>payment_source.paypal</code>付き）はHTTP 201ではなく200で、PAYER_ACTION_REQUIREDと<code>payer-action</code>リンクが返った。与信の応答の与信オブジェクト、与信のcaptureの応答、注文のcaptureの応答のcaptureオブジェクトには、<strong>受取先（payee）がない</strong>。captureの照会と注文の照会にはある。取消は表現形式で200を返した（204は観測していない）</td>
+<td>DESIGN 7.3の「売上確定の応答で受取先を確かめる」は、応答だけではできない。成功と判断する前に、captureか注文の照会で受取先を照合する必要がある。REVIEWで確認を求める</td>
+</tr>
+<tr>
+<td>F6（U07）</td>
+<td>Vertex AIはADCで認証でき、<code>global</code>で上記のモデルが構造化出力に対応した</td>
+<td>想定どおり</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="designcodex-1">実装で具体化した点（DESIGNに明記がなく、Codexの確認を求める点）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I08</td>
+<td>ポートに、Aの元決済の<code>ORDER_CAPTURE</code>（注文のcapture）を加えた。DBの<code>OPERATION_KINDS</code>には加えていない</td>
+<td>Aの元決済は債務ではなく、<code>payments</code>に記録するため（DESIGN 6.1）</td>
+</tr>
+<tr>
+<td>I09</td>
+<td>トークンを取得できず、何も送っていない場合を<code>NOT_SENT</code>として返す</td>
+<td>結果不明と区別し、同じIDでそのまま再送できるようにするため</td>
+</tr>
+<tr>
+<td>I10</td>
+<td>初回の送信で、400・422・401・403以外の4xx（404・409など）が返ったら結果不明（照会で確定）にした。409 <code>PREVIOUS_REQUEST_IN_PROGRESS</code>は「既に処理済み」に含めた</td>
+<td>DESIGN 7.1の表に定めがなく、安全側に倒すため</td>
+</tr>
+<tr>
+<td>I11</td>
+<td>「既に処理済み」とみなすPayPalのissue名の一覧（<code>classify.ts</code>）を定め、与信のDENIEDを確定失敗に含めた</td>
+<td>公式のエラー資料とOpenAPIのスキーマで確認した名前を使った</td>
+</tr>
+<tr>
+<td>I12</td>
+<td>401のときは、トークンを捨てて取得し直し、同じIDで1回だけ再送する。2回目も401・403なら認証エラー</td>
+<td>DESIGN 7.1の「認証を直して同じ操作を再送」の具体化</td>
+</tr>
+<tr>
+<td>I13</td>
+<td>本文ハッシュは、正規化した{メソッド, パス, 本文}のSHA-256。パスに対象のIDを含めるため、対象が違えばハッシュも違う。組み立て関数は実行器と共有する</td>
+<td>DESIGN 7.5の「再送の前に本文ハッシュを確かめる」のため</td>
+</tr>
+<tr>
+<td>I14</td>
+<td>模擬の接続先は<code>https://mock-paypal.invalid</code>（名前解決できない）。試験専用に、模擬のIDの接頭辞を変えるオプション（<code>testIdPrefix</code>）を置いた</td>
+<td>Sandboxモードのアダプターを、ネットワークなしで模擬に対して試験するため</td>
+</tr>
+<tr>
+<td>I15</td>
+<td>注文作成には<code>payment_source.paypal.experience_context</code>（<code>return_url</code>・<code>cancel_url</code>、配送なし、PAY_NOW）を使う。検証の戻り先は<code>http://localhost:8799/...</code>で、何も待ち受けていない</td>
+<td>承認URLを使って検証するため。画面でPayPal JS SDKのボタンを使うときの本文は、14章の5で確認する</td>
+</tr>
+<tr>
+<td>I16</td>
+<td>結果不明でも、2xxの本文を検証できた場合は資源を返す</td>
+<td>F4のOrders APIの再送で、与信やcaptureのIDを失わないため</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-5">未実施の範囲（この段階）</h3>
+<p>実行器・送信待ちキュー・回復処理（14章の3）、本格的なAIアダプター（14章の4）、画面・セッション（14章の5）、Webhook（V8）は作っていない。Sandboxでの障害（通信断、5xx、PENDING、返金FAILED）は再現しておらず、模擬だけで試験した。再送防止IDの長期間の保持（45日）は確かめていない。PayPal JS SDKのボタンからの承認は未確認。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -296,7 +588,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <p>以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。</p>
 <p>Gitのuser.name/user.emailは未登録だったため、初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定した。ユーザーのローカル/グローバルGit設定は変更していない。</p>
 <p>参照：<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a>、<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal決済</a>、<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth">Google Cloud認証</a>。</p>
-<h2 id="section-4">実行した確認とテスト</h2>
+<h2 id="section-6">実行した確認とテスト</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -386,6 +678,18 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>型チェック・試験とも終了コード0、80件成功。詳細は「骨組みの実装」</td>
 </tr>
 <tr>
+<td>11-03 Claude</td>
+<td>PayPal・AIの実装（模擬）</td>
+<td><code>npm run check</code></td>
+<td>終了コード0、152件成功。詳細は「PayPalアダプターと接続検証」</td>
+</tr>
+<tr>
+<td>11-03 Claude＋本人</td>
+<td>実接続</td>
+<td>V0〜V7（PayPal Sandbox、承認は本人）、V9（Vertex AI）</td>
+<td>「PayPalアダプターと接続検証」の実接続の表。V8は未実施</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
 <td>統合・E2E・実API・実機・同時実行・障害注入</td>
@@ -393,7 +697,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<h2 id="section-5">未確認事項</h2>
+<h2 id="section-7">未確認事項</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -407,32 +711,32 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>U01</td>
 <td>PayPal Developerの準備（Sandboxの事業者・買い手アカウント、RESTアプリの認証情報）</td>
-<td>このPCでは環境変数・<code>.env</code>とも見当たらない。未作成とは断定しない</td>
-<td>本人がV0で準備。Claudeは値を見ない</td>
+<td>解消（2026-11-03）。本人が準備し、<code>.env</code>に記入した。V0・V1で確認（値は見ていない）</td>
+<td>─</td>
 </tr>
 <tr>
 <td>U02</td>
 <td>Sandboxの事業者アカウントの国と通貨、与信（AUTHORIZE）の利用可否</td>
-<td>未確認。USDで進める案。競合作品の国の制約は転用しない</td>
-<td>V1〜V3</td>
+<td>解消（2026-11-03）。米国・USDの事業者アカウントで与信が使えた（F1）</td>
+<td>─</td>
 </tr>
 <tr>
 <td>U03</td>
 <td>与信・注文の照会から、売上確定IDを取得できるか</td>
-<td>未確認。できない場合は同じ再送防止IDでの再送に頼る</td>
-<td>V4</td>
+<td>解消（2026-11-03）。注文の照会では取得できる。与信の照会のlinksでは取得できない（F2）</td>
+<td>実行器の回復処理で使う</td>
 </tr>
 <tr>
 <td>U04</td>
 <td>返金の状態の種類と、元captureの照会で返金済みの額が分かるか</td>
-<td>未確認。返金ID・照会の組み合わせで設計</td>
-<td>V6</td>
+<td>一部解消（2026-11-03）。返金の応答に返金済みの合計がある。captureの照会は状態だけで、額は分からない。観測した返金の状態はCOMPLETEDだけ（F3）。残額確認の方法はCodexの確認待ち</td>
+<td>REVIEWの確認事項</td>
 </tr>
 <tr>
 <td>U05</td>
 <td><code>PayPal-Request-Id</code>の保持期間</td>
-<td>RESTリクエストの資料に「最大45日」の記述あり。各APIでの保証は未確認。数分以内の再送だけを前提にし、長期間後の再送には頼らない。短時間の再送試験から長期間の安全性を結論しない</td>
-<td>V4・V6で短時間の再送だけ確認</td>
+<td>RESTリクエストの資料に「最大45日」の記述あり。各APIでの保証は未確認。短時間（約30分以内）の再送では同じ資源が返ったが、Orders APIは状態の変化後に現在の状態を返す（F4）。数分以内の再送だけを前提にし、長期間後の再送には頼らない。短時間の再送試験から長期間の安全性を結論しない</td>
+<td>長期間の保持は未確認のまま</td>
 </tr>
 <tr>
 <td>U06</td>
@@ -443,8 +747,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>U07</td>
 <td>Google Cloudのプロジェクト、課金、Vertex AI APIの有効化、リージョン、利用できるGeminiのモデル</td>
-<td>未確認。gcloudとADCはこのPCにない</td>
-<td>本人の準備後にV9</td>
+<td>解消（2026-11-03）。本人がgcloudとADCを準備した。プロジェクト<code>kazoku-baton-20261015</code>・リージョン<code>global</code>・<code>gemini-3.5-flash-lite</code>でV9が合格（F6）</td>
+<td>公開時はサービスアカウントで再確認</td>
 </tr>
 <tr>
 <td>U08</td>
@@ -473,18 +777,20 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <h2 id="v0">本人にお願いする準備（V0）</h2>
+<p>2026-11-03に完了した（V0・V1・V9で確認）。</p>
 <ol>
-<li><strong>PayPal Developer</strong>：Sandboxの事業者アカウントと買い手アカウント、RESTアプリを用意し、クライアントIDとシークレットをこのフォルダの<code>.env</code>に自分で記入する（変数名は実装時に<code>.env.example</code>で示す）。値をチャットに貼らない。</li>
-<li><strong>Google Cloud</strong>：Vertex AIに使うプロジェクトを決め、課金とVertex AI APIを有効にする。Google Cloud CLIを導入し、<code>gcloud auth application-default login</code>でADCを作る。</li>
-<li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかだけを確認する。</li>
+<li><strong>PayPal Developer</strong>：Sandboxの事業者アカウント（米国・USD）と買い手アカウント、RESTアプリを用意し、クライアントID・シークレット・事業者アカウントのPayPal Merchant IDを、このフォルダの<code>.env</code>に自分で記入した（変数名は<code>.env.example</code>）。値はチャットに貼っていない。</li>
+<li><strong>Google Cloud</strong>：プロジェクト<code>kazoku-baton-20261015</code>で課金とVertex AI APIを有効にし、<code>gcloud auth application-default login</code>でADCを作った。</li>
+<li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかと、匿名化した照合結果だけを確認する。</li>
+<li><strong>今後も本人が行うこと</strong>：Sandboxの買い手アカウントでの承認（ログインとパスワードの入力）。V8の受信経路の公開の承認。</li>
 </ol>
-<h2 id="section-6">次に行う作業</h2>
+<h2 id="section-8">次に行う作業</h2>
 <ol>
-<li>Codexによる骨組みの確認（タグ<code>impl-skeleton-1</code>、REVIEWの確認依頼、特にI01〜I07）。確認を待たずに次へ進めてよい（REVIEWの実装開始指示）。</li>
-<li>DESIGN 14章の2：PayPalアダプター、障害注入付きの模擬PayPal、接続検証スクリプト（V1〜V7）。認証情報がそろい次第、Sandboxで実行する。その後、14章の3（実行器・回復）、4（AI）、5（画面とセッション）へ進む。</li>
-<li>本人の準備（V0）は並行して進められる。準備が遅れても、模擬モードで進めた部分と、実接続が未確認の部分を区別して記録する。</li>
+<li>Codexによる確認：骨組み（タグ<code>impl-skeleton-1</code>、I01〜I07）と、PayPal・AIの段階（タグ<code>impl-paypal-1</code>、REVIEWの確認依頼、特にF3〜F5とI08〜I16）。確認を待たずに次へ進めてよい（REVIEWの実装開始指示）。</li>
+<li>DESIGN 14章の3：実行器、送信待ちキュー、回復処理と、障害注入の試験（AC05・AC06・AC08・AC09）。F4（Orders APIの再送が現在の状態を返す）とF5（受取先は照会で照合）を回復処理に反映する。I07（期限切れの試行に残る注文作成の操作）もここで決める。</li>
+<li>その後、14章の4（AIアダプター）、5（画面とセッション）、V8（本人確認後）、第2レビューへ進む。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
-<h2 id="section-7">今後の検証記録の書式</h2>
+<h2 id="section-9">今後の検証記録の書式</h2>
 <p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="33aff7d451c21ad339c4461a612d03d4cb1c5667e4634aa588116b24e4f4c1d4"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="4d8ece7625c86eefb8c1f97c01fdb4d4f74030070c6f54051f855f9eb5caaf74"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -823,4 +823,176 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>提出前には、AC01–14の対応表、英語READMEの再現、モード表示、OSSライセンスと素材権利、公開内容の秘密情報、3分未満の動画、審査員アクセスを確認する。公開・デプロイ・応募は本人確認前に実行しない。</p>
+<h2 id="paypalaiclaude-code-codex2026-11-03">PayPal・AI段階の確認依頼（Claude Code → Codex、2026-11-03）</h2>
+<p>この節は末尾への追記で、上のCodexの記載と版の行は変更していない。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>節目</td>
+<td>DESIGN 14章の2（PayPalアダプター、障害注入付きの模擬PayPal、接続検証V0〜V7・V9）と、Vertex AIの最小接続。正式な第2レビューは、一件の振替が最後まで動いた時点で別に依頼する</td>
+</tr>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>impl/paypal</code>、タグ<code>impl-paypal-1</code>（<code>git rev-parse impl-paypal-1</code>でSHAを取得）。親は<code>impl-skeleton-1</code>。途中のコミット<code>dd72fe6</code>は実装の区切り</td>
+</tr>
+<tr>
+<td>差分の確認</td>
+<td><code>git diff impl-skeleton-1 impl-paypal-1 --stat</code></td>
+</tr>
+<tr>
+<td>変更ファイル</td>
+<td>新規：<code>.env.example</code>、<code>src/config-error.ts</code>、<code>src/paypal/</code>の9ファイル、<code>src/ai/</code>の3ファイル、<code>scripts/verify/</code>の10ファイル、<code>tests/</code>の4ファイル（試験3、補助1）。更新：<code>package.json</code>・<code>package-lock.json</code>（zod 4.6.7、@google/genai 2.30.0、<code>verify:*</code>のスクリプト）、<code>tsconfig.json</code>（<code>scripts</code>を対象に追加）、STATUS.md、REVIEW.md（この節）、<code>outputs/STATUS.html</code>、<code>outputs/REVIEW.html</code></td>
+</tr>
+<tr>
+<td>実行方法（模擬）</td>
+<td><code>npm ci</code> → <code>npm run check</code>。外部へは接続しない</td>
+</tr>
+<tr>
+<td>実行方法（実接続）</td>
+<td><code>.env</code>を用意し（<code>.env.example</code>の変数名）、<code>npm run verify:v0</code>、<code>verify:v1</code>、<code>verify:v2 -- start</code>、本人が承認、<code>verify:v2 -- finish</code>、V3も同様、<code>verify:v4</code>〜<code>verify:v7</code>、<code>verify:v9</code></td>
+</tr>
+<tr>
+<td>Claude側の結果</td>
+<td><code>npm run check</code>は終了コード0、9ファイル・152件成功。実接続はV1・V5・V6・V7・V9が1回の実行で合格。V2・V3は、機能の確認が初回に合格し、受取先の照合は<code>.env</code>の設定を直した後の照会だけの再確認で合格。V4は、機能の確認が初回に合格し、受取先の照合は再実行で合格（再実行時はV7の後のためcaptureがREFUNDEDで、「COMPLETED」の確認は不一致）。詳細はSTATUSの「PayPalアダプターと接続検証」</td>
+</tr>
+<tr>
+<td>モード</td>
+<td>模擬の試験と、Sandbox・Vertex AIの実接続を分けて記録した。Liveの設定・コードはない</td>
+</tr>
+<tr>
+<td>判定（Claude側）</td>
+<td>「確認依頼」。Codexの確認まで再確認済みとは扱わない</td>
+</tr>
+<tr>
+<td>未実行</td>
+<td>実行器・送信待ちキュー・回復処理、本格的なAIアダプター、画面、セッション、Webhook（V8）。Sandboxでの障害の再現（模擬だけで試験）。再送防止IDの長期間の保持</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-11">見てほしい点</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>観点</th>
+<th>場所</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sandbox専用</td>
+<td><code>src/paypal/rest.ts</code>の<code>assertApiBase</code>、<code>src/paypal/config.ts</code></td>
+<td>Sandbox以外のURLで起動を拒否する経路が、これで十分か</td>
+</tr>
+<tr>
+<td>結果の分類</td>
+<td><code>src/paypal/classify.ts</code>、<code>tests/paypal-adapter.test.ts</code></td>
+<td>DESIGN 7.1の表との対応。「既に処理済み」の一覧、初回の404・409の扱い（I10）</td>
+</tr>
+<tr>
+<td>再送防止IDと本文ハッシュ</td>
+<td><code>src/paypal/requests.ts</code>、<code>rest.ts</code>の<code>#send</code></td>
+<td>ハッシュの範囲（メソッド・パス・本文）と、不一致のときに送らないこと</td>
+</tr>
+<tr>
+<td>秘密の扱い</td>
+<td><code>rest.ts</code>のプライベートフィールドとログ、<code>scripts/verify/_lib.ts</code></td>
+<td>ログ・出力・保存（<code>work/verify/</code>）に秘密が出ないか</td>
+</tr>
+<tr>
+<td>模擬の忠実さ</td>
+<td><code>src/paypal/mock-server.ts</code></td>
+<td>「mock choice」と書いた箇所（PENDINGの返金が残額を押さえる等）と、F4に合わせた再送の挙動</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="designdesign">実接続で分かった、DESIGNとの違い（DESIGNは変更していない）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+<th>確認したいこと</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F3</td>
+<td>captureの照会には状態しかなく、返金済みの額や残額がない。返金の応答には返金済みの合計（<code>total_refunded_amount</code>）がある</td>
+<td>DESIGN 7.1の「元captureを照会し、返金できる残額を確かめる」を、「captureの状態の照会」と「capture金額 − FlexSlotが記録した返金済みの合計（返金の応答の<code>total_refunded_amount</code>と照合）」に置き換えてよいか</td>
+</tr>
+<tr>
+<td>F4</td>
+<td>同じ再送防止IDの再送で、Payments API（与信のcapture・返金・取消）は元の結果を返すが、Orders API（注文の与信・capture）は、状態が変わった後は注文の現在の状態を返す。アダプターは「結果不明（想定外の状態）」に分類し、資源は返す（I16）</td>
+<td>DESIGN 7.5のOP2（与信）の回復で、再送や照会の結果を「状態」ではなく「与信IDとcustom_id」で特定する方針でよいか</td>
+</tr>
+<tr>
+<td>F5</td>
+<td>与信のcaptureと注文のcaptureの応答には受取先（payee）がなく、captureの照会と注文の照会にはある。注文作成はHTTP 200、取消は200で表現形式（204は観測せず）</td>
+<td>DESIGN 7.3の「売上確定の応答で受取先を確かめる」を、「成功と判断する前にcaptureを照会して受取先を照合する」に変えてよいか（売上確定ごとにGETが1回増える）</td>
+</tr>
+</tbody>
+</table></div>
+<p>F2（注文の照会でcaptureを特定できる）、F1・F6（与信とVertex AIは想定どおり）は、設計を変える必要がないと考える。</p>
+<h3 id="section-12">実装で決めた点（確認を求める）</h3>
+<p>詳細と理由はSTATUSの「実装で具体化した点」（I08〜I16）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I08</td>
+<td>ポートにAの元決済の注文capture（<code>ORDER_CAPTURE</code>）を加えた。DBの操作種別には加えていない</td>
+</tr>
+<tr>
+<td>I09</td>
+<td>トークンを取得できず何も送っていない場合の<code>NOT_SENT</code></td>
+</tr>
+<tr>
+<td>I10</td>
+<td>初回の404・409などは結果不明。409 <code>PREVIOUS_REQUEST_IN_PROGRESS</code>は「既に処理済み」</td>
+</tr>
+<tr>
+<td>I11</td>
+<td>「既に処理済み」のissue名の一覧。与信のDENIEDを確定失敗に含めた</td>
+</tr>
+<tr>
+<td>I12</td>
+<td>401はトークンを取り直して同じIDで1回だけ再送</td>
+</tr>
+<tr>
+<td>I13</td>
+<td>本文ハッシュの範囲は{メソッド, パス, 本文}</td>
+</tr>
+<tr>
+<td>I14</td>
+<td>模擬の接続先<code>https://mock-paypal.invalid</code>と、試験専用の<code>testIdPrefix</code></td>
+</tr>
+<tr>
+<td>I15</td>
+<td>注文作成の<code>payment_source.paypal.experience_context</code>と、検証用の<code>localhost</code>の戻り先</td>
+</tr>
+<tr>
+<td>I16</td>
+<td>結果不明でも、検証できた資源は返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="codex">Codexへの確認事項</h3>
+<ol>
+<li>F3・F4・F5への対応方針（上の表）。DESIGNの改訂が要るなら、Codexの判断を受けてClaudeがdesign-v0.4として反映する。</li>
+<li>作品内AIのモデル：<code>gemini-3.5-flash-lite</code>（<code>global</code>、思考は既定）を採用した。理由は、公式の版の資料で提供終了が2027-07-21以降、V9で3例とも合格、遅延が0.9〜1.5秒で比較した<code>gemini-3.8-flash</code>（2.0〜3.2秒）より速いこと。</li>
+<li>実接続の記録の仕方：V2〜V4は、1回の実行ですべての確認が通ったわけではない（<code>.env</code>の受取先IDの誤りと、その修正後の再確認）。この記録で「合格」と扱えるか、それとも新しい注文で通しの再実行が必要か。</li>
+<li>模擬PayPalの再送の挙動を、Sandboxで観測したとおり（Payments APIは元の結果、Orders APIは現在の状態）にした。実行器の試験（14章の3）をこの模擬で行ってよいか。</li>
+</ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

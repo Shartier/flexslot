@@ -135,8 +135,12 @@ export class MockPayPalServer {
   readonly #idPrefix: string;
   readonly #tokens = new Map<string, number>();
   readonly #faults = new Map<MockRoute, MockFault[]>();
-  /** Stored 2xx answers per (route, PayPal-Request-Id): a resend returns the original result. */
-  readonly #idempotent = new Map<string, { status: number; body: string }>();
+  /**
+   * Stored 2xx answers per (route, PayPal-Request-Id). A resend of a Payments API call returns the original
+   * answer; a resend of order authorize / capture returns the order's current state (both seen in Sandbox,
+   * 2026-11-03, see STATUS). `orderId` marks the second kind.
+   */
+  readonly #idempotent = new Map<string, { status: number; body: string; orderId?: string }>();
   readonly #orders = new Map<string, MockOrder>();
   readonly #auths = new Map<string, MockAuthorization>();
   readonly #captures = new Map<string, MockCapture>();
@@ -235,12 +239,14 @@ export class MockPayPalServer {
     const requestId = headers.get('paypal-request-id');
     const key = requestId ? `${route} ${requestId}` : null;
     const stored = key ? this.#idempotent.get(key) : undefined;
+    if (stored?.orderId) return jsonResponse(stored.status, this.#renderOrder(this.#orders.get(stored.orderId)!, full));
     if (stored) return new Response(stored.body === '' ? null : stored.body, { status: stored.status, headers: JSON_HEADERS });
 
     const response = this.#post(route, id, parseBody(body), full, fault);
     if (key && response.status >= 200 && response.status < 300) {
       const text = await response.text();
-      this.#idempotent.set(key, { status: response.status, body: text });
+      const replaysCurrentOrder = route === 'ORDER_AUTHORIZE' || route === 'ORDER_CAPTURE';
+      this.#idempotent.set(key, { status: response.status, body: text, ...(replaysCurrentOrder ? { orderId: id! } : {}) });
       return new Response(text === '' ? null : text, { status: response.status, headers: response.headers });
     }
     return response;

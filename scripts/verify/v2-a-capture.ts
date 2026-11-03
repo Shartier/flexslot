@@ -64,23 +64,33 @@ await run(`V2 ${phase ?? '(no phase)'}`, 'SANDBOX', async (r) => {
     throw new NotReady(`order is ${before.resource.status}; approve it in the browser first`);
   }
 
-  const captureRequestId = str(s.captureRequestId) ?? randomUUID();
-  saveState('v2', { captureRequestId });
-  const cap = await paypal.captureOrder(orderId, { requestId: captureRequestId });
-  r.note('capture_outcome', cap.kind === 'UNKNOWN' ? `UNKNOWN:${cap.reason}` : cap.kind);
-  r.check('order captured (capture COMPLETED)', cap.kind === 'SUCCEEDED');
-  if (cap.kind !== 'SUCCEEDED') return;
-  const capture = cap.resource.capture;
-  saveState('v2', { captureId: capture.id });
+  // Re-run after a successful capture: verify by query only. A same-id replay of order capture returns the
+  // order's current state (e.g. PARTIALLY_REFUNDED after V6), which is not a capture result (STATUS).
+  let captureId = str(s.captureId);
+  if (captureId) {
+    r.note('capture_step', 'captured in an earlier run; checking by query only');
+  } else {
+    const captureRequestId = str(s.captureRequestId) ?? randomUUID();
+    saveState('v2', { captureRequestId });
+    const cap = await paypal.captureOrder(orderId, { requestId: captureRequestId });
+    r.note('capture_outcome', cap.kind === 'UNKNOWN' ? `UNKNOWN:${cap.reason}` : cap.kind);
+    r.check('order captured (capture COMPLETED)', cap.kind === 'SUCCEEDED');
+    if (cap.kind !== 'SUCCEEDED') return;
+    const capture = cap.resource.capture;
+    captureId = capture.id;
+    saveState('v2', { captureId });
+    r.note('capture_response_has_payee', capture.payee?.merchant_id !== undefined);
+    r.check('capture response: amount and custom_id match', mismatches(capture, { amount: AMOUNT, customId: str(s.customId)! }).length === 0);
+  }
+  const capture = { id: captureId };
   r.note('capture', anon('capture', capture.id));
-  r.note('capture_response_has_payee', capture.payee?.merchant_id !== undefined);
-  r.check('capture response: amount and custom_id match', mismatches(capture, { amount: AMOUNT, customId: str(s.customId)! }).length === 0);
 
   const q = await paypal.getCapture(capture.id);
   r.check('GET capture found', q.kind === 'FOUND');
   if (q.kind === 'FOUND') {
     r.note('capture_status', q.resource.status);
-    r.check('GET capture: COMPLETED', q.resource.status === 'COMPLETED');
+    // After V6's partial refund the capture is PARTIALLY_REFUNDED; both mean the capture itself completed.
+    r.check('GET capture: COMPLETED (or PARTIALLY_REFUNDED after V6)', q.resource.status === 'COMPLETED' || q.resource.status === 'PARTIALLY_REFUNDED');
     const m = mismatches(q.resource, { amount: AMOUNT, customId: str(s.customId)!, payeeMerchantId: expectedPayee });
     r.check('GET capture: amount, currency, custom_id, payee match', m.length === 0);
     if (m.length) r.note('capture_mismatch', m.join(','));

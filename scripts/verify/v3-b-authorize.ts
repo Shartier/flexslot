@@ -65,19 +65,29 @@ await run(`V3 ${phase ?? '(no phase)'}`, 'SANDBOX', async (r) => {
     if (before.resource.status !== 'APPROVED' && before.resource.status !== 'COMPLETED') {
       throw new NotReady(`${key}: order is ${before.resource.status}; approve it in the browser first`);
     }
-    const authorizeRequestId = str(s.authorizeRequestId) ?? randomUUID();
-    saveState(`v3_${key}`, { authorizeRequestId });
-    const res = await paypal.authorizeOrder(orderId, { requestId: authorizeRequestId });
-    r.note(`${key}_authorize_outcome`, res.kind === 'UNKNOWN' ? `UNKNOWN:${res.reason}` : res.kind);
-    r.check(`${key}: authorized (authorization CREATED)`, res.kind === 'SUCCEEDED');
-    if (res.kind !== 'SUCCEEDED') continue;
-    const a = res.resource.authorization;
-    saveState(`v3_${key}`, { authorizationId: a.id });
-    r.note(`${key}_authorization`, anon('auth', a.id));
-    r.check(`${key}: representation has authorization id, status and expiration_time`, !!a.id && !!a.status && !!a.expiration_time);
-    r.check(`${key}: authorization amount and custom_id match`, mismatches(a, { amount: AMOUNT, customId: str(s.customId)! }).length === 0);
-    r.note(`${key}_authorization_has_payee`, a.payee?.merchant_id !== undefined);
-    const pu = res.resource.order.purchase_units?.[0];
+    // Re-run after a successful authorization: verify by query only (a same-id replay of order authorize
+    // returns the order's current state, e.g. CAPTURED / VOIDED after V4 / V5; see STATUS).
+    let pu;
+    const known = str(s.authorizationId);
+    if (known) {
+      r.note(`${key}_authorize_step`, 'authorized in an earlier run; checking by query only');
+      pu = before.resource.purchase_units?.[0];
+      r.check(`${key}: order lists the authorization`, !!pu?.payments?.authorizations?.some((x) => x.id === known));
+    } else {
+      const authorizeRequestId = str(s.authorizeRequestId) ?? randomUUID();
+      saveState(`v3_${key}`, { authorizeRequestId });
+      const res = await paypal.authorizeOrder(orderId, { requestId: authorizeRequestId });
+      r.note(`${key}_authorize_outcome`, res.kind === 'UNKNOWN' ? `UNKNOWN:${res.reason}` : res.kind);
+      r.check(`${key}: authorized (authorization CREATED)`, res.kind === 'SUCCEEDED');
+      if (res.kind !== 'SUCCEEDED') continue;
+      const a = res.resource.authorization;
+      saveState(`v3_${key}`, { authorizationId: a.id });
+      r.note(`${key}_authorization`, anon('auth', a.id));
+      r.check(`${key}: representation has authorization id, status and expiration_time`, !!a.id && !!a.status && !!a.expiration_time);
+      r.check(`${key}: authorization amount and custom_id match`, mismatches(a, { amount: AMOUNT, customId: str(s.customId)! }).length === 0);
+      r.note(`${key}_authorization_has_payee`, a.payee?.merchant_id !== undefined);
+      pu = res.resource.order.purchase_units?.[0];
+    }
     if (config.expectedMerchantId) {
       r.check(`${key}: order payee matches`, pu?.payee?.merchant_id === config.expectedMerchantId);
     }
