@@ -10,11 +10,24 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "verify:v0": "node scripts/verify/v0-env.ts",
+    "verify:v1": "node scripts/verify/v1-token.ts",
+    "verify:v2": "node scripts/verify/v2-a-capture.ts",
+    "verify:v3": "node scripts/verify/v3-b-authorize.ts",
+    "verify:v4": "node scripts/verify/v4-capture.ts",
+    "verify:v5": "node scripts/verify/v5-void.ts",
+    "verify:v6": "node scripts/verify/v6-refund.ts",
+    "verify:v7": "node scripts/verify/v7-b-refund.ts",
+    "verify:v9": "node scripts/verify/v9-vertex.ts"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
     "typescript": "7.0.2",
     "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "@google/genai": "2.30.0",
+    "zod": "4.6.7"
   }
 }
