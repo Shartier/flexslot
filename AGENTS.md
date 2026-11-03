@@ -5,6 +5,7 @@
 ## 最初に読むファイル
 
 - SPEC.md：合意済みの範囲、設計案、完成条件。
+- DESIGN.md：Claude Codeが具体化した技術設計、SPECとの差分、接続検証の計画。
 - STATUS.md：実際に確認したこと、未確認のこと、次の作業。
 - REVIEW.md：レビュー対象の版、重要度付き指摘、対応状況。
 - CLAUDE_START.md：Claude Codeへの最初の依頼。

@@ -1,12 +1,28 @@
 # FlexSlot — 状況と次の作業
 
-更新日：2026-11-03（日本時間）/ 文書版：status-v0.1。
+更新日：2026-11-03（日本時間）/ 文書版：status-v0.2。
 
 ## 現在地
 
-仕様と引き継ぎの準備段階。アプリ実装、AI実接続、PayPal Sandbox接続、公開、応募の成功はまだ確認していない。
+技術設計の段階。Claude Codeが技術構成、予約枠の競合防止、三者の権限、決済の順序と回復、接続検証の計画をDESIGN.md（design-v0.1）にまとめ、Codexの第1レビューを待っている。アプリ本体の実装、AIの実接続、PayPal Sandboxの接続、公開、応募の成功はまだ確認していない。
 
-## 確認済み
+第1レビューの対象は、ブランチ`design/review-1`のタグ`design-review-1`が指すコミット。`git rev-parse design-review-1`で正確なSHAを取得できる。
+
+## Claude Codeの確認（2026-11-03、第1区切り）
+
+| 項目 | 確認結果 |
+| --- | --- |
+| 既存文書とGit | AGENTS、SPEC、STATUS、REVIEW、CLAUDE_STARTを読んだ。着手時は`main`の`a1121b4`（タグhandoff-v0.1と同じ）で、作業ツリーに未コミットの変更はなかった。既存の変更を上書きしていない |
+| ブランチ | ユーザーの選択で`design/review-1`を作成し、この上で作業した。`main`は変更していない |
+| Node.js / npm | v24.22.1 / 11.19.1 |
+| PowerShell 7 | 着手時は未導入。ユーザーの許可を得て、wingetで`Microsoft.PowerShell`をユーザー範囲に導入した（7.6.9）。既存のHTML 5組は導入直後の`render-docs.ps1 -Check`で一致を確認 |
+| Google Cloud CLI | `gcloud`はPATHになく、Cloud SDKのフォルダもない。ADCのファイルもない |
+| 環境変数 | `PAYPAL_CLIENT_ID`、`PAYPAL_CLIENT_SECRET`、`PAYPAL_WEBHOOK_ID`、`GOOGLE_CLOUD_PROJECT`、`GOOGLE_CLOUD_LOCATION`、`GOOGLE_APPLICATION_CREDENTIALS`、`GEMINI_API_KEY`、`GOOGLE_API_KEY`は、このシェルではいずれも未設定（値は表示していない）。フォルダ内に`.env`はない。別の場所に設定がある可能性は否定していない |
+| Gitの作者 | `user.name`と`user.email`は未設定のまま。ユーザーの選択で、今回のコミットだけ仮の作者`Claude Code <claude-code@local.invalid>`を指定した。Gitの設定は変更していない |
+| SQLiteの事前確認 | Node内蔵の`node:sqlite`（メモリ上のDB）で、重なる予約・FROZENの保留と重なる予約をトリガーが`SLOT_CONFLICT`で拒否し、同じA予約への2件目の案件を部分一意インデックスが拒否した。隣接する予約は許可された。`BEGIN IMMEDIATE`も実行できた。使い捨ての確認であり、本番スキーマのテストではない |
+| PayPalの公式資料 | 与信・売上確定・返金・取消の応答は既定で最小の形式（`return=minimal`）で、完全な応答には`Prefer: return=representation`が必要。部分返金では金額の指定が必要（省略すると全額返金）。`PayPal-Request-Id`の保持期間は、一般資料と各APIのページのどちらにも記載がなかった。2026-11-03に確認 |
+
+## 以前の確認（Codex、2026-11-03）
 
 | 項目 | 確認結果 |
 | --- | --- |
@@ -23,48 +39,55 @@
 
 以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。
 
-Gitのuser.name/user.emailは未登録だったため、今回の初期文書コミットに限り一時的な作者 `Codex <codex@local.invalid>` を指定する。ユーザーのローカル/グローバルGit設定は変更しない。次回以降に使う本人のコミット作者設定は未設定のまま。
+Gitのuser.name/user.emailは未登録だったため、初期文書コミットに限り一時的な作者 `Codex <codex@local.invalid>` を指定した。ユーザーのローカル/グローバルGit設定は変更していない。
 
 参照：[公式規約](https://paypalaihackathon.devpost.com/rules)、[PayPal決済](https://developer.paypal.com/v5/checkout/auth-capture)、[Google Cloud認証](https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth)。
 
 ## 実行した確認とテスト
 
-| 区分 | 実施内容 | 結果 |
-| --- | --- | --- |
-| フォルダ | Get-Location、Get-ChildItem、rg --files --hidden、親AGENTS確認 | 既存コードなし、上書き対象なし |
-| Git事前確認 | git rev-parse / status / remote | 未初期化を確認。アプリ不具合ではない |
-| Git初期化 | git init -b main | 成功 |
-| 文書検証 | PowerShellでMarkdown→HTML生成、render-docs.ps1 -Checkによる本文・SHA-256照合 | 5組で一致。ナビゲーションのローカルリンク先も確認 |
-| Git除外 | .env、入れ子.env、秘密鍵、DB、ログ、work等の除外 | 除外10パターン合格、example設定と文書等の追跡可能4パターンも合格 |
-| 計算 | 利益例の算術、PSTからJSTへの日時換算 | USD 20.50、締切2026-11-13 05:00 JSTを再計算 |
-| HTML表示 | ローカルfile URLをブラウザで開く試行 | ブラウザのURLポリシーで拒否。PC/スマホの目視確認は未実施。画面表示成功とは扱わない |
-| アプリテスト | 単体・統合・E2E・実API・実機 | 未実行。アプリコードなし |
-
-補足：文書生成ツール確認時、WindowsAppsのpython.exeエイリアスは起動できなかった。Pythonをアプリの必須要件にしていない。HTML生成には利用可能なPowerShell 7のConvertFrom-Markdownを用いる。
-
-HTMLは外部スクリプト・画像・iframeを含まず、ローカルファイルとして直接開ける形で保存した。レスポンシブCSSと表の横スクロールを用意したが、その見た目を今回のブラウザで検証できたとは主張しない。
+| 日付・担当 | 区分 | 実施内容 | 結果 |
+| --- | --- | --- | --- |
+| 11-03 Codex | フォルダ | Get-Location、Get-ChildItem、rg --files --hidden、親AGENTS確認 | 既存コードなし、上書き対象なし |
+| 11-03 Codex | Git | git rev-parse / status / remote、git init -b main | 初期化に成功 |
+| 11-03 Codex | 文書検証 | render-docs.ps1 -Checkによる本文・SHA-256照合 | 5組で一致 |
+| 11-03 Codex | Git除外 | .env、入れ子.env、秘密鍵、DB、ログ、work等の除外 | 除外10パターン合格、追跡可能4パターン合格 |
+| 11-03 Codex | 計算 | 利益例、PSTからJSTへの日時換算 | USD 20.50、締切2026-11-13 05:00 JST |
+| 11-03 Claude | 環境 | node / npm / pwsh / gcloud / docker のバージョン、ADCファイルと環境変数の有無（値は非表示） | 上の表のとおり |
+| 11-03 Claude | 導入 | `winget install --id Microsoft.PowerShell --source winget --scope user` | 終了コード0、7.6.9 |
+| 11-03 Claude | 文書検証 | `pwsh -NoProfile -File tools/render-docs.ps1 -Check`（導入直後、変更前） | 5組すべてPASS |
+| 11-03 Claude | DB事前確認 | `node:sqlite`の使い捨てスクリプト（トリガー、部分一意インデックス、BEGIN IMMEDIATE） | 期待どおり拒否・許可。スクリプトは削除済みでリポジトリに含めていない |
+| 11-03 Claude | 文書生成 | DESIGN.mdを追加し、`render-docs.ps1`の対象に加えて全HTMLを再生成、`-Check`で照合 | 結果はREVIEWの第1レビュー依頼に記載 |
+| ─ | アプリテスト | 単体・統合・E2E・実API・実機 | 未実行。アプリコードなし |
 
 ## 未確認事項
 
-| 項目 | 現時点の扱い | 確認担当/タイミング |
-| --- | --- | --- |
-| PayPal Sandbox準備 | ユーザーへ準備状況だけ質問中。未設定・失敗とは断定しない | 本人/Claude、第1段階 |
-| Sandboxの店舗とA/Bアカウント、通貨 | 未確認。競合作品の国・カード制約を転用しない | Claude、公式仕様と実アカウントで確認 |
-| Aの元capture | 未作成と断定しない。今回フォルダに証拠なし | Claude、実接続デモの前提として照合 |
-| Google Cloudプロジェクト・リージョン・モデル・認証 | 未確認。秘密値の提出は求めていない | 本人/Claude、既存設定を値非表示で確認 |
-| 実装技術とDB排他設計 | Claudeが選定・設計を具体化する | 第1レビュー |
-| Devpost登録・参加資格 | 未確認。規約を読んだことと登録済みは別 | 本人、提出準備 |
-| OSSライセンス・デモ公開先・審査アクセス | 未確定 | 提出準備時に具体案を作る |
-| 現在のCodex/Claudeモデル | モデル切替を実行・検証していない | 各アプリのモデル選択で本人確認 |
+| ID | 項目 | 現時点の扱い | 確認担当・時期 |
+| --- | --- | --- | --- |
+| U01 | PayPal Developerの準備（Sandboxの事業者・買い手アカウント、RESTアプリの認証情報） | このPCでは環境変数・`.env`とも見当たらない。未作成とは断定しない | 本人がV0で準備。Claudeは値を見ない |
+| U02 | Sandboxの事業者アカウントの国と通貨、与信（AUTHORIZE）の利用可否 | 未確認。USDで進める案。競合作品の国の制約は転用しない | V1〜V3 |
+| U03 | 与信・注文の照会から、売上確定IDを取得できるか | 未確認。できない場合は同じ再送防止IDでの再送に頼る | V4 |
+| U04 | 返金の状態の種類と、元captureの照会で返金済みの額が分かるか | 未確認。返金ID・照会の組み合わせで設計 | V6 |
+| U05 | `PayPal-Request-Id`の保持期間 | 公式資料に記載なし。数分以内の再送だけを前提にし、長期間後の再送には頼らない | V4・V6で短時間の再送だけ確認 |
+| U06 | Webhookの実配送と署名検証 | 公開HTTPSのURLが必要。ローカルでは照会で代替 | V8（公開工程、本人確認後） |
+| U07 | Google Cloudのプロジェクト、課金、Vertex AI APIの有効化、リージョン、利用できるGeminiのモデル | 未確認。gcloudとADCはこのPCにない | 本人の準備後にV9 |
+| U08 | `node:sqlite`の安定性（Node 24） | 事前確認では警告なく動作。問題があれば`better-sqlite3`に差し替える | 骨組みの実装時 |
+| U09 | 公開デモの置き場所と審査員のアクセス方法（Sandboxの買い手アカウントの共有方法を含む） | 未確定。第一候補はCompute Engine | 提出準備時、本人確認後 |
+| U10 | OSSライセンス、Devpost登録・参加資格 | 未確定 | 本人、提出準備 |
+| U11 | 現在のCodex/Claudeのモデル | モデル切替を実行・検証していない | 各アプリのモデル選択で本人確認 |
+
+## 本人にお願いする準備（V0）
+
+1. **PayPal Developer**：Sandboxの事業者アカウントと買い手アカウント、RESTアプリを用意し、クライアントIDとシークレットをこのフォルダの`.env`に自分で記入する（変数名は実装時に`.env.example`で示す）。値をチャットに貼らない。
+2. **Google Cloud**：Vertex AIに使うプロジェクトを決め、課金とVertex AI APIを有効にする。Google Cloud CLIを導入し、`gcloud auth application-default login`でADCを作る。
+3. **確認しないこと**：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかだけを確認する。
 
 ## 次に行う作業
 
-1. Claude Codeでこのフォルダを開き、CLAUDE_START.mdの依頼を渡す。
-2. Claudeは技術構成、DBの排他制御、役割別認証、決済状態と回復方法を具体化し、SPECの設計案との差分を記録する。
-3. 最初の区切りは設計確定と接続検証計画。コミットSHAと変更点をCodexへ渡し、第1レビューを受ける。本体実装を一気に開始しない。
-4. その後、Claudeが小さなAI/Sandbox接続検証から開始し、一件全体、失敗時の回復、提出物の順に実装する。秘密情報が使えなければモックで進め、実接続未確認を残す。
+1. Codexの第1レビュー（DESIGN.md、SPEC.mdの差分、接続検証の計画）。指摘はREVIEW.mdに記録し、通常の修正はClaudeが行う。
+2. レビュー後、DESIGN 14章の順で実装する。最初は模擬モードだけで動く骨組みと単体テスト。認証情報がそろい次第、V1〜V7とV9を実行する。
+3. 本人の準備（V0）は並行して進められる。準備が遅れても、模擬モードで進めた部分と、実接続が未確認の部分を区別して記録する。
 
-11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。詳細はSPECの計画を参照。接続準備が遅れても、実接続条件を黙って完成条件から外さない。
+11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。
 
 ## 今後の検証記録の書式
 

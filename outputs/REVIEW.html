@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="4fa47d1988505a6620f1eeec8a720955931356317b7246728b3b2237515deb5c"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="dc1051e565a40ff0b141ae9e5c1b9ba89e0d0b5134c44a9393a122f8899dd14b"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
 .table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
 @media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
-<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="STATUS.html">進捗</a><a href="REVIEW.html" aria-current="page">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html" aria-current="page">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：REVIEW.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — レビュー記録</h1>
-<p>更新日：2026-11-03（日本時間）/ 版：review-v0.1。</p>
+<p>更新日：2026-11-03（日本時間）/ 版：review-v0.2（Claudeの第1レビュー依頼を追記）。</p>
 <h2 id="section">対象と今回の結論</h2>
 <p>対象：SPEC.mdのspec-v0.1と関連引き継ぎ文書。今回の文書基準はGitタグ <code>handoff-v0.1</code> で特定する。<code>git rev-parse handoff-v0.1</code> で正確なコミットSHAを取得できる。</p>
 <p>Codex自身が整理した文書の整合確認であり、Claudeの実装に対する独立レビューではない。実コード、実API、テスト結果の合格判定はしていない。仕様範囲は固定できたが、DB排他・認証・外部決済との回復処理はClaudeの設計確定後に第1レビューで確認する。</p>
@@ -85,7 +85,109 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <h2 id="claude1">Claudeから第1レビューへ渡すもの</h2>
 <p>対象コミットSHA、SPECの設計案からの差分、採用技術と永続化、状態遷移と回復表、枠の排他方式、三者の操作権限、AI/Sandbox接続検証の順序、不明点。実装や接続を行っていない項目は未実行と書く。</p>
 <p>通常の修正担当はClaude。Codexは指摘、再現、確認結果を記録する。確認が済む前に「修正済み＝検証済み」と扱わない。</p>
-<h2 id="section-3">今後のレビュー記録テンプレート</h2>
+<h2 id="claude-code-codex2026-11-03">第1レビュー依頼（Claude Code → Codex、2026-11-03）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>節目</td>
+<td>1：設計確定</td>
+</tr>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>design/review-1</code>、タグ<code>design-review-1</code>（<code>git rev-parse design-review-1</code>でSHAを取得）。親は<code>handoff-v0.1</code></td>
+</tr>
+<tr>
+<td>差分の確認</td>
+<td><code>git diff handoff-v0.1 design-review-1 --stat</code>、<code>git diff handoff-v0.1 design-review-1 -- SPEC.md</code></td>
+</tr>
+<tr>
+<td>変更ファイル</td>
+<td>DESIGN.md（新規）、SPEC.md（版と11章）、STATUS.md（全面更新、以前の記録は保持）、REVIEW.md（この節）、AGENTS.md（最初に読むファイルにDESIGN.mdを追加）、tools/render-docs.ps1（DESIGNを生成対象に追加）、outputs/*.html（再生成）</td>
+</tr>
+<tr>
+<td>実行環境</td>
+<td>Windows 11、Node.js v24.22.1、PowerShell 7.6.9、Git 2.53.0。AI：未接続、決済：未接続</td>
+</tr>
+<tr>
+<td>実行したコマンド</td>
+<td><code>pwsh -NoProfile -File tools/render-docs.ps1</code>（生成）と<code>-Check</code>（照合）。結果はコミット前に確認し、報告メッセージに記載</td>
+</tr>
+<tr>
+<td>未実行</td>
+<td>アプリのテスト、Sandbox・Vertex AIの接続（認証情報が未準備）。設計の正しさは実装・接続で未検証</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-3">見てほしい点</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>観点</th>
+<th>DESIGNの場所</th>
+<th>初期論点との対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B売上確定後のDB失敗と、送信待ちキューによるA返金の開始保証</td>
+<td>6.2（E6〜E8）、8章、D05</td>
+<td>R01、R02</td>
+</tr>
+<tr>
+<td>版・ハッシュ・承認順・凍結・保留の期限の扱い</td>
+<td>3章、4章、6.1、6.3、D04、D08</td>
+<td>R03</td>
+</tr>
+<tr>
+<td>操作記録を先に書く方式、再送防止ID、照会での回復、Webhookを照会のきっかけにだけ使う方式</td>
+<td>7章、D06</td>
+<td>R04</td>
+</tr>
+<tr>
+<td>招待リンク、パスで分けたクッキー、CSRF、改ざん対策</td>
+<td>5章、D03</td>
+<td>R05</td>
+</tr>
+<tr>
+<td>Aの元決済を実Sandboxで作って照合する手順</td>
+<td>6.1の1、V2</td>
+<td>R06</td>
+</tr>
+<tr>
+<td>AI出力の検査、自由文内の指示の無視、失敗時に手入力へ切り替える扱い</td>
+<td>9章</td>
+<td>R07</td>
+</tr>
+<tr>
+<td>補償額を登録時に固定する扱いと、利益計算</td>
+<td>D09、SPEC 9</td>
+<td>R08</td>
+</tr>
+<tr>
+<td>SQLite（<code>node:sqlite</code>）を選んだ判断と、公開先の候補</td>
+<td>2章、11章、U08、U09</td>
+<td>─</td>
+</tr>
+<tr>
+<td>接続検証の項目と順序</td>
+<td>12章</td>
+<td>─</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="claudecodex">Claude側で判断できず、Codexまたは本人の判断を求める点</h3>
+<ol>
+<li>承認順を「店主 → A → B」に固定してよいか（D08）。店主の承認を、店の規則による自動承認に置き換える案は採っていない。</li>
+<li>Bが支払いを完了しない場合に、照会で判断するまでの待ち時間（案は15分）。</li>
+<li>公開デモをCompute Engineで用意するか、ローカル起動だけで提出するか（本人確認事項）。</li>
+</ol>
+<h2 id="section-4">今後のレビュー記録テンプレート</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>

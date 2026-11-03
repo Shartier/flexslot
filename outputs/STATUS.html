@@ -1,17 +1,65 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="742b627aa196eec8fffb81381098689e0c0bf69770341f32bc87c97531912aad"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="238035cff91ff032fbec5fcbb6ad3a1b657d06d580a1c99bfbc2fe8966b67c6e"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
 .table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
 @media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
-<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
-<p>更新日：2026-11-03（日本時間）/ 文書版：status-v0.1。</p>
+<p>更新日：2026-11-03（日本時間）/ 文書版：status-v0.2。</p>
 <h2 id="section">現在地</h2>
-<p>仕様と引き継ぎの準備段階。アプリ実装、AI実接続、PayPal Sandbox接続、公開、応募の成功はまだ確認していない。</p>
-<h2 id="section-1">確認済み</h2>
+<p>技術設計の段階。Claude Codeが技術構成、予約枠の競合防止、三者の権限、決済の順序と回復、接続検証の計画をDESIGN.md（design-v0.1）にまとめ、Codexの第1レビューを待っている。アプリ本体の実装、AIの実接続、PayPal Sandboxの接続、公開、応募の成功はまだ確認していない。</p>
+<p>第1レビューの対象は、ブランチ<code>design/review-1</code>のタグ<code>design-review-1</code>が指すコミット。<code>git rev-parse design-review-1</code>で正確なSHAを取得できる。</p>
+<h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>確認結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>既存文書とGit</td>
+<td>AGENTS、SPEC、STATUS、REVIEW、CLAUDE_STARTを読んだ。着手時は<code>main</code>の<code>a1121b4</code>（タグhandoff-v0.1と同じ）で、作業ツリーに未コミットの変更はなかった。既存の変更を上書きしていない</td>
+</tr>
+<tr>
+<td>ブランチ</td>
+<td>ユーザーの選択で<code>design/review-1</code>を作成し、この上で作業した。<code>main</code>は変更していない</td>
+</tr>
+<tr>
+<td>Node.js / npm</td>
+<td>v24.22.1 / 11.19.1</td>
+</tr>
+<tr>
+<td>PowerShell 7</td>
+<td>着手時は未導入。ユーザーの許可を得て、wingetで<code>Microsoft.PowerShell</code>をユーザー範囲に導入した（7.6.9）。既存のHTML 5組は導入直後の<code>render-docs.ps1 -Check</code>で一致を確認</td>
+</tr>
+<tr>
+<td>Google Cloud CLI</td>
+<td><code>gcloud</code>はPATHになく、Cloud SDKのフォルダもない。ADCのファイルもない</td>
+</tr>
+<tr>
+<td>環境変数</td>
+<td><code>PAYPAL_CLIENT_ID</code>、<code>PAYPAL_CLIENT_SECRET</code>、<code>PAYPAL_WEBHOOK_ID</code>、<code>GOOGLE_CLOUD_PROJECT</code>、<code>GOOGLE_CLOUD_LOCATION</code>、<code>GOOGLE_APPLICATION_CREDENTIALS</code>、<code>GEMINI_API_KEY</code>、<code>GOOGLE_API_KEY</code>は、このシェルではいずれも未設定（値は表示していない）。フォルダ内に<code>.env</code>はない。別の場所に設定がある可能性は否定していない</td>
+</tr>
+<tr>
+<td>Gitの作者</td>
+<td><code>user.name</code>と<code>user.email</code>は未設定のまま。ユーザーの選択で、今回のコミットだけ仮の作者<code>Claude Code &lt;claude-code@local.invalid&gt;</code>を指定した。Gitの設定は変更していない</td>
+</tr>
+<tr>
+<td>SQLiteの事前確認</td>
+<td>Node内蔵の<code>node:sqlite</code>（メモリ上のDB）で、重なる予約・FROZENの保留と重なる予約をトリガーが<code>SLOT_CONFLICT</code>で拒否し、同じA予約への2件目の案件を部分一意インデックスが拒否した。隣接する予約は許可された。<code>BEGIN IMMEDIATE</code>も実行できた。使い捨ての確認であり、本番スキーマのテストではない</td>
+</tr>
+<tr>
+<td>PayPalの公式資料</td>
+<td>与信・売上確定・返金・取消の応答は既定で最小の形式（<code>return=minimal</code>）で、完全な応答には<code>Prefer: return=representation</code>が必要。部分返金では金額の指定が必要（省略すると全額返金）。<code>PayPal-Request-Id</code>の保持期間は、一般資料と各APIのページのどちらにも記載がなかった。2026-11-03に確認</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="codex2026-11-03">以前の確認（Codex、2026-11-03）</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -63,12 +111,13 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。</p>
-<p>Gitのuser.name/user.emailは未登録だったため、今回の初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定する。ユーザーのローカル/グローバルGit設定は変更しない。次回以降に使う本人のコミット作者設定は未設定のまま。</p>
+<p>Gitのuser.name/user.emailは未登録だったため、初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定した。ユーザーのローカル/グローバルGit設定は変更していない。</p>
 <p>参照：<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a>、<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal決済</a>、<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth">Google Cloud認証</a>。</p>
-<h2 id="section-2">実行した確認とテスト</h2>
+<h2 id="section-1">実行した確認とテスト</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
+<th>日付・担当</th>
 <th>区分</th>
 <th>実施内容</th>
 <th>結果</th>
@@ -76,109 +125,165 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </thead>
 <tbody>
 <tr>
+<td>11-03 Codex</td>
 <td>フォルダ</td>
 <td>Get-Location、Get-ChildItem、rg --files --hidden、親AGENTS確認</td>
 <td>既存コードなし、上書き対象なし</td>
 </tr>
 <tr>
-<td>Git事前確認</td>
-<td>git rev-parse / status / remote</td>
-<td>未初期化を確認。アプリ不具合ではない</td>
+<td>11-03 Codex</td>
+<td>Git</td>
+<td>git rev-parse / status / remote、git init -b main</td>
+<td>初期化に成功</td>
 </tr>
 <tr>
-<td>Git初期化</td>
-<td>git init -b main</td>
-<td>成功</td>
-</tr>
-<tr>
+<td>11-03 Codex</td>
 <td>文書検証</td>
-<td>PowerShellでMarkdown→HTML生成、render-docs.ps1 -Checkによる本文・SHA-256照合</td>
-<td>5組で一致。ナビゲーションのローカルリンク先も確認</td>
+<td>render-docs.ps1 -Checkによる本文・SHA-256照合</td>
+<td>5組で一致</td>
 </tr>
 <tr>
+<td>11-03 Codex</td>
 <td>Git除外</td>
 <td>.env、入れ子.env、秘密鍵、DB、ログ、work等の除外</td>
-<td>除外10パターン合格、example設定と文書等の追跡可能4パターンも合格</td>
+<td>除外10パターン合格、追跡可能4パターン合格</td>
 </tr>
 <tr>
+<td>11-03 Codex</td>
 <td>計算</td>
-<td>利益例の算術、PSTからJSTへの日時換算</td>
-<td>USD 20.50、締切2026-11-13 05:00 JSTを再計算</td>
+<td>利益例、PSTからJSTへの日時換算</td>
+<td>USD 20.50、締切2026-11-13 05:00 JST</td>
 </tr>
 <tr>
-<td>HTML表示</td>
-<td>ローカルfile URLをブラウザで開く試行</td>
-<td>ブラウザのURLポリシーで拒否。PC/スマホの目視確認は未実施。画面表示成功とは扱わない</td>
+<td>11-03 Claude</td>
+<td>環境</td>
+<td>node / npm / pwsh / gcloud / docker のバージョン、ADCファイルと環境変数の有無（値は非表示）</td>
+<td>上の表のとおり</td>
 </tr>
 <tr>
+<td>11-03 Claude</td>
+<td>導入</td>
+<td><code>winget install --id Microsoft.PowerShell --source winget --scope user</code></td>
+<td>終了コード0、7.6.9</td>
+</tr>
+<tr>
+<td>11-03 Claude</td>
+<td>文書検証</td>
+<td><code>pwsh -NoProfile -File tools/render-docs.ps1 -Check</code>（導入直後、変更前）</td>
+<td>5組すべてPASS</td>
+</tr>
+<tr>
+<td>11-03 Claude</td>
+<td>DB事前確認</td>
+<td><code>node:sqlite</code>の使い捨てスクリプト（トリガー、部分一意インデックス、BEGIN IMMEDIATE）</td>
+<td>期待どおり拒否・許可。スクリプトは削除済みでリポジトリに含めていない</td>
+</tr>
+<tr>
+<td>11-03 Claude</td>
+<td>文書生成</td>
+<td>DESIGN.mdを追加し、<code>render-docs.ps1</code>の対象に加えて全HTMLを再生成、<code>-Check</code>で照合</td>
+<td>結果はREVIEWの第1レビュー依頼に記載</td>
+</tr>
+<tr>
+<td>─</td>
 <td>アプリテスト</td>
 <td>単体・統合・E2E・実API・実機</td>
 <td>未実行。アプリコードなし</td>
 </tr>
 </tbody>
 </table></div>
-<p>補足：文書生成ツール確認時、WindowsAppsのpython.exeエイリアスは起動できなかった。Pythonをアプリの必須要件にしていない。HTML生成には利用可能なPowerShell 7のConvertFrom-Markdownを用いる。</p>
-<p>HTMLは外部スクリプト・画像・iframeを含まず、ローカルファイルとして直接開ける形で保存した。レスポンシブCSSと表の横スクロールを用意したが、その見た目を今回のブラウザで検証できたとは主張しない。</p>
-<h2 id="section-3">未確認事項</h2>
+<h2 id="section-2">未確認事項</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
+<th>ID</th>
 <th>項目</th>
 <th>現時点の扱い</th>
-<th>確認担当/タイミング</th>
+<th>確認担当・時期</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>PayPal Sandbox準備</td>
-<td>ユーザーへ準備状況だけ質問中。未設定・失敗とは断定しない</td>
-<td>本人/Claude、第1段階</td>
+<td>U01</td>
+<td>PayPal Developerの準備（Sandboxの事業者・買い手アカウント、RESTアプリの認証情報）</td>
+<td>このPCでは環境変数・<code>.env</code>とも見当たらない。未作成とは断定しない</td>
+<td>本人がV0で準備。Claudeは値を見ない</td>
 </tr>
 <tr>
-<td>Sandboxの店舗とA/Bアカウント、通貨</td>
-<td>未確認。競合作品の国・カード制約を転用しない</td>
-<td>Claude、公式仕様と実アカウントで確認</td>
+<td>U02</td>
+<td>Sandboxの事業者アカウントの国と通貨、与信（AUTHORIZE）の利用可否</td>
+<td>未確認。USDで進める案。競合作品の国の制約は転用しない</td>
+<td>V1〜V3</td>
 </tr>
 <tr>
-<td>Aの元capture</td>
-<td>未作成と断定しない。今回フォルダに証拠なし</td>
-<td>Claude、実接続デモの前提として照合</td>
+<td>U03</td>
+<td>与信・注文の照会から、売上確定IDを取得できるか</td>
+<td>未確認。できない場合は同じ再送防止IDでの再送に頼る</td>
+<td>V4</td>
 </tr>
 <tr>
-<td>Google Cloudプロジェクト・リージョン・モデル・認証</td>
-<td>未確認。秘密値の提出は求めていない</td>
-<td>本人/Claude、既存設定を値非表示で確認</td>
+<td>U04</td>
+<td>返金の状態の種類と、元captureの照会で返金済みの額が分かるか</td>
+<td>未確認。返金ID・照会の組み合わせで設計</td>
+<td>V6</td>
 </tr>
 <tr>
-<td>実装技術とDB排他設計</td>
-<td>Claudeが選定・設計を具体化する</td>
-<td>第1レビュー</td>
+<td>U05</td>
+<td><code>PayPal-Request-Id</code>の保持期間</td>
+<td>公式資料に記載なし。数分以内の再送だけを前提にし、長期間後の再送には頼らない</td>
+<td>V4・V6で短時間の再送だけ確認</td>
 </tr>
 <tr>
-<td>Devpost登録・参加資格</td>
-<td>未確認。規約を読んだことと登録済みは別</td>
+<td>U06</td>
+<td>Webhookの実配送と署名検証</td>
+<td>公開HTTPSのURLが必要。ローカルでは照会で代替</td>
+<td>V8（公開工程、本人確認後）</td>
+</tr>
+<tr>
+<td>U07</td>
+<td>Google Cloudのプロジェクト、課金、Vertex AI APIの有効化、リージョン、利用できるGeminiのモデル</td>
+<td>未確認。gcloudとADCはこのPCにない</td>
+<td>本人の準備後にV9</td>
+</tr>
+<tr>
+<td>U08</td>
+<td><code>node:sqlite</code>の安定性（Node 24）</td>
+<td>事前確認では警告なく動作。問題があれば<code>better-sqlite3</code>に差し替える</td>
+<td>骨組みの実装時</td>
+</tr>
+<tr>
+<td>U09</td>
+<td>公開デモの置き場所と審査員のアクセス方法（Sandboxの買い手アカウントの共有方法を含む）</td>
+<td>未確定。第一候補はCompute Engine</td>
+<td>提出準備時、本人確認後</td>
+</tr>
+<tr>
+<td>U10</td>
+<td>OSSライセンス、Devpost登録・参加資格</td>
+<td>未確定</td>
 <td>本人、提出準備</td>
 </tr>
 <tr>
-<td>OSSライセンス・デモ公開先・審査アクセス</td>
-<td>未確定</td>
-<td>提出準備時に具体案を作る</td>
-</tr>
-<tr>
-<td>現在のCodex/Claudeモデル</td>
+<td>U11</td>
+<td>現在のCodex/Claudeのモデル</td>
 <td>モデル切替を実行・検証していない</td>
 <td>各アプリのモデル選択で本人確認</td>
 </tr>
 </tbody>
 </table></div>
-<h2 id="section-4">次に行う作業</h2>
+<h2 id="v0">本人にお願いする準備（V0）</h2>
 <ol>
-<li>Claude Codeでこのフォルダを開き、CLAUDE_START.mdの依頼を渡す。</li>
-<li>Claudeは技術構成、DBの排他制御、役割別認証、決済状態と回復方法を具体化し、SPECの設計案との差分を記録する。</li>
-<li>最初の区切りは設計確定と接続検証計画。コミットSHAと変更点をCodexへ渡し、第1レビューを受ける。本体実装を一気に開始しない。</li>
-<li>その後、Claudeが小さなAI/Sandbox接続検証から開始し、一件全体、失敗時の回復、提出物の順に実装する。秘密情報が使えなければモックで進め、実接続未確認を残す。</li>
+<li><strong>PayPal Developer</strong>：Sandboxの事業者アカウントと買い手アカウント、RESTアプリを用意し、クライアントIDとシークレットをこのフォルダの<code>.env</code>に自分で記入する（変数名は実装時に<code>.env.example</code>で示す）。値をチャットに貼らない。</li>
+<li><strong>Google Cloud</strong>：Vertex AIに使うプロジェクトを決め、課金とVertex AI APIを有効にする。Google Cloud CLIを導入し、<code>gcloud auth application-default login</code>でADCを作る。</li>
+<li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかだけを確認する。</li>
 </ol>
-<p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。詳細はSPECの計画を参照。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
-<h2 id="section-5">今後の検証記録の書式</h2>
+<h2 id="section-3">次に行う作業</h2>
+<ol>
+<li>Codexの第1レビュー（DESIGN.md、SPEC.mdの差分、接続検証の計画）。指摘はREVIEW.mdに記録し、通常の修正はClaudeが行う。</li>
+<li>レビュー後、DESIGN 14章の順で実装する。最初は模擬モードだけで動く骨組みと単体テスト。認証情報がそろい次第、V1〜V7とV9を実行する。</li>
+<li>本人の準備（V0）は並行して進められる。準備が遅れても、模擬モードで進めた部分と、実接続が未確認の部分を区別して記録する。</li>
+</ol>
+<p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
+<h2 id="section-4">今後の検証記録の書式</h2>
 <p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

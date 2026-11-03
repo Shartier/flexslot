@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="17562ddcb54695ed5630a30f50986270fdedf446afa4e7fd8c8e0d504f856cd7"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
+.top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
+main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
+.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
+@media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html" aria-current="page">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
+<main><div class="meta">正本：DESIGN.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-1">FlexSlot — 技術設計（第1レビュー対象）</h1>
+<p>版：design-v0.1 / 作成日：2026-11-03（日本時間）/ 作成：Claude Code / 状態：設計のみ。アプリ本体は未実装、AI・PayPalは未接続。</p>
+<p>SPEC.md（spec-v0.1）の「設計案」を検証し、実装できる粒度まで具体化した文書。合意済みの範囲は変えない。SPECの条件を弱めた箇所はない。追加・具体化した箇所は「1. SPECとの差分」に列挙する。</p>
+<h2 id="spec">1. SPECとの差分</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>区分</th>
+<th>SPECの記述</th>
+<th>この設計での扱い</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D01</td>
+<td>具体化</td>
+<td>技術構成は未確定</td>
+<td>Node.js 24 + TypeScript、Fastify、React + Vite、Node内蔵SQLite（<code>node:sqlite</code>）、Vitest</td>
+<td>6章</td>
+</tr>
+<tr>
+<td>D02</td>
+<td>具体化</td>
+<td>予約の一意制約・時間重複検査をDBトランザクション内で</td>
+<td><code>BEGIN IMMEDIATE</code>の直列化に加え、DBトリガーで予約・保留の時間重複を拒否する二重防御</td>
+<td>4章。トリガーは2026-11-03にNode v24.22.1で動作を確認</td>
+</tr>
+<tr>
+<td>D03</td>
+<td>具体化</td>
+<td>三者の最小セッション設計</td>
+<td>役割ごとの招待リンク（推測不能なトークン）→ 役割と案件範囲に限定したHttpOnlyクッキー。CSRFトークンとOrigin検査</td>
+<td>5章</td>
+</tr>
+<tr>
+<td>D04</td>
+<td>追加</td>
+<td>Bの支払い承認が来ない場合の扱いは未記載</td>
+<td>実行開始後にBがPayPal画面を閉じた場合は、時間だけで判断せず注文を照会し、未承認と確認できたときだけ凍結を解く</td>
+<td>7.4節。SPECの「結果不明の枠を期限切れで解放しない」と整合</td>
+</tr>
+<tr>
+<td>D05</td>
+<td>追加</td>
+<td>予約確定とAへの返金の結び付け方は未記載</td>
+<td>予約更新と同じDBトランザクションで、A返金の操作記録（送信前）を作る（送信待ちキュー方式）</td>
+<td>予約確定後に返金が開始されない状態を作らないため</td>
+</tr>
+<tr>
+<td>D06</td>
+<td>追加</td>
+<td>Webhookを業務状態へ反映</td>
+<td>Webhookは照会のきっかけにだけ使い、状態はREST照会の結果で更新する</td>
+<td>順不同・重複・古い通知で状態が後退しないため</td>
+</tr>
+<tr>
+<td>D07</td>
+<td>追加</td>
+<td>PayPal応答の形式は未記載</td>
+<td>与信・売上確定・返金・取消には常に<code>Prefer: return=representation</code>を付ける</td>
+<td>既定は最小応答で、与信IDなどが返らない（公式参照、2026-11-03）</td>
+</tr>
+<tr>
+<td>D08</td>
+<td>具体化</td>
+<td>承認は同じ版とハッシュに紐付け</td>
+<td>承認順を「店主 → A → B（条件承認と支払い開始を同時）」に固定</td>
+<td>Bを先に待たせず、Aが断った時点でBに課金が発生しないため</td>
+</tr>
+<tr>
+<td>D09</td>
+<td>追加</td>
+<td>補償額の確定時点は未記載</td>
+<td>補償額は、Aが移動条件を登録した時点の店の規定額を、条件の版と一緒に固定する</td>
+<td>待つほど増えない（SPEC 9）を構造で保証するため</td>
+</tr>
+<tr>
+<td>D10</td>
+<td>追加</td>
+<td>公開デモの利用者の分離は未記載</td>
+<td>利用者ごとに独立したデモ環境（ワールド）を作り、データ・招待リンク・PayPalの紐付けをワールド単位で分ける</td>
+<td>審査員同士の操作が混ざらないため</td>
+</tr>
+<tr>
+<td>D11</td>
+<td>保留</td>
+<td>公開先</td>
+<td>ローカル起動を正式な手段とする。公開候補はCompute Engine＋永続ディスク</td>
+<td>11章。公開は本人確認後</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="section">2. 技術構成</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>層</th>
+<th>採用</th>
+<th>選定理由</th>
+<th>代替案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>実行環境</td>
+<td>Node.js 24（このPCはv24.22.1）</td>
+<td>このPCに導入済み。審査員の環境で再現しやすい</td>
+<td>─</td>
+</tr>
+<tr>
+<td>言語</td>
+<td>TypeScript（サーバー・画面の両方）</td>
+<td>型でAPIの入出力と金額を守る</td>
+<td>─</td>
+</tr>
+<tr>
+<td>API</td>
+<td>Fastify</td>
+<td>入力検証との統合、テスト用の注入機能</td>
+<td>Hono</td>
+</tr>
+<tr>
+<td>入力検証</td>
+<td>zod</td>
+<td>AI出力、API入力、PayPal応答の検証を一本化する</td>
+<td>─</td>
+</tr>
+<tr>
+<td>DB</td>
+<td>SQLite（<code>node:sqlite</code>の<code>DatabaseSync</code>）、WAL、<code>BEGIN IMMEDIATE</code></td>
+<td>ネイティブビルドが不要で、Windowsでも導入失敗が少ない。単一プロセスで直列化が明確</td>
+<td><code>better-sqlite3</code>（DBアクセス層を薄く包み、差し替え可能にする）</td>
+</tr>
+<tr>
+<td>画面</td>
+<td>React + Vite（PC・スマホ兼用のレスポンシブWeb）</td>
+<td>三画面と状態表示を短期間で組める</td>
+<td>サーバー描画</td>
+</tr>
+<tr>
+<td>PayPal</td>
+<td>REST直呼び出し（<code>fetch</code>）とPayPal JS SDKのボタン</td>
+<td>再送防止IDと応答の扱いを自分で管理できる</td>
+<td>公式サーバーSDK</td>
+</tr>
+<tr>
+<td>AI</td>
+<td>Google Gen AI SDK（<code>@google/genai</code>）でGemini on Vertex AIを呼ぶ</td>
+<td>Vertex AIとADC認証に対応</td>
+<td>Vertex AI REST直呼び出し</td>
+</tr>
+<tr>
+<td>テスト</td>
+<td>Vitest（単体・統合）、PayPal模擬サーバー（障害注入付き）、Playwright（画面試験は後の工程）</td>
+<td>失敗を再現可能にする</td>
+<td>─</td>
+</tr>
+</tbody>
+</table></div>
+<p>構成は単一プロセスとする。HTTPサーバー、外部呼び出しの実行器、回復処理が同じプロセスで動き、DBファイルは1つ。審査員がローカルで起動する場合も、<code>npm install</code> → <code>npm run dev</code>で完結させる。</p>
+<p>時刻は、すべてサーバーの<code>Clock</code>インターフェース経由で取得する。テストでは時刻を固定・前進させられるようにし、境界試験（AC05）に使う。</p>
+<h2 id="section-1">3. データモデルと不変条件</h2>
+<p>金額は通貨の最小単位の整数（USDならセント）。時刻はUTCのエポックミリ秒で保存し、店のタイムゾーンを別に持つ。時間区間は開始を含み終了を含まない（<code>start &lt; other.end AND other.start &lt; end</code>で重複と判定）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>テーブル</th>
+<th>主な列</th>
+<th>DBで守る制約</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>worlds</td>
+<td>id, mode_ai, mode_payment, created_at, expires_at</td>
+<td>決済モードはワールド作成時に固定</td>
+</tr>
+<tr>
+<td>shops</td>
+<td>id, world_id, name, timezone, currency, compensation_minor, expected_payee_merchant_id</td>
+<td>─</td>
+</tr>
+<tr>
+<td>stylists / services</td>
+<td>id, shop_id, 名前, 施術時間（分）, 料金（最小単位）</td>
+<td>施術時間 &gt; 0、料金 ≥ 0</td>
+</tr>
+<tr>
+<td>customers</td>
+<td>id, world_id, display_name</td>
+<td>─</td>
+</tr>
+<tr>
+<td>bookings</td>
+<td>id, shop_id, stylist_id, customer_id, service_id, start_ms, end_ms, status, version, price_minor</td>
+<td><code>end_ms &gt; start_ms</code>。確定予約・保留との時間重複をトリガーで拒否（4章）</td>
+</tr>
+<tr>
+<td>payments</td>
+<td>id, booking_id, kind（A_ORIGINAL / B_SWAP）, order_id, capture_id, amount_minor, currency, payee_merchant_id, status_raw, verified_at</td>
+<td>capture_idは一意</td>
+</tr>
+<tr>
+<td>flex_preferences</td>
+<td>id, booking_id, version, raw_text, structured_json, confirmed_at, compensation_minor</td>
+<td>(booking_id, version)は一意。補償額は登録時に固定（D09）</td>
+</tr>
+<tr>
+<td>b_requests</td>
+<td>id, world_id, customer_id, version, raw_text, structured_json, confirmed_at</td>
+<td>─</td>
+</tr>
+<tr>
+<td>swap_cases</td>
+<td>id, world_id, version, status, terms_json, terms_hash, a_booking_id, a_booking_version, b_request_id, 元枠, 移動先枠, b_price_minor, a_comp_minor, currency, a_capture_id, offer_expires_at</td>
+<td>1つのA予約に対し、進行中の案件は1件まで（部分一意インデックス。動作確認済み）</td>
+</tr>
+<tr>
+<td>approvals</td>
+<td>case_id, role（OWNER / A / B）, party_id, terms_hash, decision, decided_at</td>
+<td>(case_id, role, terms_hash)は一意</td>
+</tr>
+<tr>
+<td>slot_holds</td>
+<td>id, case_id, stylist_id, start_ms, end_ms, status（ACTIVE / FROZEN / RELEASED / CONVERTED）, expires_at</td>
+<td>有効な保留（ACTIVE / FROZEN）は確定予約と同様に重複判定に含める</td>
+</tr>
+<tr>
+<td>compensation_grants</td>
+<td>booking_id（一意）, case_id, granted_at</td>
+<td>補償は予約単位で1回（SPEC 6）</td>
+</tr>
+<tr>
+<td>payment_ops</td>
+<td>id, case_id, kind, paypal_request_id（一意）, request_hash, status, attempts, next_attempt_at, lease_until, external_id, http_status, response_summary_json</td>
+<td>(case_id, kind)は一意。再試行は同じ行・同じ再送防止IDを使う</td>
+</tr>
+<tr>
+<td>webhook_inbox</td>
+<td>event_id（一意）, received_at, headers_json, body, verify_status, processed_at</td>
+<td>同じイベントは1回だけ反映</td>
+</tr>
+<tr>
+<td>audit_log</td>
+<td>id, world_id, case_id, actor, action, detail_json, created_at</td>
+<td>秘密情報を含めない</td>
+</tr>
+<tr>
+<td>sessions / invites</td>
+<td>token_hash（SHA-256）, world_id, role, party_id, expires_at, csrf_hash</td>
+<td>トークンの平文は保存しない</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>terms_json</code>は、案件ID、版、店・担当者、A/BのID、元予約とその版、元枠と移動先、施術と時間、Bの料金、Aの補償、通貨、受取店舗、Aの元capture ID、期限を含む不変のスナップショット（SPEC 6）。<code>terms_hash</code>はその正規化JSONのSHA-256。条件が変われば版を上げ、それまでの承認は一致しなくなるため自動的に無効になる。</p>
+<h2 id="section-2">4. 予約枠の競合防止</h2>
+<ol>
+<li><strong>直列化</strong>：予約・保留・案件状態を変える処理は、すべて<code>BEGIN IMMEDIATE</code>の短いトランザクションで行う。SQLiteは書き込みを1本に直列化するため、「確認してから書く」間に別の書き込みが割り込まない。外部APIの呼び出し中はトランザクションを開かない。</li>
+<li><strong>DBトリガー（二重防御）</strong>：<code>bookings</code>への確定予約の挿入・時刻変更の前に、同じ担当者の確定予約、および有効な保留（ACTIVE / FROZEN）と時間が重なれば<code>SLOT_CONFLICT</code>で中止する。<code>slot_holds</code>の挿入にも同じトリガーを置く。アプリのコードに誤りがあっても、DBが重複を拒否する。</li>
+<li><strong>保留の期限</strong>：トリガーは時刻に依存させない。期限切れの判定はアプリの時計で行い、同じトランザクションの先頭で、期限を過ぎたACTIVEの保留をRELEASEDに更新してから検査する。FROZEN（実行開始後）の保留は期限で解放しない（SPEC 6）。</li>
+<li><strong>振替の確定順序</strong>：1つのトランザクション内で「移動先の保留をCONVERTEDにする → Aの予約を移動先へ更新する → 元枠にBの予約を挿入する」の順に実行する。各文がトリガーの検査を通るため、元枠をBだけが引き継げる。</li>
+<li><strong>二重の案件</strong>：同じA予約に対する進行中の案件は、部分一意インデックスで1件に制限する（AC06の同時要求を含む）。</li>
+</ol>
+<p>2026-11-03の事前確認（Node v24.22.1、メモリ上のDB）：重なる予約、FROZENの保留と重なる予約、同じA予約への2件目の案件は、いずれも拒否された。隣接する予約（終了時刻＝開始時刻）は許可された。本番のスキーマとテストで改めて確認する。</p>
+<h2 id="section-3">5. 三者の権限とセッション</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>店主</th>
+<th>A</th>
+<th>B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>自分のワールドの予約・案件・台帳を見る</td>
+<td>○</td>
+<td>自分の予約と、自分宛ての案件だけ</td>
+<td>自分の依頼と案件だけ</td>
+</tr>
+<tr>
+<td>補償規定の設定</td>
+<td>○（それ以降の登録に適用）</td>
+<td>×</td>
+<td>×</td>
+</tr>
+<tr>
+<td>移動条件の登録・変更（新しい版になる）</td>
+<td>×</td>
+<td>自分の確定予約だけ</td>
+<td>×</td>
+</tr>
+<tr>
+<td>依頼の入力・確認質問への回答</td>
+<td>×</td>
+<td>×</td>
+<td>自分の依頼だけ</td>
+</tr>
+<tr>
+<td>振替案の承認・却下</td>
+<td>同じ<code>terms_hash</code>に対して</td>
+<td>自分の予約に対する案だけ</td>
+<td>自分の依頼に対する案だけ</td>
+</tr>
+<tr>
+<td>支払いの開始</td>
+<td>×</td>
+<td>×</td>
+<td>店主とAが同じ<code>terms_hash</code>を承認済みのときだけ</td>
+</tr>
+<tr>
+<td>要対応の操作の再実行</td>
+<td>既存の操作の回復だけ（新しい返金は作れない）</td>
+<td>×</td>
+<td>×</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>招待リンク</strong>：ワールド作成時に、役割ごとに256ビットの乱数トークンを発行し、SHA-256だけを保存する。リンクを開くと、ワールドと役割に紐付いたセッションを作る。</li>
+<li><strong>クッキー</strong>：<code>HttpOnly</code>、<code>SameSite=Strict</code>、HTTPSでは<code>Secure</code>。パスを<code>/w/{ワールドID}/{役割}</code>に限定し、1つのブラウザで三役割のタブを開いても混ざらないようにする。</li>
+<li><strong>サーバー側の検査</strong>：すべてのAPIで、セッションのワールド・役割・当事者IDと、操作対象の案件・予約の所有者を照合する。画面の役割切替ボタンは招待リンクを開くだけで、認証の代わりにはしない。デモでは作成者が三役割のリンクを持つが、本来は当事者がそれぞれ自分のリンクだけを受け取る前提であることを画面とREADMEに書く。</li>
+<li><strong>CSRF</strong>：変更系のAPIは、セッションに紐付いたCSRFトークン（<code>X-CSRF-Token</code>ヘッダー）と<code>Origin</code>の一致を必須にする。</li>
+<li><strong>改ざん対策</strong>：ブラウザから来た金額・通貨・受取先・order ID・capture IDは使わない。サーバーは案件IDだけを受け取り、値はDBの条件スナップショットから取る（AC11）。</li>
+</ul>
+<h2 id="section-4">6. 振替の流れと状態</h2>
+<h3 id="section-5">6.1 承認までの流れ</h3>
+<ol>
+<li><strong>ワールド作成</strong>：店、担当者Mika、施術2種類、Aの予約を作る。Sandboxモードでは、AがPayPal Sandboxで予約代金を支払う（<code>intent=CAPTURE</code>）。サーバーは売上確定の結果を照会し、金額・通貨・受取店舗・予約との紐付けを確認してから、Aの予約を「支払い確認済み」にする。模擬モードでは模擬の売上確定を使い、そのことを表示する。</li>
+<li><strong>Aの移動条件の登録</strong>：Aが自由文で条件を書き、AIが構造化し、Aが確認して確定する（版あり）。補償額はこの時点の店の規定額で固定する（D09）。</li>
+<li><strong>Bの依頼</strong>：Bが自由文で希望を書き、AIが構造化する。曖昧な点は質問し、Bが確認して確定する。</li>
+<li><strong>候補の判定（プログラム）</strong>：Bの希望枠を占めている確定予約のうち、支払い確認済みで移動条件を登録済みのA予約について、Aの条件に合う移動先を探す。担当者・施術時間・営業時間・Aの許容時間・他の予約と保留を検査する。成立しない場合は理由を表示する。</li>
+<li><strong>案の作成</strong>：条件スナップショットと<code>terms_hash</code>を作り、移動先にACTIVEの保留を置く（期限付き）。</li>
+<li><strong>承認</strong>：店主 → A → B の順（D08）。それぞれ同じ<code>terms_hash</code>を承認する。Aが却下するか期限切れになれば、保留を解放し、案件は不成立になる。Bには課金しない。</li>
+</ol>
+<h3 id="b">6.2 実行（Bの支払い開始から完了まで）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>段階</th>
+<th>処理</th>
+<th>次の状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E1 実行開始</td>
+<td>Bが条件を承認して支払いボタンを押す。<code>BEGIN IMMEDIATE</code>で版・期限・三者の承認・予約・保留・金額・通貨・受取先を再検査し、保留をFROZENにして条件を凍結し、注文作成の操作記録を作る</td>
+<td>PAYMENT_STARTED</td>
+</tr>
+<tr>
+<td>E2 注文作成</td>
+<td><code>POST /v2/checkout/orders</code>（<code>intent=AUTHORIZE</code>、金額、<code>custom_id=case:{id}:v{版}</code>、<code>invoice_id=FS-{id}-B</code>）。order IDをブラウザに返す</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>E3 B承認</td>
+<td>BがPayPal Sandboxの画面で承認する。ブラウザからの通知は合図としてだけ使う</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>E4 与信</td>
+<td><code>POST /v2/checkout/orders/{id}/authorize</code>。応答で金額・通貨・custom_id・受取先・与信の状態（CREATED）を照合する</td>
+<td>AUTHORIZED</td>
+</tr>
+<tr>
+<td>E5 売上確定前の検査</td>
+<td>元予約・保留・承認・凍結・与信の状態を再検査する。不成立なら取消（E-V）へ</td>
+<td>CAPTURING</td>
+</tr>
+<tr>
+<td>E6 売上確定</td>
+<td><code>POST /v2/payments/authorizations/{id}/capture</code>（金額を明示、<code>final_capture=true</code>）。COMPLETEDを確認する。PENDINGなら照会を続け、予約確定へ進まない</td>
+<td>CAPTURED / PAYMENT_PENDING</td>
+</tr>
+<tr>
+<td>E7 予約確定</td>
+<td>1つのトランザクションで、Aの予約を移動先へ、Bの予約を元枠へ確定し、保留をCONVERTEDにし、補償の権利（予約単位で一意）とA返金の操作記録を作る（D05）</td>
+<td>BOOKING_COMMITTED</td>
+</tr>
+<tr>
+<td>E8 A返金</td>
+<td><code>POST /v2/payments/captures/{Aの元capture}/refund</code>（補償額を明示）。送信前に、返金できる残額を確認する。COMPLETEDを確認する</td>
+<td>REFUND_PENDING → COMPLETED</td>
+</tr>
+<tr>
+<td>E-V 取消</td>
+<td>売上確定前に不成立になった場合、<code>POST /v2/payments/authorizations/{id}/void</code>を送り、照会で取り消されたことを確認する</td>
+<td>VOID_PENDING → REJECTED</td>
+</tr>
+<tr>
+<td>E-R B返金</td>
+<td>Bの売上確定後に振替が確定的に不能になった場合、Bの売上を全額返金する（金額を明示）。Aの元予約は維持し、Aへの補償は開始しない</td>
+<td>B_REFUND_PENDING → COMPENSATED</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>実行権は1つだけ</strong>：E1は<code>UPDATE swap_cases SET status='PAYMENT_STARTED' ... WHERE id=? AND status='A_ACCEPTED' AND version=?</code>の条件付き更新で行い、更新件数が1のときだけ実行権を得る。同じ案件への確定要求が同時に2つ来ても、<code>BEGIN IMMEDIATE</code>で直列化されるため、2つ目は更新件数0となって拒否される（AC06、C04）。</p>
+<p><strong>予約確定の処理済みマーカー</strong>：E7では「案件の状態をBOOKING_COMMITTEDにする」「<code>compensation_grants</code>の行を挿入する」「A返金の操作行（REFUND_A）を挿入する」を、予約の更新と同じトランザクションで書く。SQLiteのコミットは原子的なので、これらは全部あるか全部ないかのどちらかになる。再起動後はこの3つの有無で、予約確定済みか未確定かを判定する（C06）。</p>
+<p>状態名はSPEC 7の表をそのまま使い、PAYMENT_STARTED（実行開始・凍結済み）を追加する。予約、Bの与信、Bの売上確定、Aへの返金、Bへの回復返金の状態は、案件とは別に<code>payments</code>と<code>payment_ops</code>に保存する。PayPalの状態名は加工せずに保存し、未知の状態は成功として扱わない。</p>
+<h3 id="bd04">6.3 Bが支払いを完了しない場合（D04）</h3>
+<p>E1で凍結した後にBがPayPalの画面を閉じた場合、一定時間（例：15分）が過ぎたら、時間ではなく照会結果で判断する。<code>GET /v2/checkout/orders/{id}</code>で未承認（CREATED / PAYER_ACTION_REQUIRED）と確認できたときだけ、凍結を解いて承認待ちに戻すか、期限切れにする。承認済み（APPROVED）なら与信を進め、与信済みなら通常の流れに合流する。照会できない場合は結果不明として枠を保護し続ける。</p>
+<h2 id="paypal">7. PayPal呼び出しの共通規則</h2>
+<ul>
+<li><strong>Sandbox専用</strong>：接続先は<code>https://api-m.sandbox.paypal.com</code>に固定し、起動時にSandbox以外のURLを設定していれば起動を拒否する（SPEC、AGENTS）。</li>
+<li><strong>操作記録を先に書く</strong>：外部呼び出しの前に、<code>payment_ops</code>の行（種別、再送防止ID＝UUID、リクエスト本文のハッシュ、案件の版）を状態SENDINGでコミットする。再起動後にSENDINGの行が残っていれば「送ったか不明」として扱い、送っていないとはみなさない。</li>
+<li><strong>再送防止ID</strong>：同じ操作の再試行は、同じ<code>PayPal-Request-Id</code>と同じ本文を使う。別の操作には別のIDを使う。保持期間は公式の一般資料に記載がない（2026-11-03確認）ため、長期間後の再送に頼らない（9章 U05）。</li>
+<li><strong>応答の形式</strong>：<code>Prefer: return=representation</code>を付ける（D07）。</li>
+<li><strong>結果の照合</strong>：成功と判断する前に、金額・通貨・<code>custom_id</code>・受取先のmerchant ID・状態を、条件スナップショットと照合する。</li>
+<li><strong>再試行</strong>：通信エラー、5xx、429のときだけ、間隔を2秒から倍にして最大6回まで再試行する。それでも不明なら要対応（NEEDS_ATTENTION）とし、店主の画面に表示する。4xx（金額超過など）は再試行しない。</li>
+<li><strong>実行器</strong>：単一プロセス内のループが、期限切れでない貸出（lease）を取った操作だけを実行する。画面の操作から同じ処理を呼んでも、貸出があるため同じ操作が二重に走らない。</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>結果が不明なときの照会方法</th>
+<th>照会でも決まらないとき</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>注文作成</td>
+<td>同じ再送防止IDで再送</td>
+<td>支払いは発生していないので、注文を破棄し新しい操作として作り直す</td>
+</tr>
+<tr>
+<td>与信</td>
+<td><code>GET /v2/checkout/orders/{id}</code>の与信一覧</td>
+<td>同じ再送防止IDで再送</td>
+</tr>
+<tr>
+<td>売上確定</td>
+<td><code>GET /v2/payments/authorizations/{id}</code>の状態、注文の照会での売上確定一覧（取得できるかは検証項目V4）</td>
+<td>同じ再送防止IDで再送。それでも不明なら要対応</td>
+</tr>
+<tr>
+<td>取消</td>
+<td>与信の照会でVOIDEDを確認</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>返金</td>
+<td>返金IDがあれば<code>GET /v2/payments/refunds/{id}</code>。なければ元captureの照会（返金の確認方法は検証項目V6）</td>
+<td>同じ再送防止IDで再送。新しい返金は作らない</td>
+</tr>
+</tbody>
+</table></div>
+<p>Webhook（D06）：受信したら署名検証の前でも<code>webhook_inbox</code>にコミットしてから200を返す。保存できなければ成功を返さない。その後、<code>POST /v1/notifications/verify-webhook-signature</code>で検証に成功したものだけを、該当する操作の照会のきっかけにする。Webhookの内容で状態を直接書き換えないため、古い通知で状態が後退しない。実際のWebhook配送には公開HTTPSのURLが必要で、本人確認後の公開工程で検証する。</p>
+<h2 id="spec-7">8. 失敗時の回復（SPEC 7の具体化）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>失敗箇所</th>
+<th>検知</th>
+<th>回復</th>
+<th>画面の表示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>承認前の却下・期限切れ</td>
+<td>承認API、期限の掃除</td>
+<td>保留を解放。課金なし</td>
+<td>不成立</td>
+</tr>
+<tr>
+<td>B未承認のまま離脱</td>
+<td>6.3の照会</td>
+<td>未承認と確認できたときだけ凍結を解く</td>
+<td>支払い待ち</td>
+</tr>
+<tr>
+<td>与信後、売上確定前に不成立</td>
+<td>E5の検査</td>
+<td>取消を送り、VOIDEDを確認</td>
+<td>不成立・与信取消を確認中</td>
+</tr>
+<tr>
+<td>売上確定の結果不明</td>
+<td>通信切断・5xx、またはSENDINGの残存</td>
+<td>与信と注文を照会 → 同じIDで再送。新しい決済は作らない。枠はFROZENのまま</td>
+<td>決済を確認中</td>
+</tr>
+<tr>
+<td>売上確定済み、予約確定前に停止</td>
+<td>再起動時に、CAPTUREDの案件にE7の記録がない</td>
+<td>条件が有効なら同じ案件のE7を再実行する。確定的に不能（DBの制約違反など）ならBへ全額返金（E-R）</td>
+<td>予約を確定中</td>
+</tr>
+<tr>
+<td>予約確定のコミット応答が不明</td>
+<td>再起動時にDBを読み直す</td>
+<td>コミット済みならA返金へ進む。未コミットなら上の行と同じ処理。分からないまま巻き戻さない</td>
+<td>予約を確定中</td>
+</tr>
+<tr>
+<td>A返金の結果不明・PENDING</td>
+<td>応答・照会</td>
+<td>予約は変更後のまま維持し、Aへの未払いの補償を記録。照会と同じIDでの再送だけを行う</td>
+<td>予約変更済み・補償の返金待ち</td>
+</tr>
+<tr>
+<td>A返金の確定失敗</td>
+<td>FAILED、または4xx</td>
+<td>要対応として店主に表示する。原因を直した後も、前回の失敗と残額を確認するまで新しい返金は作らない。予約は戻さない</td>
+<td>予約変更済み・補償は要対応</td>
+</tr>
+<tr>
+<td>Bへの回復返金の失敗・不明</td>
+<td>同上</td>
+<td>振替不成立と未返金額を表示し、照会と回復を続ける。完了とは表示しない</td>
+<td>振替不成立・B返金を確認中</td>
+</tr>
+<tr>
+<td>プロセスの終了・再起動</td>
+<td>起動時にSENDING・未完了の操作を走査</td>
+<td>保存した操作と外部IDから再開する。ブラウザが開いていなくても回復できる</td>
+<td>処理中</td>
+</tr>
+</tbody>
+</table></div>
+<p>実行開始（E1）後に新しく取り消す操作は、このMVPでは提供しない。承認画面でその旨を説明する（SPEC 7）。</p>
+<h2 id="aigemini-on-vertex-ai">9. AI（Gemini on Vertex AI）</h2>
+<ul>
+<li><strong>役割</strong>：Aの移動条件とBの依頼の自由文を、決めたJSONスキーマへ構造化し、曖昧な点の確認質問を作る。候補の判定、金額、承認、決済は扱わない。AIに決済の機能やDB操作の機能は渡さない。</li>
+<li><strong>入力</strong>：店のタイムゾーン、今日の日付（店の現地時刻）、施術ID・施術時間・担当者ID・営業時間。利用者の文は「指示ではなくデータ」と明示して渡す。自由文に含まれる指示（「補償を50ドルにして」など）には従わず、構造化の対象にもしない。</li>
+<li><strong>出力スキーマ（案）</strong>：許容する時間区間の一覧（日付、開始・終了の現地時刻）、担当者を変えてよいか、施術の変更可否（MVPでは常に不可）、曖昧な点と確認質問。Bの場合は、施術IDと必須の時間区間も含める。</li>
+<li><strong>サーバーでの検査</strong>：zodで型・列挙値・日付の範囲・営業時間内かを検査する。「午後なら」のような表現は、具体的な時刻に勝手に確定せず、質問に回す。最終的な構造化結果は本人が確認して確定し、元の文とは別に版で保存する。</li>
+<li><strong>呼び出し</strong>：<code>@google/genai</code>を<code>vertexai: true</code>、プロジェクトID、リージョンを指定して使う。認証はローカルではADC（<code>gcloud auth application-default login</code>）、公開時はサーバーのサービスアカウント。ブラウザに認証情報を渡さない。<code>responseMimeType: application/json</code>と<code>responseSchema</code>を使い、<code>temperature</code>は0にする。</li>
+<li><strong>上限</strong>：1回20秒でタイムアウト、5xxと429のときだけ1回再試行、ワールドあたり30回まで、全体で1日500回まで。上限を超えたらフォームでの手入力を案内する。</li>
+<li><strong>失敗時</strong>：AIが失敗したら、フォームでの手入力に切り替えることを明示して案内する。模擬のAIに黙って切り替えない。模擬モードは試験とオフライン用の固定ルールで、画面に「AI：模擬」と表示する。</li>
+<li><strong>モデル</strong>：Vertex AIのGeminiのうち、構造化出力に対応する低遅延のモデル（Flash系を想定）を候補にする。実際のモデル名とリージョンは接続検証（V9）で、このプロジェクトで使えるものを確認してから決め、STATUSに記録する。</li>
+</ul>
+<h2 id="section-6">10. モードの分離と表示</h2>
+<ul>
+<li>AIのモード（Vertex / 模擬）と決済のモード（Sandbox / 模擬）は独立して設定し、ワールドの作成時に固定する。三画面の上部に常に表示する。</li>
+<li>決済のIDはモードを付けて保存する。模擬モードのIDをSandboxのAPIに渡す操作、Sandboxのワールドで模擬の結果を使う操作は、サーバーで拒否する（AC12）。</li>
+<li>Live接続のコードは書かない。設定でLiveのURLを指定できないようにする。</li>
+</ul>
+<h2 id="section-7">11. 公開とローカル起動（保留・本人確認後）</h2>
+<p>正式な提出手段は、英語のREADMEに沿ったローカル起動とする（規約上、公開ホスティングは必須ではない）。公開デモを用意する場合の第一候補は、Google Cloudの小さなCompute Engine VMと永続ディスクでNodeとSQLiteを動かす構成。サービスアカウントでVertex AIを呼べるため、鍵ファイルが不要になる。Cloud RunはDBの永続化のためにCloud SQLへの変更が必要になるので、今回は採らない。公開・デプロイは本人確認後に行い、審査期間の終了（日本時間12月16日01:00）まで維持する。</p>
+<h2 id="section-8">12. 接続検証の計画</h2>
+<p>本体の実装とは別に、<code>scripts/verify/</code>に小さなスクリプトを置き、Sandboxと実AIで一項目ずつ確認する。秘密情報は<code>.env</code>から読み、出力しない。各結果はSTATUSに、日時・モード・コマンド・終了コード・匿名化した結果として記録する。ブラウザでのSandbox承認が必要な項目は、本人の操作で行う。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>確認内容</th>
+<th>合格の証拠</th>
+<th>前提</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V0</td>
+<td>前提の準備</td>
+<td><code>.env</code>の必須変数がそろっている（値は表示せず、有無だけ確認）</td>
+<td>本人：PayPal Developer、Google Cloud</td>
+</tr>
+<tr>
+<td>V1</td>
+<td>PayPalのアクセストークン取得</td>
+<td>取得の成否と有効期限だけを表示</td>
+<td>V0</td>
+</tr>
+<tr>
+<td>V2</td>
+<td>Aの元決済（<code>intent=CAPTURE</code>）</td>
+<td>注文作成 → Sandboxの買い手で承認 → 売上確定 → 照会で金額・通貨・受取先が一致</td>
+<td>V1、本人の承認操作</td>
+</tr>
+<tr>
+<td>V3</td>
+<td>Bの与信</td>
+<td><code>intent=AUTHORIZE</code>の注文 → 承認 → 与信。表現形式の応答で与信ID・状態・期限が取れる</td>
+<td>V1、本人の承認操作</td>
+</tr>
+<tr>
+<td>V4</td>
+<td>売上確定と再送防止</td>
+<td>金額を明示して売上確定。同じ再送防止IDで再送すると同じcapture IDが返る。注文・与信の照会から売上確定を特定できるかも確認する</td>
+<td>V3</td>
+</tr>
+<tr>
+<td>V5</td>
+<td>与信の取消</td>
+<td>別の与信を取り消し、照会でVOIDEDになる</td>
+<td>V3</td>
+</tr>
+<tr>
+<td>V6</td>
+<td>Aへの部分返金</td>
+<td>元captureへ10.00を返金し、同じIDで再送すると同じ返金IDが返る。返金と元captureの照会で状態・残額が分かる。残額を超える返金はエラーで拒否される</td>
+<td>V2</td>
+</tr>
+<tr>
+<td>V7</td>
+<td>Bへの全額返金（回復の経路）</td>
+<td>Bの売上を全額返金し、照会でCOMPLETEDになる</td>
+<td>V4</td>
+</tr>
+<tr>
+<td>V8</td>
+<td>Webhookの署名検証</td>
+<td>公開URLへの実配送で、署名検証APIがSUCCESSを返す。改ざんした本文はFAILUREになる</td>
+<td>公開工程（本人確認後）</td>
+</tr>
+<tr>
+<td>V9</td>
+<td>Vertex AIの構造化出力</td>
+<td>選んだモデル・リージョンで、A・B・曖昧な文の3例がスキーマどおりに返る。遅延と使用量を記録。タイムアウト時の扱いも確認</td>
+<td>本人：プロジェクト、課金、Vertex AI API、gcloud、ADC</td>
+</tr>
+</tbody>
+</table></div>
+<p>模擬モードの障害注入テスト（通信切断、5xx、PENDING、二重のWebhookなど）は、Sandboxで同じ失敗を再現した証拠とは区別して記録する（SPEC 10）。</p>
+<h2 id="section-9">13. 完成条件との対応</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>AC</th>
+<th>主な確認手段</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AC01</td>
+<td>三画面での一件の操作、DB・Sandboxの照会結果の一致（V2〜V6のあとに通しで確認）</td>
+</tr>
+<tr>
+<td>AC02</td>
+<td>候補判定の単体テスト（60分・120分、隣接・重複、許容時間、タイムゾーンの境界）</td>
+</tr>
+<tr>
+<td>AC03</td>
+<td>V9と、曖昧な文・不正な出力・API失敗の試験</td>
+</tr>
+<tr>
+<td>AC04</td>
+<td>V2〜V7</td>
+</tr>
+<tr>
+<td>AC05</td>
+<td>時計を注入した状態遷移テスト（期限の境界、版の変更、古い承認の拒否）</td>
+</tr>
+<tr>
+<td>AC06</td>
+<td>同時要求の統合テスト（DBトリガー、部分一意インデックス、操作の貸出）</td>
+</tr>
+<tr>
+<td>AC07</td>
+<td>受信箱の単体テスト、署名検証の模擬テスト、V8</td>
+</tr>
+<tr>
+<td>AC08</td>
+<td>模擬PayPalでの障害注入（売上確定・返金・コミットの前後で停止）と再起動テスト</td>
+</tr>
+<tr>
+<td>AC09</td>
+<td>模擬PayPalでの返金PENDING・FAILED、Bへの回復返金のテスト。Sandboxで再現できた範囲は別に記録</td>
+</tr>
+<tr>
+<td>AC10</td>
+<td>ページ再読み込みとサーバー再起動のテスト</td>
+</tr>
+<tr>
+<td>AC11</td>
+<td>他人・他案件のセッション、改ざんした値を送るAPIテスト</td>
+</tr>
+<tr>
+<td>AC12</td>
+<td>モードの混在を拒否するテスト、画面の表示</td>
+</tr>
+<tr>
+<td>AC13</td>
+<td>別フォルダへのクリーンな取得とREADMEどおりの起動、PC幅とスマホ幅での操作</td>
+</tr>
+<tr>
+<td>AC14</td>
+<td>利益計算の単体テスト（20.50、機会損失を増やした場合、2回目の補償の拒否）</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="section-10">14. 第1レビュー後の実装順序</h2>
+<ol>
+<li>骨組み：パッケージ構成、DBスキーマとトリガー、時計、候補判定、利益計算と、その単体テスト（模擬モードのみ）。</li>
+<li>PayPalアダプター、障害注入付きの模擬PayPal、接続検証スクリプト（V1〜V7）。認証情報がそろい次第、Sandboxで実行する。</li>
+<li>実行器、送信待ちキュー、回復処理と、障害注入テスト。</li>
+<li>AIアダプター（Vertex / 模擬）とV9。</li>
+<li>三画面（店主・A・B）とセッション。</li>
+<li>第2レビュー：Sandboxで一件が最後まで通った時点。</li>
+</ol>
+</article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
