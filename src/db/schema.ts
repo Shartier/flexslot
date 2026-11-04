@@ -1,7 +1,9 @@
-// SQLite schema for DESIGN 3 (design-v0.3). Money is integer minor units; times are UTC epoch ms.
+// SQLite schema for DESIGN 3 (design-v0.5). Money is integer minor units; times are UTC epoch ms.
 // Raised error messages (SLOT_CONFLICT etc.) are part of the contract with the application code.
+// Version 2 (executor, DESIGN 14.3): operation rows keep their fixed input, the reconciliation marker
+// (D20 / IP1-04) and timestamps; A's original payment has its own operation table (STATUS I08).
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const CASE_STATUSES = [
   'DRAFT',
@@ -41,8 +43,63 @@ export const OPERATION_KINDS = ['ORDER_CREATE', 'ORDER_AUTHORIZE', 'AUTH_CAPTURE
 /** UNKNOWN = sent, outcome not known; PENDING = PayPal reported PENDING; NOT_ACCEPTED = first send rejected as invalid input. */
 export const OPERATION_STATUSES = ['PREPARED', 'SENDING', 'UNKNOWN', 'PENDING', 'SUCCEEDED', 'FAILED', 'NOT_ACCEPTED'] as const;
 export const UNCONFIRMED_OPERATION_STATUSES = ['PREPARED', 'SENDING', 'UNKNOWN', 'PENDING'] as const;
+/** D20: AWAITING = the POST succeeded but FlexSlot has not reconciled it yet; MATCHED = reconciled. */
+export const RECONCILE_STATUSES = ['AWAITING', 'MATCHED'] as const;
+/** A's original payment (intent=CAPTURE, DESIGN 6.1): not a money obligation, so it has its own table. */
+export const A_OPERATION_KINDS = ['ORDER_CREATE', 'ORDER_CAPTURE'] as const;
 
 const sqlList = (values: readonly string[]) => values.map((v) => `'${v}'`).join(', ');
+
+// Columns shared by payment_operations and a_payment_operations (DESIGN 7.1, 7.2).
+// request_json is the fixed input the request hash was computed from; it is never rebuilt before a resend.
+const operationColumns = `
+  op_seq INTEGER NOT NULL CHECK (op_seq >= 1),
+  target_external_id TEXT,
+  paypal_request_id TEXT NOT NULL UNIQUE,
+  request_hash TEXT NOT NULL CHECK (length(request_hash) = 64),
+  request_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(request_json)),
+  status TEXT NOT NULL CHECK (status IN (${sqlList(OPERATION_STATUSES)})),
+  result_external_id TEXT,
+  external_status TEXT,
+  external_update_time TEXT,
+  reconcile_status TEXT CHECK (reconcile_status IN (${sqlList(RECONCILE_STATUSES)})),
+  reconciled_at INTEGER,
+  result_amount_minor INTEGER,
+  observed_total_refunded_minor INTEGER,
+  lease_owner TEXT,
+  lease_gen INTEGER NOT NULL DEFAULT 0 CHECK (lease_gen >= 0),
+  lease_until INTEGER,
+  sends INTEGER NOT NULL DEFAULT 0 CHECK (sends >= 0),
+  prior_unknown INTEGER NOT NULL DEFAULT 0 CHECK (prior_unknown IN (0, 1)),
+  next_send_at INTEGER,
+  last_error_class TEXT,
+  created_at INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  CHECK (reconcile_status IS NULL OR status = 'SUCCEEDED'),
+  CHECK ((reconcile_status IS 'MATCHED') = (reconciled_at IS NOT NULL))`;
+
+// DESIGN 7.2: an operation's status only moves forward (PREPARED < SENDING/UNKNOWN < PENDING < final), the
+// reconciliation marker never goes back, and the stored request and the identified resource never change.
+const operationTriggers = (table: string) => `
+CREATE TRIGGER ${table}_no_regression BEFORE UPDATE OF status ON ${table}
+WHEN (OLD.status IN ('SUCCEEDED', 'FAILED', 'NOT_ACCEPTED') AND NEW.status IS NOT OLD.status)
+  OR (OLD.status = 'PENDING' AND NEW.status IN ('PREPARED', 'SENDING', 'UNKNOWN'))
+  OR (OLD.status IN ('SENDING', 'UNKNOWN') AND NEW.status = 'PREPARED')
+BEGIN SELECT RAISE(ABORT, 'OPERATION_STATUS_REGRESSION'); END;
+
+CREATE TRIGGER ${table}_reconcile_forward BEFORE UPDATE OF reconcile_status ON ${table}
+WHEN (OLD.reconcile_status = 'MATCHED' AND NEW.reconcile_status IS NOT 'MATCHED')
+  OR (OLD.reconcile_status = 'AWAITING' AND NEW.reconcile_status IS NULL)
+BEGIN SELECT RAISE(ABORT, 'RECONCILE_REGRESSION'); END;
+
+CREATE TRIGGER ${table}_request_immutable
+BEFORE UPDATE OF op_kind, op_seq, target_external_id, paypal_request_id, request_hash, request_json, result_external_id ON ${table}
+WHEN NEW.op_kind IS NOT OLD.op_kind OR NEW.op_seq IS NOT OLD.op_seq
+  OR NEW.target_external_id IS NOT OLD.target_external_id OR NEW.paypal_request_id IS NOT OLD.paypal_request_id
+  OR NEW.request_hash IS NOT OLD.request_hash OR NEW.request_json IS NOT OLD.request_json
+  OR (OLD.result_external_id IS NOT NULL AND NEW.result_external_id IS NOT OLD.result_external_id)
+BEGIN SELECT RAISE(ABORT, 'OPERATION_IMMUTABLE'); END;
+`;
 
 // Overlap rule shared by the triggers: [start, end) intervals overlap when a.start < b.end AND b.start < a.end.
 const bookingBlocks = (excludeSelf: boolean) => `
@@ -245,21 +302,8 @@ CREATE TABLE payment_operations (
   id TEXT PRIMARY KEY,
   attempt_id TEXT NOT NULL REFERENCES payment_attempts(id),
   op_kind TEXT NOT NULL CHECK (op_kind IN (${sqlList(OPERATION_KINDS)})),
-  op_seq INTEGER NOT NULL CHECK (op_seq >= 1),
   previous_operation_id TEXT REFERENCES payment_operations(id),
-  target_external_id TEXT,
-  paypal_request_id TEXT NOT NULL UNIQUE,
-  request_hash TEXT NOT NULL CHECK (length(request_hash) = 64),
-  status TEXT NOT NULL CHECK (status IN (${sqlList(OPERATION_STATUSES)})),
-  result_external_id TEXT,
-  external_status TEXT,
-  external_update_time TEXT,
-  lease_owner TEXT,
-  lease_gen INTEGER NOT NULL DEFAULT 0 CHECK (lease_gen >= 0),
-  lease_until INTEGER,
-  sends INTEGER NOT NULL DEFAULT 0 CHECK (sends >= 0),
-  next_send_at INTEGER,
-  last_error_class TEXT,
+  ${operationColumns},
   UNIQUE (attempt_id, op_kind, op_seq),
   CHECK ((op_seq = 1) = (previous_operation_id IS NULL))
 ) STRICT;
@@ -267,6 +311,21 @@ CREATE UNIQUE INDEX payment_operations_one_unconfirmed_per_attempt
   ON payment_operations(attempt_id) WHERE status IN (${sqlList(UNCONFIRMED_OPERATION_STATUSES)});
 CREATE UNIQUE INDEX payment_operations_one_success_per_attempt_kind
   ON payment_operations(attempt_id, op_kind) WHERE status = 'SUCCEEDED';
+CREATE INDEX payment_operations_target ON payment_operations(op_kind, target_external_id);
+
+CREATE TABLE a_payment_operations (
+  id TEXT PRIMARY KEY,
+  booking_id TEXT NOT NULL REFERENCES bookings(id),
+  op_kind TEXT NOT NULL CHECK (op_kind IN (${sqlList(A_OPERATION_KINDS)})),
+  previous_operation_id TEXT REFERENCES a_payment_operations(id),
+  ${operationColumns},
+  UNIQUE (booking_id, op_kind, op_seq),
+  CHECK ((op_seq = 1) = (previous_operation_id IS NULL))
+) STRICT;
+CREATE UNIQUE INDEX a_payment_operations_one_unconfirmed_per_booking
+  ON a_payment_operations(booking_id) WHERE status IN (${sqlList(UNCONFIRMED_OPERATION_STATUSES)});
+CREATE UNIQUE INDEX a_payment_operations_one_success_per_booking_kind
+  ON a_payment_operations(booking_id, op_kind) WHERE status = 'SUCCEEDED';
 
 CREATE TABLE webhook_deliveries (
   id TEXT PRIMARY KEY,
@@ -355,6 +414,7 @@ BEGIN SELECT RAISE(ABORT, 'OBLIGATION_SETTLED'); END;
 
 -- DESIGN 7.1: settle only through a SUCCEEDED operation of this obligation, of the kind that completes it
 -- (B_CHARGE by AUTH_CAPTURE, never by order creation or authorization). AFTER, so the UNIQUE check runs first.
+-- D20 / IP1-04: a capture (and a void) settles only once FlexSlot has reconciled it with a query (MATCHED).
 CREATE TRIGGER money_obligations_settlement_matches AFTER UPDATE OF status, settled_by_operation_id ON money_obligations
 WHEN NEW.settled_by_operation_id IS NOT NULL AND NOT EXISTS (
   SELECT 1 FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id
@@ -364,8 +424,18 @@ WHEN NEW.settled_by_operation_id IS NOT NULL AND NOT EXISTS (
       WHEN 'B_AUTH_VOID' THEN 'AUTH_VOID'
       ELSE 'CAPTURE_REFUND'
     END
+    AND (NEW.kind NOT IN ('B_CHARGE', 'B_AUTH_VOID') OR o.reconcile_status = 'MATCHED')
 )
 BEGIN SELECT RAISE(ABORT, 'SETTLEMENT_MISMATCH'); END;
+
+-- DESIGN 7.2: an attempt only moves forward (OPEN < ORDER_CREATED < AUTHORIZED < final).
+CREATE TRIGGER payment_attempts_no_regression BEFORE UPDATE OF status ON payment_attempts
+WHEN (OLD.status IN ('CAPTURED', 'SUCCEEDED', 'EXPIRED', 'FAILED') AND NEW.status IS NOT OLD.status)
+  OR (OLD.status = 'ORDER_CREATED' AND NEW.status = 'OPEN')
+  OR (OLD.status = 'AUTHORIZED' AND NEW.status IN ('OPEN', 'ORDER_CREATED'))
+BEGIN SELECT RAISE(ABORT, 'ATTEMPT_STATUS_REGRESSION'); END;
+${operationTriggers('payment_operations')}
+${operationTriggers('a_payment_operations')}
 
 -- DESIGN 7.4: only a VERIFIED delivery with the same event_id may register an event.
 CREATE TRIGGER webhook_events_verified_only BEFORE INSERT ON webhook_events

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="cf4dd109123966db1a986fd1e52da921dab215ce26aac4eb148e7338972116ff"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="9b89ec29667e7f7379ac8215143e47cb5c35201d30b30be19a5a69120da8b48b"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1190,4 +1190,197 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
+<h2 id="claude-code-codex2026-11-05">実行器・送信待ちキュー・回復処理の確認依頼（Claude Code → Codex、2026-11-05）</h2>
+<p>この節は末尾への追記で、上のCodexの記載と版の行は変更していない。正式な第2レビュー（一件の振替が画面とSandboxで最後まで動いた時点）とは別の、中間確認の依頼。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>節目</td>
+<td>DESIGN 14章の3（実行器、送信待ちキュー、回復処理、障害注入の試験）。最初にIP1-04と6.1の小修正をdesign-v0.5へ反映した</td>
+</tr>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>impl/executor</code>、タグ<code>impl-executor-1</code>（<code>git rev-parse impl-executor-1</code>でSHAを取得）。親は<code>impl-paypal-1-fix1</code>。間のコミット<code>5f68f90</code>は文書だけ（design-v0.5、Codexの再確認の記録）</td>
+</tr>
+<tr>
+<td>差分の確認</td>
+<td><code>git diff impl-paypal-1-fix1 impl-executor-1 --stat</code></td>
+</tr>
+<tr>
+<td>変更ファイル</td>
+<td>新規：<code>src/executor/</code>の8ファイル（<code>executor.ts</code>、<code>engine.ts</code>、<code>handlers.ts</code>、<code>identify.ts</code>、<code>ledger.ts</code>、<code>ops.ts</code>、<code>store.ts</code>、<code>terms.ts</code>）、<code>tests/</code>の7ファイル（<code>executor-flow</code>、<code>executor-recovery</code>、<code>executor-queue</code>、<code>executor-refund</code>、<code>executor-deadline</code>、<code>a-payment</code>の6つの試験と、補助の<code>executor-helpers.ts</code>）。更新：<code>src/db/schema.ts</code>（version 2）、<code>src/db/database.ts</code>（トリガーの名前）、<code>tests/db-schema.test.ts</code>、<code>tests/db-payments.test.ts</code>、DESIGN.md、STATUS.md、REVIEW.md（この節）、<code>outputs/</code>のDESIGN・STATUS・REVIEWのHTML</td>
+</tr>
+<tr>
+<td>実行方法</td>
+<td><code>npm ci</code> → <code>npm run check</code>。模擬PayPalだけで、外部へは接続しない</td>
+</tr>
+<tr>
+<td>Claude側の結果</td>
+<td><code>npm run check</code>は終了コード0、16ファイル・257件成功（前回の166件と今回の91件）。変異7種（受取先の照合、期限と与信、I07の除外、台帳の未確定、貸出の確認、再送の上限、照合前のCAPTURED）をすべて試験が検出した。詳細はSTATUSの「実行器・送信待ちキュー・回復処理」</td>
+</tr>
+<tr>
+<td>モード</td>
+<td>模擬PayPalの試験だけ。Sandboxでの実行器の実行・障害の再現は行っていない。Liveの設定・コードはない</td>
+</tr>
+<tr>
+<td>判定（Claude側）</td>
+<td>「確認依頼」。Codexの確認まで再確認済みとは扱わない</td>
+</tr>
+<tr>
+<td>未実行</td>
+<td>Sandboxでの実行器の実行、キューのタイマーと画面・HTTPからの呼び出し、Webhook（V8）、<code>HOLD:</code>の解除、承認URLの受け渡し</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="ip1-04">IP1-04の実装と試験</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Codexの条件</th>
+<th>実装</th>
+<th>試験（<code>tests/executor-recovery.test.ts</code>）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POSTの成功でcapture ID・COMPLETED・成功を保存し、B_CHARGEはOPEN、試行は未完了、枠はFROZEN。照合待ちを永続的に識別</td>
+<td>操作の<code>reconcile_status = AWAITING</code>（I19）。試行・債務・案件は照合済みまで動かさない。DBのトリガーで、照合済みでない売上確定による完了と、SUCCEEDEDからの後退を拒否</td>
+<td>「stop right after the POST success is saved」「the DB refuses to settle B_CHARGE from a capture that is not reconciled」</td>
+</tr>
+<tr>
+<td>captureを照会し、ID・親の与信と注文・金額・通貨・状態・受取先を照合できたときだけ、CAPTURED・SETTLED・paymentsを整合させてE7</td>
+<td><code>identify.ts</code>の<code>reconcileCapture</code>。照合済みと同じトランザクションで試行CAPTURED・B_CHARGE SETTLED。<code>payments</code>のBの行はE7で予約と一緒に記録（DESIGN 7.5に明記）</td>
+<td>一件の流れの試験、上記の停止の試験</td>
+</tr>
+<tr>
+<td>再起動時に照合待ちも走査し、POSTをやり直さず照会から再開。SENDINGへ戻さない。貸出・世代番号で保護</td>
+<td><code>recover()</code>の走査に照合待ちを含める。照合も貸出を取ってから行い、世代番号を条件に書く</td>
+<td>同上（POSTは1回、操作数は増えない）、「an answer that arrives after the lease expired is ignored」</td>
+</tr>
+<tr>
+<td>照会の失敗・受取先の欠落・不一致では債務と枠を維持し、後から一致したら一度だけ先へ進む</td>
+<td>失敗は照合待ちのまま10秒後に照会。欠落・不一致は監査ログに要対応を1回記録（I21）</td>
+<td>「stop after the reconciliation GET timed out」「a GET timeout that is saved keeps it awaiting」「GET capture with payee_missing / payee / amount」</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-15">見てほしい点</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>観点</th>
+<th>場所</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>貸出と前向きの書き込み</td>
+<td><code>src/executor/ops.ts</code>、<code>engine.ts</code>の<code>#store</code>、スキーマの操作のトリガー</td>
+<td>古い応答・状態の後退・update_timeの逆行を拒否する条件が足りているか</td>
+</tr>
+<tr>
+<td>同定と次の操作の判定（D19）</td>
+<td><code>identify.ts</code>、<code>handlers.ts</code>の<code>identify</code>・<code>recover</code></td>
+<td>再送の応答が元の結果でも現在の状態でも、同定の後に現在の状態で判断しているか。I23の「受理されなかった」とする条件</td>
+</tr>
+<tr>
+<td>返金の管理値（D18）</td>
+<td><code>ledger.ts</code>、<code>handlers.ts</code>の<code>#refundLedgerBlock</code>・<code>beforeFirstSend</code></td>
+<td>未確定・矛盾の間に送らない条件と、captureの照会との突き合わせ。外部返金の検出の限界（STATUSの未実施の範囲）</td>
+</tr>
+<tr>
+<td>I07の範囲</td>
+<td><code>executor.ts</code>の<code>EXCLUDED_SQL</code>、<code>handlers.ts</code>の<code>mayWork</code>・<code>resendAllowed</code></td>
+<td>走査から外すのが、EXPIREDの試行のorder IDのない注文作成だけになっているか</td>
+</tr>
+<tr>
+<td>I08</td>
+<td><code>handlers.ts</code>の<code>AOpHandler</code>、<code>executor.ts</code>の<code>prepareAPayment</code>・<code>captureAPayment</code>、<code>tests/a-payment.test.ts</code></td>
+<td>Aの元決済が、アプリ本体で操作単位に保存・回復されているか</td>
+</tr>
+<tr>
+<td>再送と照会の間隔</td>
+<td><code>ops.ts</code>の定数、<code>engine.ts</code>の<code>#fromSend</code></td>
+<td>合計7回の送信、10秒ごとの照会（I22）</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-16">実装で決めた点（確認を求める）</h3>
+<p>詳細と理由はSTATUSの「実行器・送信待ちキュー・回復処理」の「実装で決めた点」（I17〜I29）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I17</td>
+<td>与信も照合待ちを経て、注文の照会で照合してからAUTHORIZED（DESIGN E4の「応答で照合」より厳しい）</td>
+</tr>
+<tr>
+<td>I18</td>
+<td>取消も照合待ちを経て与信の照会でVOIDEDを確認。B_AUTH_VOIDは照合済みでだけSETTLED</td>
+</tr>
+<tr>
+<td>I19</td>
+<td>照合待ちの識別は<code>reconcile_status</code>。案件の表示はRECONCILING・PAYMENT_UNKNOWN・PAYMENT_PENDING</td>
+</tr>
+<tr>
+<td>I20</td>
+<td>確定しない送信はUNKNOWNと理由。<code>prior_unknown</code>は一度立てたら下げず、認証エラーとNOT_SENTでは立てない</td>
+</tr>
+<tr>
+<td>I21</td>
+<td><code>HOLD:</code>は自動処理の停止（債務はNEEDS_ATTENTION）。照会を続けるものは監査ログの要対応</td>
+</tr>
+<tr>
+<td>I22</td>
+<td>送信は合計7回、照会は10秒ごと、再起動後は貸出の期限切れを待つ</td>
+</tr>
+<tr>
+<td>I23</td>
+<td>未承認の注文で与信・captureがなければ「受理されなかった」。与信がVOIDED・EXPIREDなら売上確定は確定失敗</td>
+</tr>
+<tr>
+<td>I24</td>
+<td>売上確定の確定失敗では取消（E-V）へ</td>
+</tr>
+<tr>
+<td>I25</td>
+<td>E7の確定的な不能の判断（SLOT_CONFLICT、制約違反、Aの予約の変更、保留の状態）とE-R</td>
+</tr>
+<tr>
+<td>I26</td>
+<td>E1は完全な条件スナップショットと受取先の設定を必須にする</td>
+</tr>
+<tr>
+<td>I27</td>
+<td>返金の管理値に使うcaptureの金額の求め方</td>
+</tr>
+<tr>
+<td>I28</td>
+<td>期限切れでB_CHARGEはCANCELLED。補償0なら返金の債務を作らない</td>
+</tr>
+<tr>
+<td>I29</td>
+<td>6.3の5の防御を、EXPIREDの試行の注文の照会で行う</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="codex-2">Codexへの確認事項</h3>
+<ol>
+<li>IP1-04の実装と試験（上の表）で、IP1-04をクローズしてよいか。</li>
+<li>I17（与信も照会で照合する）を採るか、DESIGNどおり応答だけで照合に戻すか。採る場合は、DESIGNの6.2のE4と7.5の進み方3をClaudeが次の版で揃える。</li>
+<li>I21の「要対応」の分け方（債務のNEEDS_ATTENTIONと監査ログ）で、画面（14章の5）に進んでよいか。</li>
+<li>次の段階を14章の4（AIアダプター）と5（画面とセッション）のどちらから進めるか、Codexとして順序の意見があれば。</li>
+</ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

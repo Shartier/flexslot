@@ -3,10 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { immediate, isSchemaRaise, openDatabase } from '../src/db/database.ts';
+import { SCHEMA_VERSION } from '../src/db/schema.ts';
 import { SAMPLE_NOW_MS, seedSampleWorld } from '../src/sample.ts';
 import { insertCase, seeded, sha256 } from './helpers.ts';
 
+// a_payment_operations: A's original payment per operation (STATUS I08, schema version 2).
 const DESIGN_3_TABLES = [
+  'a_payment_operations',
   'approvals',
   'audit_log',
   'b_requests',
@@ -50,7 +53,7 @@ describe('schema', () => {
     const first = openDatabase(path);
     expect(first.prepare('PRAGMA journal_mode').get()).toEqual({ journal_mode: 'wal' });
     expect(first.prepare('PRAGMA foreign_keys').get()).toEqual({ foreign_keys: 1 });
-    expect(first.prepare('PRAGMA user_version').get()).toEqual({ user_version: 1 });
+    expect(first.prepare('PRAGMA user_version').get()).toEqual({ user_version: SCHEMA_VERSION });
     seedSampleWorld(first, 'w1', SAMPLE_NOW_MS);
     first.close();
 

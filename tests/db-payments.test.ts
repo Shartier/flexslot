@@ -108,10 +108,14 @@ describe('payment operations: DESIGN 7.5 B_CHARGE example', () => {
       'SETTLEMENT_MISMATCH',
     );
 
-    // E6: capture COMPLETED settles the obligation.
+    // E6: the capture POST succeeded, but it settles the obligation only once reconciled (D20, IP1-04).
     insertOperation(db, { id: 'OP3', attemptId: 'AT1', kind: 'AUTH_CAPTURE', target: 'U1', status: 'SENDING' });
+    setOp(db, 'OP3', { status: 'SUCCEEDED', result_external_id: 'C1', external_status: 'COMPLETED', reconcile_status: 'AWAITING' });
+    expect(() => db.prepare("UPDATE money_obligations SET status = 'SETTLED', settled_by_operation_id = 'OP3' WHERE id = 'OB1'").run()).toThrow(
+      'SETTLEMENT_MISMATCH',
+    );
     immediate(db, () => {
-      setOp(db, 'OP3', { status: 'SUCCEEDED', result_external_id: 'C1', external_status: 'COMPLETED' });
+      setOp(db, 'OP3', { reconcile_status: 'MATCHED', reconciled_at: 1 });
       db.prepare("UPDATE payment_attempts SET status = 'CAPTURED' WHERE id = 'AT1'").run();
       db.prepare("UPDATE money_obligations SET status = 'SETTLED', settled_by_operation_id = 'OP3' WHERE id = 'OB1'").run();
     });

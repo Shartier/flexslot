@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="790e8a2a62c7906f2787f274bf684a630ff6a6fd720a62cd60b9099ea469d1ba"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="bc15c7f18a835d0b54fb2ab5e4204257cf0de11904594e55d03343ef9882f72b"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,7 +8,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html" aria-current="page">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：DESIGN.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-1">FlexSlot — 技術設計（第1レビュー対象）</h1>
-<p>版：design-v0.5 / 作成日：2026-11-03、更新：2026-11-04（日本時間）/ 作成：Claude Code / 状態：骨組み・PayPalアダプター・接続検証（V1〜V7・V9）まで実装済み（STATUS参照）。実行器・回復処理は実装中（14章の3）。画面は未実装。</p>
+<p>版：design-v0.5 / 作成日：2026-11-03、更新：2026-11-04（日本時間）/ 作成：Claude Code / 状態：骨組み・PayPalアダプター・接続検証（V1〜V7・V9）、実行器・送信待ちキュー・回復処理（14章の3、模擬PayPalで試験）まで実装済み（STATUS参照）。画面は未実装。</p>
 <p>SPEC.md（spec-v0.1）の「設計案」を検証し、実装できる粒度まで具体化した文書。合意済みの範囲は変えない。SPECの条件を弱めた箇所はない。追加・具体化した箇所は「1. SPECとの差分」に列挙する。</p>
 <p>design-v0.2の変更：Codexの第1レビュー指摘DR1-01〜05と小修正を反映した。対応箇所の一覧は15章。</p>
 <p>design-v0.3の変更：DR1-02の残件に対応し、支払いの保存単位を「債務・試行・API操作」の3階層に分けた（D17、3章、6.2、6.3、7章、7.5）。</p>
@@ -1120,7 +1120,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <ol>
 <li>骨組み：パッケージ構成、DBスキーマとトリガー、時計、候補判定、利益計算と、その単体テスト（模擬モードのみ）。実装済み（<code>impl-skeleton-1</code>）。</li>
 <li>PayPalアダプター、障害注入付きの模擬PayPal、接続検証スクリプト（V1〜V7）。認証情報がそろい次第、Sandboxで実行する。実装済みで、Sandboxで実行した（<code>impl-paypal-1</code>とその修正版。STATUS参照）。Vertex AIの最小接続とV9もこの段階で行った。</li>
-<li>実行器、送信待ちキュー、回復処理と、障害注入テスト。</li>
+<li>実行器、送信待ちキュー、回復処理と、障害注入テスト。実装済みで、模擬PayPalで試験した（<code>impl-executor-1</code>。Sandboxでは未実行。STATUS参照）。</li>
 <li>AIアダプター（Vertex / 模擬）の本格版。</li>
 <li>三画面（店主・A・B）とセッション。</li>
 <li>第2レビュー：Sandboxで一件が最後まで通った時点。</li>

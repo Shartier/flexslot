@@ -55,7 +55,11 @@ export type SchemaRaise =
   | 'OBLIGATION_IMMUTABLE'
   | 'OBLIGATION_SETTLED'
   | 'SETTLEMENT_MISMATCH'
-  | 'DELIVERY_NOT_VERIFIED';
+  | 'DELIVERY_NOT_VERIFIED'
+  | 'ATTEMPT_STATUS_REGRESSION'
+  | 'OPERATION_STATUS_REGRESSION'
+  | 'RECONCILE_REGRESSION'
+  | 'OPERATION_IMMUTABLE';
 
 export function isSchemaRaise(error: unknown, code: SchemaRaise): boolean {
   return error instanceof Error && (error as { code?: unknown }).code === 'ERR_SQLITE_ERROR' && error.message === code;
