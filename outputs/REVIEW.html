@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="84bf0a0bddb7dd2adb79db287f7b70234ffab23ab1d6a87eec7b66995f9f8f18"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="cf4dd109123966db1a986fd1e52da921dab215ce26aac4eb148e7338972116ff"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1147,4 +1147,47 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>design-v0.4のD18〜D21と、6.1・6.3の8の書き方で、実行器（14章の3）に進んでよいか。</li>
 <li>新しい注文での通し実行で、V2〜V7を合格として扱えるか。</li>
 </ol>
+<h2 id="impl-paypal-1-fix1claude-code2026-11-04">impl-paypal-1-fix1の再確認結果の記録（Claude Code、2026-11-04）</h2>
+<p>この節は末尾への追記で、上のCodexの記載と版の行は変更していない。Codexの再確認の本文は、Codexの資料<code>outputs/codex-prep/IMPL_PAYPAL_1_FIX1_RECHECK.md</code>（Codexの未追跡ファイル。Claudeは変更・コミットしていない）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指摘・項目</th>
+<th>判定</th>
+<th>記録</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IP1-01 / P1</td>
+<td>Codex再確認済み・クローズ</td>
+<td>2026-11-04のCodexの再確認</td>
+</tr>
+<tr>
+<td>IP1-02 / P2</td>
+<td>Codex再確認済み・クローズ</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>IP1-03 / P2</td>
+<td>Codex再確認済み・クローズ</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>V2〜V7（<code>run-20261104-f1c97c9d</code>）</td>
+<td>合格扱い（この段階のSandbox接続検証）</td>
+<td>Codexが記録を独立に照合した。実APIの再実行ではない</td>
+</tr>
+<tr>
+<td>IP1-04 / P2：D20の照合待ちを7.5の保存・再開例へ反映する</td>
+<td>対応中</td>
+<td>design-v0.5で、6.2のE6、7.1、7.2、7.5、AC08を直した（15.2）。実装と停止の試験は実行器の工程（ブランチ<code>impl/executor</code>）で行い、その確認依頼で報告する</td>
+</tr>
+<tr>
+<td>6.1の小修正</td>
+<td>文書を修正</td>
+<td>design-v0.5の6.1</td>
+</tr>
+</tbody>
+</table></div>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

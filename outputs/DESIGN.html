@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="c7d77ea879743a7d8eea68e4296805fa73cc4cfa8ae9a4d2e6a67bbbecaaa16c"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="790e8a2a62c7906f2787f274bf684a630ff6a6fd720a62cd60b9099ea469d1ba"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,11 +8,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html" aria-current="page">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：DESIGN.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-1">FlexSlot — 技術設計（第1レビュー対象）</h1>
-<p>版：design-v0.4 / 作成日：2026-11-03（日本時間）/ 作成：Claude Code / 状態：骨組み・PayPalアダプター・接続検証（V1〜V7・V9）まで実装済み（STATUS参照）。実行器・回復処理・画面は未実装。</p>
+<p>版：design-v0.5 / 作成日：2026-11-03、更新：2026-11-04（日本時間）/ 作成：Claude Code / 状態：骨組み・PayPalアダプター・接続検証（V1〜V7・V9）まで実装済み（STATUS参照）。実行器・回復処理は実装中（14章の3）。画面は未実装。</p>
 <p>SPEC.md（spec-v0.1）の「設計案」を検証し、実装できる粒度まで具体化した文書。合意済みの範囲は変えない。SPECの条件を弱めた箇所はない。追加・具体化した箇所は「1. SPECとの差分」に列挙する。</p>
 <p>design-v0.2の変更：Codexの第1レビュー指摘DR1-01〜05と小修正を反映した。対応箇所の一覧は15章。</p>
 <p>design-v0.3の変更：DR1-02の残件に対応し、支払いの保存単位を「債務・試行・API操作」の3階層に分けた（D17、3章、6.2、6.3、7章、7.5）。</p>
 <p>design-v0.4の変更：Sandboxでの実接続（V1〜V7）の結果と、Codexの中間確認（<code>impl-paypal-1</code>、指摘IP1-01〜03と回答）を反映した。返金できる残額の管理値（D18）、再送・照会の応答での資源の同定と次の操作の判定の分離（D19）、売上確定後の照会による受取先の照合（D20）、候補探索の起点（D21）、I07・I08の回復条件、作品内AIのモデルとtemperatureの扱い。対応箇所は15章。</p>
+<p>design-v0.5の変更：Codexの再確認（<code>impl-paypal-1-fix1</code>、2026-11-04）の指摘IP1-04と6.1の小修正を反映した。売上確定のPOSTの成功の後の「照合待ち」を操作の行に永続的に記録し（<code>reconcile_status</code>）、6.2のE6、7.1、7.2、7.5の保存・再開の手順をD20に揃えた。Aの元決済の注文作成で、送信前と応答後に保存する値を分けた（6.1）。対応箇所は15.2。</p>
 <h2 id="spec">1. SPECとの差分</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -427,7 +428,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <h2 id="section-4">6. 振替の流れと状態</h2>
 <h3 id="section-5">6.1 承認までの流れ</h3>
 <ol>
-<li><strong>ワールド作成</strong>：店、担当者Mika、施術2種類、Aの予約を作る。Sandboxモードでは、AがPayPal Sandboxで予約代金を支払う（<code>intent=CAPTURE</code>）。サーバーは売上確定の結果を照会し、金額・通貨・受取店舗・予約との紐付けを確認してから、Aの予約を「支払い確認済み」にする。模擬モードでは模擬の売上確定を使い、そのことを表示する。Aの元決済は債務ではないが、注文作成と注文の売上確定（<code>ORDER_CAPTURE</code>）も、送信前に注文ID・再送防止ID・固定した本文ハッシュを保存し、応答が失われても同じIDの再送と照会で回復する。最終の<code>payments</code>行だけを保存する方式にはしない（STATUS I08）。</li>
+<li><strong>ワールド作成</strong>：店、担当者Mika、施術2種類、Aの予約を作る。Sandboxモードでは、AがPayPal Sandboxで予約代金を支払う（<code>intent=CAPTURE</code>）。サーバーは売上確定の結果を照会し、金額・通貨・受取店舗・予約との紐付けを確認してから、Aの予約を「支払い確認済み」にする。模擬モードでは模擬の売上確定を使い、そのことを表示する。Aの元決済は債務ではないが、注文作成と注文の売上確定（<code>ORDER_CAPTURE</code>）も操作単位で保存し、応答が失われても同じIDの再送と照会で回復する。保存の時点は次のとおり分ける。注文作成の送信前に保存するのは、再送防止ID・固定した入力・本文ハッシュで、この時点にはorder IDはまだない。order IDは注文作成の応答を受け取ってから保存する。注文の売上確定は保存済みのorder IDを対象にするため、送信前に対象のorder ID・再送防止ID・本文ハッシュを保存できる。売上確定のPOSTが成功しても、captureを照会して照合を終えるまで<code>payments</code>に記録しない（6.2のE6と同じ扱い）。最終の<code>payments</code>行だけを保存する方式にはしない（STATUS I08）。</li>
 <li><strong>Aの移動条件の登録</strong>：Aが自由文で条件を書き、AIが構造化し、Aが確認して確定する（版あり）。補償額はこの時点の店の規定額で固定する（D09）。</li>
 <li><strong>Bの依頼</strong>：Bが自由文で希望を書き、AIが構造化する。曖昧な点は質問し、Bが確認して確定する。</li>
 <li><strong>候補の判定（プログラム）</strong>：Bの希望枠を占めている確定予約のうち、支払い確認済みで移動条件を登録済みのA予約について、Aの条件に合う移動先を探す。担当者・施術時間・営業時間・Aの許容時間・他の予約と保留を検査する。成立しない場合は理由を表示する。Bの枠はAの元枠の内側に限る（STATUS I01）。開始時刻は15分刻みで調べ、Aの移動先は各許容時間の開始から、Bの枠は「Bの希望時間とAの元枠の重なり」の開始から数える。希望の時刻は丸めない（D21）。</li>
@@ -471,8 +472,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>E6 売上確定</td>
-<td>売上確定の操作（AUTH_CAPTURE、対象はauthorization ID）を作り、<code>POST /v2/payments/authorizations/{id}/capture</code>（金額を明示、<code>final_capture=true</code>）を送る。POSTの応答でCOMPLETEDを確認したら、その成功を操作に保存する。次にcaptureを照会し、capture ID・親の与信・金額・通貨・状態・受取先を照合できたときだけ、試行をCAPTUREDに、B_CHARGEの債務をSETTLED（<code>settled_by_operation_id</code>＝この操作）にする（D20）。照会の失敗・受取先の欠落・不一致は「照合待ち」とし、照会を再開する。新しい売上確定ではやり直さず、保留も解放しない。PENDINGなら照会を続け、予約確定へ進まない</td>
-<td>CAPTURED / PAYMENT_PENDING</td>
+<td>売上確定の操作（AUTH_CAPTURE、対象はauthorization ID）を作り、<code>POST /v2/payments/authorizations/{id}/capture</code>（金額を明示、<code>final_capture=true</code>）を送る。POSTの応答でCOMPLETEDを確認したら、1つのトランザクションで、capture ID・外部状態COMPLETED・操作の成功（SUCCEEDED）と、照合待ち（<code>reconcile_status = AWAITING</code>、7.1）を保存する。この時点では、試行は未完了（AUTHORIZED）、B_CHARGEはOPEN、保留はFROZENのまま。次にcaptureを照会し、capture ID・親の与信と注文・金額・通貨・状態・受取先を照合できたときだけ、1つのトランザクションで、照合済み（MATCHED）・試行のCAPTURED・B_CHARGEの債務のSETTLED（<code>settled_by_operation_id</code>＝この操作）を保存する（D20）。照会の失敗・受取先の欠落・不一致は照合待ちのままとし、照会を再開する。新しい売上確定ではやり直さず、保留も解放しない。PENDINGなら照会を続け、予約確定へ進まない</td>
+<td>CAPTURED / PAYMENT_PENDING / RECONCILING</td>
 </tr>
 <tr>
 <td>E7 予約確定</td>
@@ -534,7 +535,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>同じ種類の操作をやり直す</strong>：同じ種類の直前の操作が「確定失敗」か「受理されなかった」と判定できたときだけ、<code>op_seq</code>を1つ上げた新しい操作（新しいID、直前の操作を<code>previous_operation_id</code>で参照）を作れる。</li>
 <li><strong>新しい試行を作れる条件</strong>：直前の試行が終端の失敗（FAILED、またはお金が動いていないEXPIRED）のときだけ。新しい試行は直前の試行を<code>previous_attempt_id</code>で参照する。B_CHARGEでは、支払い期限の切れた案件では新しい試行を作らず、新しい案件からやり直す（6.3）。古い試行・操作の行と外部IDは上書きせずに残す。</li>
 <li><strong>未確定は1つまで</strong>：1つの試行に、未確定（PREPARED・SENDING・結果不明・PayPal側PENDING）の操作は1つまで。1つの債務に、未終了の試行は1つまで（どちらも部分一意インデックスで強制）。成功した試行も1つの債務に1つまでなので、返金の合計が債務の金額を超えない。</li>
-<li><strong>債務の完了</strong>：B_CHARGEをSETTLEDにするのは、売上確定の操作でCOMPLETEDを確認したときだけ。注文作成や与信の成功では完了にしない。返金の債務は、返金の操作でCOMPLETEDを確認したときにSETTLEDにする。</li>
+<li><strong>債務の完了</strong>：B_CHARGEをSETTLEDにするのは、売上確定の操作がSUCCEEDED（POSTでCOMPLETEDを確認）で、かつcaptureの照会で照合を終えた（<code>reconcile_status = MATCHED</code>）ときだけ（D20）。POSTのCOMPLETEDだけ、注文作成や与信の成功だけでは完了にしない。照合済みでない売上確定の操作による完了は、DBのトリガーでも拒否する。返金の債務は、返金の操作でCOMPLETEDを確認したときにSETTLEDにする。</li>
+<li><strong>照合待ちの記録（D20、IP1-04）</strong>：POSTの成功と照合の完了を分けるため、操作の行に照合の状態<code>reconcile_status</code>を持つ。照合が要らない操作では空、AWAITINGは「POSTは成功したが照合が未完了」、MATCHEDは「照合済み」。AWAITING・MATCHEDはSUCCEEDEDの操作にだけ置け、MATCHEDから戻さない。照会の失敗・受取先の欠落・不一致の理由は<code>last_error_class</code>に残し、照合待ちのまま照会を再開する。照合待ちの操作は、再起動時の走査の対象に含める（7.5）。</li>
 <li><strong>返金の前の残額確認（D18）</strong>：captureの照会には返金済みの額がない（STATUS F3）。そこで、返金できる残額はFlexSlotの記録から求める管理値とし、次の条件で使う。PayPal側の最新の残額を確認したとは扱わない。
 <ul>
 <li>このMVPでは、FlexSlotが作ったSandboxのcaptureへの返金は、FlexSlotの債務からだけ行う前提とする。PayPalの管理画面や別のアプリからの返金は想定しない（一般の連携には、そのまま当てはめない）。</li>
@@ -601,6 +603,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>結果の書き込み</strong>：外部応答の保存は<code>... WHERE id=? AND lease_gen=? AND lease_owner=?</code>と、許される状態遷移の条件をつけた更新だけで行う。更新件数が0なら、その応答は古いものとして業務状態に採用しない（監査ログには残す）。案件の状態の更新も、<code>WHERE status=? AND version=?</code>の条件付き更新で行う。</li>
 <li><strong>時間の関係</strong>：PayPalへの1回の通信は20秒でタイムアウトさせ、貸出は60秒とする。通常は貸出が切れる前に終わる。切れた場合でも、上の世代の条件で古い書き込みを防ぐ。</li>
 <li><strong>状態を後退させない</strong>：操作の状態には順位を付け（準備 &lt; 送信中・結果不明 &lt; PayPal側PENDING &lt; 終端）、終端から非終端へ、PENDINGから送信中へは戻さない。試行の状態（OPEN &lt; ORDER_CREATED &lt; AUTHORIZED &lt; CAPTURED、終端の失敗）も同じく前にしか進めない。外部リソースの状態は、PayPalの<code>update_time</code>が保存済みのもの以上で、かつ順位が下がらない場合だけ反映する。照会Q1（PENDING）がQ2（COMPLETED）の後に届いても、状態は戻らない。</li>
+<li><strong>照合結果の反映</strong>：照合待ちの操作の照会も、操作の行の貸出を取ってから行い、結果は取得時の世代番号を条件にした更新で反映する。照合待ちのSUCCEEDEDを、SENDINGやPENDINGへ戻さない。貸出が切れた後に届いた照会の結果は採用しない。</li>
 <li><strong>正当な進行との区別</strong>：COMPLETEDの売上確定がのちに返金されるなど、別のリソース（返金・取消）による変化は、そのリソースの試行・債務として記録し、元のリソースの状態を書き換えない。</li>
 <li><strong>結果不明は新しい操作にしない</strong>：結果不明の操作は、新しい操作・新しい試行としては送らず、照会と同じIDでの再送による回復に回す（7.1）。</li>
 </ul>
@@ -806,18 +809,19 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<p><code>rid-OP*</code>は操作ごとに別々のUUID、<code>sha-OP*</code>は作成時に固定した本文のハッシュ。3つの操作のID・本文ハッシュ・外部IDが、上書きされずに共存する。</p>
+<p><code>rid-OP*</code>は操作ごとに別々のUUID、<code>sha-OP*</code>は作成時に固定した本文のハッシュ。3つの操作のID・本文ハッシュ・外部IDが、上書きされずに共存する。OP3の<code>reconcile_status</code>はMATCHED（照合済み、D20）。</p>
 <p><strong>進み方</strong></p>
 <ol>
-<li>E1：OB1（OPEN）、AT1（OPEN）、OP1（PREPARED）を1つのトランザクションで作る。</li>
-<li>E2：OP1をSENDINGにしてから送る。O1を保存してOP1をSUCCEEDEDにし、同じトランザクションでAT1をORDER_CREATEDにする。OB1はOPENのまま。</li>
+<li>E1：OB1（OPEN）、AT1（OPEN）、OP1（PREPARED）を1つのトランザクションで作る。OP1には、再送防止ID・固定した入力・本文ハッシュを保存する。注文はまだないため、order IDはない。</li>
+<li>E2：OP1をSENDINGにしてから送る。応答のO1を保存してOP1をSUCCEEDEDにし、同じトランザクションでAT1をORDER_CREATEDにする。OB1はOPENのまま。</li>
 <li>E4：Bの承認後、AT1が期限内でORDER_CREATEDであることを条件に、OP2をSENDINGで作ってから送る。U1を保存してOP2をSUCCEEDEDにし、AT1をAUTHORIZEDにする。OB1はまだOPEN。</li>
-<li>E6：OP3をSENDINGで作ってから送る。C1がCOMPLETEDなら、1つのトランザクションでOP3をSUCCEEDED、AT1をCAPTURED、OB1をSETTLED（<code>settled_by_operation_id</code>＝OP3）にし、<code>payments</code>にC1を記録する。そのあとE7へ進む。</li>
+<li>E6（POST）：OP3をSENDINGで作ってから送る。応答のC1がCOMPLETEDなら、1つのトランザクションでOP3にC1・COMPLETED・SUCCEEDEDと照合待ち（<code>reconcile_status = AWAITING</code>）を保存する。AT1はAUTHORIZED、OB1はOPEN、両方の枠（移動先の保留はFROZEN、元枠はAの予約のまま）は変えない。</li>
+<li>E6（照合）：OP3の貸出を取ってC1を照会し、ID・親の与信U1と注文O1・金額・通貨・状態・custom_id・受取先を照合する。照合できたときだけ、1つのトランザクションでOP3を照合済み（MATCHED）、AT1をCAPTURED、OB1をSETTLED（<code>settled_by_operation_id</code>＝OP3）にする。そのあとE7へ進む。<code>payments</code>のBの行は、Bの予約を作るE7のトランザクションで、C1と一緒に記録する（<code>payments</code>は予約を参照するため）。照会の失敗・受取先の欠落・不一致なら照合待ちのままとし、OB1・AT1・枠を変えずに照会を再開する。</li>
 </ol>
-<p><strong>制約に衝突しないこと</strong>：OP1・OP2・OP3は操作種別が違うため、「(試行, 操作種別)ごとに成功は1つまで」に衝突しない。OP2はOP1の成功後、OP3はOP2の成功後に作るため、「1つの試行に未確定の操作は1つまで」も守られる。B_CHARGEが完了（SETTLED）になるのは、OP3がCOMPLETEDになったときだけ。</p>
+<p><strong>制約に衝突しないこと</strong>：OP1・OP2・OP3は操作種別が違うため、「(試行, 操作種別)ごとに成功は1つまで」に衝突しない。OP2はOP1の成功後、OP3はOP2の成功後に作るため、「1つの試行に未確定の操作は1つまで」も守られる。B_CHARGEが完了（SETTLED）になるのは、OP3がCOMPLETEDで、かつ照合済みになったときだけ。</p>
 <p><strong>同時に与信が要求された場合</strong>：ブラウザの承認通知、Webhook、実行器が同時にE4を始めても、OP2の作成は<code>BEGIN IMMEDIATE</code>の中で「この試行にORDER_AUTHORIZEの操作がまだない」ことを条件に行い、部分一意インデックスも未確定の操作を1つに制限する。2つ目以降はOP2を作れず、既存のOP2の結果を待つ。</p>
 <p><strong>途中で切断した場合の再開</strong></p>
-<p>PayPal側では成功したが、その結果をDBに保存する前に通信が切れた、またはプロセスが止まった場合を示す。再起動時に、SENDINGまたは結果不明の操作を走査して、その操作だけを回復する。新しい操作・新しい試行は作らない。</p>
+<p>PayPal側では成功したが、その結果をDBに保存する前に通信が切れた、またはプロセスが止まった場合と、POSTの成功を保存した後、照合を終える前に止まった場合を示す。再起動時に、SENDING・結果不明・PayPal側PENDINGの操作と、照合待ち（SUCCEEDEDで<code>reconcile_status = AWAITING</code>）の操作を走査して、その操作だけを回復する。新しい操作・新しい試行は作らない。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -843,18 +847,30 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>OP3（売上確定）</td>
 <td>OP3がSENDING、U1あり</td>
-<td>与信U1を照会する。CAPTUREDなら、注文O1の照会（<code>payments.captures[]</code>）か同じrid-OP3の再送でC1を特定し、親の与信・金額・custom_idで同定して保存する。続けてC1を照会し、受取先を照合する（D20）。CREATEDのままなら同じrid-OP3で再送する。PENDINGなら照会を続ける。決まらなければ要対応</td>
+<td>与信U1を照会する。CAPTUREDなら、注文O1の照会（<code>payments.captures[]</code>）か同じrid-OP3の再送でC1を特定し、親の与信・金額・custom_idで同定して、POSTの成功と照合待ちとして保存する。続けてC1を照会し、受取先を照合する（D20、次の行）。CREATEDのままなら同じrid-OP3で再送する。PENDINGなら照会を続ける。決まらなければ要対応</td>
 <td>予約確定（E7）へ進まない。枠はFROZENのまま</td>
 </tr>
 <tr>
-<td>OP3の保存後、E7の前</td>
+<td>OP3のPOST成功の保存後、照合の前</td>
+<td>OP3がSUCCEEDEDで<code>reconcile_status = AWAITING</code>、C1あり。AT1はAUTHORIZED、OB1はOPEN</td>
+<td>POSTはやり直さず、OP3をSENDINGへ戻さない。OP3の貸出を取り、C1の照会から再開する。照合できたときだけ、取得時の世代番号を条件に、照合済み・AT1のCAPTURED・OB1のSETTLEDを保存する</td>
+<td>予約確定（E7）へ進まない。枠はFROZENのまま</td>
+</tr>
+<tr>
+<td>照会の失敗・受取先の欠落・不一致の後</td>
+<td>上の行と同じ。<code>last_error_class</code>に理由</td>
+<td>間隔を空けて照会を続ける。欠落・不一致は店主の要対応にも表示する。後から照合できたら、一度だけ先へ進む</td>
+<td>債務と枠を維持する</td>
+</tr>
+<tr>
+<td>OP3の照合後、E7の前</td>
 <td>AT1がCAPTURED、OB1がSETTLED、BOOKING_COMMITTEDの印なし</td>
 <td>6.2の処理済みマーカーで未確定と判定し、E7を再実行する</td>
 <td>─</td>
 </tr>
 </tbody>
 </table></div>
-<p>再送の前に、保存してある本文ハッシュと再送する本文が一致することを確かめる。一致しなければ不具合として送らず、要対応にする。この4つの中断点は、AC08の障害注入テストに含める（未実行）。</p>
+<p>再送の前に、保存してある本文ハッシュと再送する本文が一致することを確かめる。一致しなければ不具合として送らず、要対応にする。これらの中断点と、IP1-04の2つの停止（売上確定のPOSTの成功を保存した直後・照会の前の停止、照会がタイムアウトした後の停止）は、AC08の障害注入テストに含める。</p>
 <h2 id="spec-7">8. 失敗時の回復（SPEC 7の具体化）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1072,7 +1088,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>AC08</td>
-<td>模擬PayPalでの障害注入（売上確定・返金・コミットの前後で停止）と再起動テスト。貸出の期限切れ後に届いた古い応答、遅れて届いたPENDINGの照会結果が状態を後退させないこと（DR1-03）。注文作成・与信・売上確定それぞれの「PayPal成功直後・DB保存前」の停止から、その操作だけを照会か同じIDで回復し、注文・与信の段階ではB_CHARGEが未完了、売上確定が結果不明なら予約確定へ進まないこと（7.5）。同じIDの再送が元の結果を返す場合と、現在の状態を返す場合の両方（模擬の<code>replay</code>設定、D19）、PENDINGからの更新、同定できない資源、照合の不一致。売上確定後のcaptureの照会の失敗で「照合待ち」になり、保留を解放しないこと（D20）。EXPIREDの試行に残る結果不明の注文作成（6.3の8）</td>
+<td>模擬PayPalでの障害注入（売上確定・返金・コミットの前後で停止）と再起動テスト。貸出の期限切れ後に届いた古い応答、遅れて届いたPENDINGの照会結果が状態を後退させないこと（DR1-03）。注文作成・与信・売上確定それぞれの「PayPal成功直後・DB保存前」の停止から、その操作だけを照会か同じIDで回復し、注文・与信の段階ではB_CHARGEが未完了、売上確定が結果不明なら予約確定へ進まないこと（7.5）。同じIDの再送が元の結果を返す場合と、現在の状態を返す場合の両方（模擬の<code>replay</code>設定、D19）、PENDINGからの更新、同定できない資源、照合の不一致。売上確定後のcaptureの照会の失敗で「照合待ち」になり、保留を解放しないこと（D20）。売上確定のPOSTの成功を保存した直後・照会の前の停止と、照会のタイムアウトの後の停止から、照会で再開し、POSTの回数も新しい操作の数も増えず、照合の前にSETTLED・E7へ進まないこと（IP1-04）。EXPIREDの試行に残る結果不明の注文作成（6.3の8）</td>
 </tr>
 <tr>
 <td>AC09</td>
@@ -1201,4 +1217,27 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>設計の変更であり、実行器・回復処理の実装と試験はまだ行っていない（14章の3）。</p>
+<h3 id="design-v0.5codeximpl-paypal-1-fix1">15.2 design-v0.5（Codexの再確認<code>impl-paypal-1-fix1</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>根拠</th>
+<th>対応した箇所</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Codex指摘IP1-04</td>
+<td>6.2のE6、7.1（債務の完了、照合待ちの記録）、7.2（照合結果の反映）、7.5（保存例、進み方4・5、再開の表に2行、走査の対象）、AC08</td>
+<td>POSTの成功（SUCCEEDED）と照合待ち（<code>reconcile_status = AWAITING</code>）を一緒に保存し、B_CHARGEはOPEN・試行は未完了・枠はFROZENのまま。照合できたときだけ、照合済み・試行CAPTURED・債務SETTLEDにしてE7へ進む。再起動時は照合待ちも走査し、POSTをやり直さず照会から再開する。照合結果の反映にも貸出と世代番号を使う。照会の失敗・欠落・不一致では債務と枠を維持する</td>
+</tr>
+<tr>
+<td>Codexの6.1の小修正</td>
+<td>6.1の1</td>
+<td>注文作成の送信前は再送防止ID・固定した入力・ハッシュだけで、order IDは応答の後に保存する。注文の売上確定は送信前に対象のorder IDを保存できる</td>
+</tr>
+</tbody>
+</table></div>
+<p>7.5の<code>payments</code>のBの行は、Bの予約を作るE7のトランザクションで記録すると明記した（<code>payments</code>が予約を参照するため）。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
