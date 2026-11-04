@@ -1,6 +1,6 @@
 # FlexSlot — 状況と次の作業
 
-更新日：2026-11-03（日本時間）/ 文書版：status-v0.6。
+更新日：2026-11-04（日本時間）/ 文書版：status-v0.7。
 
 ## 現在地
 
@@ -9,8 +9,8 @@
 | 区分 | 状況 |
 | --- | --- |
 | 設計の再確認（Codex） | `design-review-1-fix2`でDR1-02の残件を含めて第1レビューを完了し、design-v0.3を基準に実装開始を可とした（REVIEWの「第1レビュー完了・実装開始可」）。アプリの動作・実接続の合格判定ではない |
-| 実装 | 14章の1（骨組み）はタグ`impl-skeleton-1`。14章の2（PayPalアダプター、障害注入付きの模擬PayPal、Vertex AIの最小接続、接続検証スクリプトV0〜V7・V9）を実装した。ブランチ`impl/paypal`、タグ`impl-paypal-1`（`git rev-parse impl-paypal-1`）。Codexの確認待ち。14章の3以降（実行器、送信待ちキュー、回復、本格的なAIアダプター、画面、セッション、Webhook）は未着手 |
-| 実接続 | PayPal SandboxでV1〜V7を、Vertex AIでV9を実行した（結果は「PayPalアダプターと接続検証」の節）。Webhookの実配送（V8）は未実施。アプリ本体による一件の振替はまだ動いていない。公開・応募も未実施 |
+| 実装 | 14章の1（骨組み）はタグ`impl-skeleton-1`。14章の2（PayPalアダプター、障害注入付きの模擬PayPal、Vertex AIの最小接続、接続検証スクリプトV0〜V7・V9）を実装した。ブランチ`impl/paypal`、タグ`impl-paypal-1`。Codexの中間確認の指摘IP1-01〜03を修正し、DESIGNをdesign-v0.4にした修正版がタグ`impl-paypal-1-fix1`（`git rev-parse impl-paypal-1-fix1`）。Codexの再確認待ち。14章の3以降（実行器、送信待ちキュー、回復、本格的なAIアダプター、画面、セッション、Webhook）は未着手 |
+| 実接続 | PayPal SandboxでV1〜V7を、Vertex AIでV9を実行した（結果は「PayPalアダプターと接続検証」の節）。修正版で、新しい注文を使ったV2〜V7の通し実行が全項目合格した（2026-11-04）。Webhookの実配送（V8）は未実施。アプリ本体による一件の振替はまだ動いていない。公開・応募も未実施 |
 
 ## 骨組みの実装（Claude Code、2026-11-03）
 
@@ -52,7 +52,7 @@ DESIGNの本文は変更していない。以下はREVIEWの確認依頼にも�
 | ID | 内容 | 理由 |
 | --- | --- | --- |
 | I01 | Bの枠は「Aの元の枠の内側」に限る（`swap_cases`のCHECKでも強制） | 予約確定まで守られているのはAの予約がある元枠だけで、元枠の外へはみ出す部分を保留する仕組みがDESIGNにないため。Bの施術がAより長い場合は不成立になる |
-| I02 | 候補の開始時刻は、許容時間の開始から15分刻みで調べる。最も早い成立枠を案にする | SPEC・DESIGNに刻みの定めがないため。設定で変えられる |
+| I02 | 候補の開始時刻は、許容時間の開始から15分刻みで調べる。最も早い成立枠を案にする。Bの枠は「Bの希望時間とAの元枠の重なり」の開始から数える（Codex指摘IP1-03で修正。以前はAの元枠の開始から数えていたため、14:10開始の希望を落としていた。DESIGN D21） | SPEC・DESIGNに刻みの定めがないため。設定で変えられる |
 | I03 | ACTIVEの保留は「現在時刻 < 期限」の間だけ有効 | 期限ちょうどの扱いを決めるため |
 | I04 | `shops`に営業時間（`business_open_min`、`business_close_min`、現地の0時からの分）を追加。`swap_cases`の元枠・移動先を、元枠・Bの枠・移動先の開始/終了の列と担当者の列にした | DESIGN 3の「主な列」にない値を、候補判定と再検査で使うため |
 | I05 | 状態名：試行に、返金・取消の成功を表すSUCCEEDEDを追加。操作の状態はPREPARED・SENDING・UNKNOWN（結果不明）・PENDING・SUCCEEDED・FAILED（確定失敗）・NOT_ACCEPTED（受理されなかった）。案件はSPEC 7の表にDESIGNのPAYMENT_STARTED・A_ACCEPTED・CAPTURED・BOOKING_COMMITTEDを加え、COMPLETED・REJECTED・EXPIRED・COMPENSATEDを終端とした | DESIGNはB_CHARGEの試行の状態だけを挙げており、部分一意インデックスの対象を決めるため |
@@ -129,7 +129,7 @@ V9（プロジェクト`kazoku-baton-20261015`、リージョン`global`）：
 | F1（U02） | 米国・USDのSandbox事業者アカウントで`intent=AUTHORIZE`が使えた。与信の表現形式の応答に、与信ID・状態・期限・金額が含まれた | 想定どおり |
 | F2（U03） | 与信のcapture後、与信の照会（CAPTURED）のlinksにはcapture IDがない。注文の照会の`purchase_units[0].payments.captures[]`にはcaptureがあり、captureのlinksの`up`は与信を指す | 売上確定の結果が不明なときは、注文の照会でcaptureを特定できる（DESIGN 7.3の第1案が使える） |
 | F3（U04） | 返金の応答に`seller_payable_breakdown.total_refunded_amount`（返金済みの合計）がある。captureの照会には状態（PARTIALLY_REFUNDED・REFUNDED）しかなく、返金済みの額や残額の項目はない（`seller_receivable_breakdown`はgross・net・手数料だけ）。観測した返金の状態はCOMPLETEDだけで、PENDING・FAILEDはSandboxでは再現していない（模擬だけ） | DESIGN 7.1の「元captureを照会し、返金できる残額を確かめる」は、captureの照会だけではできない。残額は「capture金額 − 返金済みの合計（FlexSlotの記録、または最新の返金の`total_refunded_amount`）」で求める必要がある。REVIEWで確認を求める |
-| F4（U05） | 同じ再送防止IDの再送：数分以内は、与信のcapture・返金・注文のcaptureとも同じIDの資源が返った（初回はHTTP 201、再送は与信のcapture・返金が200、注文のcaptureが201）。資源の状態が後で変わった後（約10〜30分後）は、Payments API（与信のcapture・返金・取消）は**元の結果**（COMPLETED・VOIDED、同じID、HTTP 200）を返し、Orders API（注文の与信・capture）は**注文の現在の状態**（PARTIALLY_REFUNDED、CAPTURED、VOIDED、HTTP 201）を返した。お金は動いていない。アダプターはこれを「結果不明（想定外の状態）」に分類し、成功とはしない | 与信（ORDER_AUTHORIZE）と注文のcaptureを同じIDの再送で回復するときは、状態ではなくIDとcustom_idで特定する必要がある。アダプターは、結果不明でも応答の資源を返すようにした（I16）。45日の保持は確認していない（短時間の再送だけ） |
+| F4（U05） | 同じ再送防止IDの再送：数分以内は、与信のcapture・返金・注文のcaptureとも同じIDの資源が返った（初回はHTTP 201、再送は与信のcapture・返金が200、注文のcaptureが201）。資源の状態が後で変わった後（約10〜30分後）は、Payments API（与信のcapture・返金・取消）は**元の結果**（COMPLETED・VOIDED、同じID、HTTP 200）を返し、Orders API（注文の与信・capture）は**注文の現在の状態**（PARTIALLY_REFUNDED、CAPTURED、VOIDED、HTTP 201）を返した。お金は動いていない。アダプターはこれを「結果不明（想定外の状態）」に分類し、成功とはしない | 与信（ORDER_AUTHORIZE）と注文のcaptureを同じIDの再送で回復するときは、状態ではなくIDとcustom_idで特定する必要がある。アダプターは、結果不明でも応答の資源を返すようにした（I16）。45日の保持は確認していない（短時間の再送だけ）。Codexの確認：これは観測であり公式の保証ではない（公式の説明は「現在の状態を返す」）。DESIGN D19で、同定と次の操作の判定を分け、どちらの応答でも動くようにした |
 | F5（7.3の表） | 注文作成（`payment_source.paypal`付き）はHTTP 201ではなく200で、PAYER_ACTION_REQUIREDと`payer-action`リンクが返った。与信の応答の与信オブジェクト、与信のcaptureの応答、注文のcaptureの応答のcaptureオブジェクトには、**受取先（payee）がない**。captureの照会と注文の照会にはある。取消は表現形式で200を返した（204は観測していない） | DESIGN 7.3の「売上確定の応答で受取先を確かめる」は、応答だけではできない。成功と判断する前に、captureか注文の照会で受取先を照合する必要がある。REVIEWで確認を求める |
 | F6（U07） | Vertex AIはADCで認証でき、`global`で上記のモデルが構造化出力に対応した | 想定どおり |
 
@@ -146,6 +146,44 @@ V9（プロジェクト`kazoku-baton-20261015`、リージョン`global`）：
 | I14 | 模擬の接続先は`https://mock-paypal.invalid`（名前解決できない）。試験専用に、模擬のIDの接頭辞を変えるオプション（`testIdPrefix`）を置いた | Sandboxモードのアダプターを、ネットワークなしで模擬に対して試験するため |
 | I15 | 注文作成には`payment_source.paypal.experience_context`（`return_url`・`cancel_url`、配送なし、PAY_NOW）を使う。検証の戻り先は`http://localhost:8799/...`で、何も待ち受けていない | 承認URLを使って検証するため。画面でPayPal JS SDKのボタンを使うときの本文は、14章の5で確認する |
 | I16 | 結果不明でも、2xxの本文を検証できた場合は資源を返す | F4のOrders APIの再送で、与信やcaptureのIDを失わないため |
+
+### Codexの中間確認への対応（`impl-paypal-1-fix1`、2026-11-03）
+
+Codexの中間確認（`impl-paypal-1`を対象。詳細はCodexの資料`outputs/codex-prep/IMPL_PAYPAL_1_REVIEW.md`）は、構成を採用し、指摘3件の修正とF3〜F5のDESIGNへの反映を求めた。V2・V3の既存の記録は「初回の操作の成立と、設定修正後の照会による補完」の限定した接続確認、V4は項目別の確認済み（1回通しの合格ではない）と判断された。既存の失敗の記録は消していない。
+
+| 指摘 | 修正 | 試験 |
+| --- | --- | --- |
+| IP1-01 / P1：別の検証実行に前回の再送防止IDが引き継がれる | 検証を「実行（run）」で分け、`work/verify/runs.json`に保存する。V2・V3の`start`は、現在の実行がその段階を済ませていれば新しい実行を開く。各POSTは実行ごとに1回だけ、対象ID・本文ハッシュ・再送防止IDに結び付け、上書きしない。再開は同じ結び付きを使い、対象か本文が違えば送らずに止める（`OpBindingError`）。再送防止IDは全実行で重複させない。V6の残額超過の試験は、10.00の返金がその実行のcaptureで確認できたときだけ行う。以前の`work/verify/state.json`は消さずに残し、読まない。手順の本体を`scripts/verify/steps.ts`に移し、模擬で試験できるようにした | `tests/verify-steps.test.ts`：2回続けた実行がどちらも全項目合格で、再送防止IDを共有しない。2回目の残額超過も拒否される。同じ実行の再開ではIDが変わらず資源も増えない。別の対象に変えると送信0回で拒否 |
+| IP1-02 / P2：受取先が未設定でも照合の合格を表示できる | V2・V3の`start`、V3の`finish`、V4は、`PAYPAL_EXPECTED_MERCHANT_ID`が未設定なら何も送らずにNOT_READYにする。応答に受取先がないときも不一致として扱う | 未設定（送信0回）、応答に欠落、不一致、一致の4つ |
+| IP1-03 / P2：Bの候補探索の起点がI02と違い、成立する枠を落とす | Bの開始時刻を「Bの希望時間とAの元枠の重なり」の開始から15分刻みで調べる。重なりに施術が収まらないときの理由`B_WINDOW_OUTSIDE_ORIGIN_SLOT`を、以前の`B_SLOT_OUTSIDE_REQUEST_WINDOW`の代わりに置いた（DESIGN D21） | 14:10–15:10の希望が14:10で成立、複数の希望時間、元枠の終わりちょうど、元枠より広い希望、重なりが短すぎる希望 |
+
+その他の対応：
+
+| 項目 | 内容 |
+| --- | --- |
+| F3〜F5 | design-v0.4のD18（返金できる残額の管理値）、D19（同定と次の操作の判定の分離）、D20（売上確定後の照会による受取先の照合）に反映した。実装は実行器（14章の3） |
+| I07・I08 | DESIGN 6.3の8（EXPIREDの試行の結果不明の操作は無条件に再送しない）と6.1（Aの元決済も操作単位で保存して回復する）に書いた |
+| 模擬の再送 | 模擬PayPalの`replay`設定で、Orders APIとPayments APIのそれぞれについて、元の結果（ORIGINAL）と現在の状態（CURRENT）を選べるようにした。既定はSandboxで観測したとおり（注文はCURRENT、支払いはORIGINAL）。両方の試験を追加した |
+| temperature | 公式のモデル資料（2026-11-03に確認）で、`gemini-3.5-flash-lite`はtemperature・top-K・top-Pの指定を無視すると書かれている。`temperature: 0`は送っているが、生成の制御や再現性の保証とは扱わない（DESIGN 9章、`src/ai/vertex.ts`の説明） |
+| Codexの確認用スクリプト | `work/codex-review-paypal1/offline-probes.mjs`は、以前の`_lib.ts`の関数（`readState`など）を差し替える作りのため、今回の構成では読み込みの段階で動かない。変更はしていない。同じ3つの場面は、上の回帰試験で確かめている |
+
+#### 修正後の実接続（新しい注文で通し実行）
+
+修正版のスクリプト（コミット`19f00bf`）で、新しい注文を使ってV2〜V7を1回の実行（run）で通した。時刻は日本時間。3件の注文は本人がSandboxの買い手アカウントで承認した。
+
+| 実行 | 時刻 | 結果 |
+| --- | --- | --- |
+| `run-20261103-9655a6aa` | 11-03 21:45 V0・V1・V2 start・V3 start（いずれも0） | 注文3件を作成したが、承認されないまま約25時間が過ぎ、11-04 22:54の照会では3件とも404（見つからない）になった。PayPal側で未承認の注文が失効したと考えられる（正確な失効までの時間は確かめていない）。この実行は記録を残し、以後は使っていない |
+| `run-20261104-f1c97c9d` | 11-04 22:54 V2 start・V3 start（0） | 新しい注文3件（A `order#771c7d44`、b1 `order#8a56c537`、b2 `order#b1802e8e`）。3件目の承認URLを、Claudeがチャットで1文字誤って伝えたため、本人の承認が一度失敗した（PayPalの画面は「Things don't appear to be working at the moment」）。正しいURLで承認した |
+| 同上 | 11-04 23:01 V2 finish（0、9/9） | 売上確定COMPLETED（`capture#04b58909`）。captureと注文の照会で、金額・通貨・custom_id・受取先が一致 |
+| 同上 | 23:01 V3 finish（0、8/8） | 与信2件CREATED（`auth#02da81c1`、`auth#3cee8e19`）、表現形式に期限あり、受取先一致 |
+| 同上 | 23:01 V4（0、10/10） | 売上確定COMPLETED（`capture#57314ea7`）、同じIDの再送で同じcapture ID、与信はCAPTURED、注文の照会にcaptureあり、captureの受取先一致。売上確定の状態の間に確認した |
+| 同上 | 23:01 V5（0、3/3） | 取消VOIDED（照会でも確認） |
+| 同上 | 23:01 V6（0、7/7） | 10.00の返金COMPLETED（`refund#7c8bca38`、`total_refunded_amount`は10.00）、同じIDの再送で同じ返金ID、返金がこの実行のAのcaptureに属すること、captureはPARTIALLY_REFUNDED。前提を確かめたうえで、50.01の返金が422 `REFUND_AMOUNT_EXCEEDED`で拒否された |
+| 同上 | 23:01 V7（0、6/6） | 60.00の全額返金COMPLETED（`refund#de9d689d`）、captureはREFUNDED |
+| ─ | 23:02 V0・V1（0） | 設定とトークン |
+
+この実行では、V2〜V7のすべての確認項目が1回の実行で合格した。以前の実行（11-03）の失敗の記録は`work/verify/results.jsonl`に残している。V9は、送る内容を変えていない（`src/ai/vertex.ts`は説明の変更だけ）ため、再実行していない。
 
 ### 未実施の範囲（この段階）
 
@@ -207,6 +245,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | 11-03 Claude | 骨組みの実装 | `npm run typecheck`、`npm test`、変異の確認、文書の再生成と`-Check` | 型チェック・試験とも終了コード0、80件成功。詳細は「骨組みの実装」 |
 | 11-03 Claude | PayPal・AIの実装（模擬） | `npm run check` | 終了コード0、152件成功。詳細は「PayPalアダプターと接続検証」 |
 | 11-03 Claude＋本人 | 実接続 | V0〜V7（PayPal Sandbox、承認は本人）、V9（Vertex AI） | 「PayPalアダプターと接続検証」の実接続の表。V8は未実施 |
+| 11-04 Claude | Codex指摘の修正 | `npm run check`、`render-docs.ps1 -Check` | 終了コード0、10ファイル・166件成功。文書6組PASS |
+| 11-04 Claude＋本人 | 実接続（修正版） | 新しい実行でV2〜V7、V0・V1 | すべて終了コード0。「修正後の実接続」の表 |
 | ─ | アプリテスト | 統合・E2E・実API・実機・同時実行・障害注入 | 未実行。単体・DBの試験だけ実施 |
 
 ## 未確認事項
@@ -216,7 +256,7 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | U01 | PayPal Developerの準備（Sandboxの事業者・買い手アカウント、RESTアプリの認証情報） | 解消（2026-11-03）。本人が準備し、`.env`に記入した。V0・V1で確認（値は見ていない） | ─ |
 | U02 | Sandboxの事業者アカウントの国と通貨、与信（AUTHORIZE）の利用可否 | 解消（2026-11-03）。米国・USDの事業者アカウントで与信が使えた（F1） | ─ |
 | U03 | 与信・注文の照会から、売上確定IDを取得できるか | 解消（2026-11-03）。注文の照会では取得できる。与信の照会のlinksでは取得できない（F2） | 実行器の回復処理で使う |
-| U04 | 返金の状態の種類と、元captureの照会で返金済みの額が分かるか | 一部解消（2026-11-03）。返金の応答に返金済みの合計がある。captureの照会は状態だけで、額は分からない。観測した返金の状態はCOMPLETEDだけ（F3）。残額確認の方法はCodexの確認待ち | REVIEWの確認事項 |
+| U04 | 返金の状態の種類と、元captureの照会で返金済みの額が分かるか | 一部解消（2026-11-03）。返金の応答に返金済みの合計がある。captureの照会は状態だけで、額は分からない。観測した返金の状態はCOMPLETEDだけ（F3）。残額はFlexSlotの記録から求める管理値とする（Codexの条件付き採用、DESIGN D18） | 実行器で実装 |
 | U05 | `PayPal-Request-Id`の保持期間 | RESTリクエストの資料に「最大45日」の記述あり。各APIでの保証は未確認。短時間（約30分以内）の再送では同じ資源が返ったが、Orders APIは状態の変化後に現在の状態を返す（F4）。数分以内の再送だけを前提にし、長期間後の再送には頼らない。短時間の再送試験から長期間の安全性を結論しない | 長期間の保持は未確認のまま |
 | U06 | Webhookの実配送と署名検証 | 必須の接続検証（V8）。公開デモの採否とは別に、本人確認後の限定的なHTTPS受信経路で行う。承認がなければ未確認のまま残す | V8（11月7日目標、本人確認後） |
 | U07 | Google Cloudのプロジェクト、課金、Vertex AI APIの有効化、リージョン、利用できるGeminiのモデル | 解消（2026-11-03）。本人がgcloudとADCを準備した。プロジェクト`kazoku-baton-20261015`・リージョン`global`・`gemini-3.5-flash-lite`でV9が合格（F6） | 公開時はサービスアカウントで再確認 |
@@ -236,8 +276,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 
 ## 次に行う作業
 
-1. Codexによる確認：骨組み（タグ`impl-skeleton-1`、I01〜I07）と、PayPal・AIの段階（タグ`impl-paypal-1`、REVIEWの確認依頼、特にF3〜F5とI08〜I16）。確認を待たずに次へ進めてよい（REVIEWの実装開始指示）。
-2. DESIGN 14章の3：実行器、送信待ちキュー、回復処理と、障害注入の試験（AC05・AC06・AC08・AC09）。F4（Orders APIの再送が現在の状態を返す）とF5（受取先は照会で照合）を回復処理に反映する。I07（期限切れの試行に残る注文作成の操作）もここで決める。
+1. Codexによる修正版の再確認（タグ`impl-paypal-1-fix1`、REVIEWの最後の節）。確認を待たずに次へ進めてよい（Codexの中間確認の判断）。
+2. DESIGN 14章の3：実行器、送信待ちキュー、回復処理と、障害注入の試験（AC05・AC06・AC08・AC09）。design-v0.4のD18〜D20、6.3の8（I07）、6.1（I08）を実装する。模擬の`replay`設定で、再送の応答が元の結果の場合と現在の状態の場合の両方を試験する。
 3. その後、14章の4（AIアダプター）、5（画面とセッション）、V8（本人確認後）、第2レビューへ進む。
 
 11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。

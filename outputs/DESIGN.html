@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="2ab6aa3cd562f4af0a36ee5f6c0dfc2b4bc95e6f6b4a0a270631267f0c574b28"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="c7d77ea879743a7d8eea68e4296805fa73cc4cfa8ae9a4d2e6a67bbbecaaa16c"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,10 +8,11 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html" aria-current="page">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：DESIGN.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-1">FlexSlot — 技術設計（第1レビュー対象）</h1>
-<p>版：design-v0.3 / 作成日：2026-11-03（日本時間）/ 作成：Claude Code / 状態：設計のみ。アプリ本体は未実装、AI・PayPalは未接続。</p>
+<p>版：design-v0.4 / 作成日：2026-11-03（日本時間）/ 作成：Claude Code / 状態：骨組み・PayPalアダプター・接続検証（V1〜V7・V9）まで実装済み（STATUS参照）。実行器・回復処理・画面は未実装。</p>
 <p>SPEC.md（spec-v0.1）の「設計案」を検証し、実装できる粒度まで具体化した文書。合意済みの範囲は変えない。SPECの条件を弱めた箇所はない。追加・具体化した箇所は「1. SPECとの差分」に列挙する。</p>
 <p>design-v0.2の変更：Codexの第1レビュー指摘DR1-01〜05と小修正を反映した。対応箇所の一覧は15章。</p>
 <p>design-v0.3の変更：DR1-02の残件に対応し、支払いの保存単位を「債務・試行・API操作」の3階層に分けた（D17、3章、6.2、6.3、7章、7.5）。</p>
+<p>design-v0.4の変更：Sandboxでの実接続（V1〜V7）の結果と、Codexの中間確認（<code>impl-paypal-1</code>、指摘IP1-01〜03と回答）を反映した。返金できる残額の管理値（D18）、再送・照会の応答での資源の同定と次の操作の判定の分離（D19）、売上確定後の照会による受取先の照合（D20）、候補探索の起点（D21）、I07・I08の回復条件、作品内AIのモデルとtemperatureの扱い。対応箇所は15章。</p>
 <h2 id="spec">1. SPECとの差分</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -142,6 +143,34 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>試行1行に再送防止ID・外部IDを1つ（design-v0.2）</td>
 <td>「債務」「試行（Bはチェックアウト1回分）」「API操作」の3階層に分ける。再送防止ID・本文ハッシュ・外部ID・状態・貸出はAPI操作ごとに持つ</td>
 <td>7.1、7.5、DR1-02の残件</td>
+</tr>
+<tr>
+<td>D18</td>
+<td>変更</td>
+<td>返金の前に元captureの残額を確認（design-v0.3）</td>
+<td>返金できる残額は、FlexSlotの記録から求める管理値とする（capture金額 − 確認済みCOMPLETEDの返金の合計、refund IDで重複排除）。未確定の返金がある間や記録に矛盾がある間は、新しい返金を送らない。PayPal側の最新の残額を確認したとは扱わない</td>
+<td>7.1。captureの照会に返金済みの額がない（Sandbox、STATUS F3）。Codexの条件付き採用</td>
+</tr>
+<tr>
+<td>D19</td>
+<td>追加</td>
+<td>結果の照会と同じIDでの再送</td>
+<td>再送や照会で返った資源は、IDと親子関係・custom_id・金額・通貨・受取先で同定する。次の操作に進めるかは、資源の現在の状態で別に判定する</td>
+<td>7.3、7.5。Orders APIの再送が注文の現在の状態を返した（STATUS F4）。応答の種類は公式に保証されないため、どちらの応答でも動くようにする</td>
+</tr>
+<tr>
+<td>D20</td>
+<td>変更</td>
+<td>売上確定の応答で受取先を確認（design-v0.3）</td>
+<td>売上確定のPOSTの成功と、照合を終えて業務を進められることを分ける。POSTの成功の後にcaptureを照会し、受取先などを照合してから債務の完了・E7へ進む。照会の失敗・欠落・不一致は「照合待ち」</td>
+<td>6.2のE6、7.3。売上確定の応答に受取先がない（STATUS F5）</td>
+</tr>
+<tr>
+<td>D21</td>
+<td>具体化</td>
+<td>候補の判定</td>
+<td>開始時刻は15分刻みで調べる。Aの移動先は各許容時間の開始から、Bの枠は「Bの希望時間とAの元枠の重なり」の開始から数える。希望の時刻を丸めない</td>
+<td>6.1。Codex指摘IP1-03、STATUS I01・I02</td>
 </tr>
 </tbody>
 </table></div>
@@ -398,10 +427,10 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <h2 id="section-4">6. 振替の流れと状態</h2>
 <h3 id="section-5">6.1 承認までの流れ</h3>
 <ol>
-<li><strong>ワールド作成</strong>：店、担当者Mika、施術2種類、Aの予約を作る。Sandboxモードでは、AがPayPal Sandboxで予約代金を支払う（<code>intent=CAPTURE</code>）。サーバーは売上確定の結果を照会し、金額・通貨・受取店舗・予約との紐付けを確認してから、Aの予約を「支払い確認済み」にする。模擬モードでは模擬の売上確定を使い、そのことを表示する。</li>
+<li><strong>ワールド作成</strong>：店、担当者Mika、施術2種類、Aの予約を作る。Sandboxモードでは、AがPayPal Sandboxで予約代金を支払う（<code>intent=CAPTURE</code>）。サーバーは売上確定の結果を照会し、金額・通貨・受取店舗・予約との紐付けを確認してから、Aの予約を「支払い確認済み」にする。模擬モードでは模擬の売上確定を使い、そのことを表示する。Aの元決済は債務ではないが、注文作成と注文の売上確定（<code>ORDER_CAPTURE</code>）も、送信前に注文ID・再送防止ID・固定した本文ハッシュを保存し、応答が失われても同じIDの再送と照会で回復する。最終の<code>payments</code>行だけを保存する方式にはしない（STATUS I08）。</li>
 <li><strong>Aの移動条件の登録</strong>：Aが自由文で条件を書き、AIが構造化し、Aが確認して確定する（版あり）。補償額はこの時点の店の規定額で固定する（D09）。</li>
 <li><strong>Bの依頼</strong>：Bが自由文で希望を書き、AIが構造化する。曖昧な点は質問し、Bが確認して確定する。</li>
-<li><strong>候補の判定（プログラム）</strong>：Bの希望枠を占めている確定予約のうち、支払い確認済みで移動条件を登録済みのA予約について、Aの条件に合う移動先を探す。担当者・施術時間・営業時間・Aの許容時間・他の予約と保留を検査する。成立しない場合は理由を表示する。</li>
+<li><strong>候補の判定（プログラム）</strong>：Bの希望枠を占めている確定予約のうち、支払い確認済みで移動条件を登録済みのA予約について、Aの条件に合う移動先を探す。担当者・施術時間・営業時間・Aの許容時間・他の予約と保留を検査する。成立しない場合は理由を表示する。Bの枠はAの元枠の内側に限る（STATUS I01）。開始時刻は15分刻みで調べ、Aの移動先は各許容時間の開始から、Bの枠は「Bの希望時間とAの元枠の重なり」の開始から数える。希望の時刻は丸めない（D21）。</li>
 <li><strong>案の作成</strong>：条件スナップショットと<code>terms_hash</code>を作り、移動先にACTIVEの保留を置く（期限付き）。</li>
 <li><strong>承認</strong>：店主 → A → B の順（D08）。それぞれ同じ<code>terms_hash</code>を承認する。Aが却下するか期限切れになれば、保留を解放し、案件は不成立になる。Bには課金しない。</li>
 </ol>
@@ -432,7 +461,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>E4 与信</td>
-<td>試行が有効（期限内で終了していない）であることを条件付き更新で確かめ、同じトランザクションで与信の操作（ORDER_AUTHORIZE、対象はorder ID）を作り、SENDINGを記録してから<code>POST /v2/checkout/orders/{id}/authorize</code>を送る。応答で金額・通貨・custom_id（案件・版・試行）・受取先・与信の状態（CREATED）を照合し、authorization IDを操作に保存する。B_CHARGEはまだ未完了</td>
+<td>試行が有効（期限内で終了していない）であることを条件付き更新で確かめ、同じトランザクションで与信の操作（ORDER_AUTHORIZE、対象はorder ID）を作り、SENDINGを記録してから<code>POST /v2/checkout/orders/{id}/authorize</code>を送る。応答で金額・通貨・custom_id（案件・版・試行）・受取先・与信の状態（CREATED）を照合し、authorization IDを操作に保存する。与信のオブジェクトには受取先がないため、応答の注文の<code>purchase_units[].payee</code>で照合する（STATUS F5）。B_CHARGEはまだ未完了</td>
 <td>AUTHORIZED</td>
 </tr>
 <tr>
@@ -442,7 +471,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>E6 売上確定</td>
-<td>売上確定の操作（AUTH_CAPTURE、対象はauthorization ID）を作り、<code>POST /v2/payments/authorizations/{id}/capture</code>（金額を明示、<code>final_capture=true</code>）を送る。COMPLETEDを確認したときだけ、試行をCAPTUREDに、B_CHARGEの債務をSETTLED（<code>settled_by_operation_id</code>＝この操作）にする。PENDINGなら照会を続け、予約確定へ進まない</td>
+<td>売上確定の操作（AUTH_CAPTURE、対象はauthorization ID）を作り、<code>POST /v2/payments/authorizations/{id}/capture</code>（金額を明示、<code>final_capture=true</code>）を送る。POSTの応答でCOMPLETEDを確認したら、その成功を操作に保存する。次にcaptureを照会し、capture ID・親の与信・金額・通貨・状態・受取先を照合できたときだけ、試行をCAPTUREDに、B_CHARGEの債務をSETTLED（<code>settled_by_operation_id</code>＝この操作）にする（D20）。照会の失敗・受取先の欠落・不一致は「照合待ち」とし、照会を再開する。新しい売上確定ではやり直さず、保留も解放しない。PENDINGなら照会を続け、予約確定へ進まない</td>
 <td>CAPTURED / PAYMENT_PENDING</td>
 </tr>
 <tr>
@@ -485,6 +514,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>防御</strong>：照会や通知で、終了した試行に紐付く与信が見つかった場合（本来は起きない）は、ただちに取消（B_AUTH_VOID）の債務を作り、店主に要対応として表示する。</li>
 <li><strong>再開</strong>：期限切れの後は、同じ依頼から新しい案件（新しい版、新しい保留）を作り、店主・A・Bの承認からやり直す。古い試行や古い注文を再利用しない。</li>
 <li><strong>15分の意味</strong>：未承認の支払いを打ち切る検討時点であり、結果不明の処理や返金待ちの打ち切り期限ではない。通知の受信時や通常の照会は、15分を待たずに行う。</li>
+<li><strong>終了した試行に残る、結果不明の注文作成（STATUS I07）</strong>：EXPIREDの試行の操作は、無条件には再送しない。注文IDが分かっていれば注文を照会し、与信や売上確定が見つかれば（本来は起きない）5.に従って取消・返金の債務を作り、店主に要対応として表示する。注文IDが分からない場合は、FlexSlotがその試行で与信を送らないためお金は動かないので、再起動時の走査の対象から外し、監査ログに残す。この分岐は再起動の試験（AC08）で確認する。</li>
 </ol>
 <h2 id="paypal">7. PayPal呼び出しの共通規則</h2>
 <ul>
@@ -505,7 +535,15 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>新しい試行を作れる条件</strong>：直前の試行が終端の失敗（FAILED、またはお金が動いていないEXPIRED）のときだけ。新しい試行は直前の試行を<code>previous_attempt_id</code>で参照する。B_CHARGEでは、支払い期限の切れた案件では新しい試行を作らず、新しい案件からやり直す（6.3）。古い試行・操作の行と外部IDは上書きせずに残す。</li>
 <li><strong>未確定は1つまで</strong>：1つの試行に、未確定（PREPARED・SENDING・結果不明・PayPal側PENDING）の操作は1つまで。1つの債務に、未終了の試行は1つまで（どちらも部分一意インデックスで強制）。成功した試行も1つの債務に1つまでなので、返金の合計が債務の金額を超えない。</li>
 <li><strong>債務の完了</strong>：B_CHARGEをSETTLEDにするのは、売上確定の操作でCOMPLETEDを確認したときだけ。注文作成や与信の成功では完了にしない。返金の債務は、返金の操作でCOMPLETEDを確認したときにSETTLEDにする。</li>
-<li><strong>返金の前の残額確認</strong>：Aへの返金の新しい試行を作る前に、元captureを照会し、返金できる残額が債務の金額以上であることを確かめる。</li>
+<li><strong>返金の前の残額確認（D18）</strong>：captureの照会には返金済みの額がない（STATUS F3）。そこで、返金できる残額はFlexSlotの記録から求める管理値とし、次の条件で使う。PayPal側の最新の残額を確認したとは扱わない。
+<ul>
+<li>このMVPでは、FlexSlotが作ったSandboxのcaptureへの返金は、FlexSlotの債務からだけ行う前提とする。PayPalの管理画面や別のアプリからの返金は想定しない（一般の連携には、そのまま当てはめない）。</li>
+<li>capture IDごとに、確認済みCOMPLETEDの返金額を、refund IDで重複を除いて合計する。同じ返金を、再送・通知・照会の回数だけ引かない。管理値は「capture金額 − この合計」。</li>
+<li>そのcaptureに、PENDING・UNKNOWN・送信後に未確定の返金の操作がある間は、新しい返金の操作を作らない。同じ操作の照会と回復を優先し、返金したかもしれない額を残額に戻さない。</li>
+<li>captureの状態、既知の返金の照会、返金の応答の<code>total_refunded_amount</code>は照合の材料にする。記録の欠落、外部からの返金の疑い、合計や状態の矛盾があれば「残額不明」とし、自動の送信を止めて要対応にする。差を都合よく丸めない。</li>
+<li>同じcaptureへの返金は直列化する。返金の金額は、合意した債務の金額と、確認できた管理上の残額の、どちらも超えない。PayPalの残額超過の拒否だけに頼らない。</li>
+</ul>
+</li>
 <li><strong>店主の操作</strong>：店主にできるのは「既存の債務の回復」だけ。金額や返金先を指定する任意の返金は作れない。</li>
 </ul>
 <p>外部の結果を、次のように分類してから操作の状態を決める。HTTPの4xxをすべて「返金FAILED」と同じには扱わない。</p>
@@ -580,37 +618,44 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tbody>
 <tr>
 <td>注文作成</td>
-<td>注文の完全な表現</td>
+<td>注文の完全な表現。<code>payment_source.paypal</code>付きではHTTP 200、PAYER_ACTION_REQUIRED、<code>payer-action</code>リンク</td>
 <td>order ID、状態、金額、custom_id</td>
 <td>注文の照会</td>
 </tr>
 <tr>
 <td>与信</td>
 <td>注文の完全な表現</td>
-<td><code>purchase_units[].payments.authorizations[]</code>のID・状態・期限・金額</td>
+<td><code>purchase_units[].payments.authorizations[]</code>のID・状態・期限・金額。受取先は与信のオブジェクトにないため、<code>purchase_units[].payee</code>で確かめる</td>
 <td>注文の照会</td>
 </tr>
 <tr>
 <td>売上確定</td>
-<td>売上確定の完全な表現</td>
-<td>capture ID、状態、金額、受取先</td>
-<td>与信の照会、注文の照会（V4で確認）</td>
+<td>売上確定の表現。<strong>受取先は含まれない</strong></td>
+<td>capture ID、状態、金額、custom_id</td>
+<td>受取先はcaptureの照会で照合する（D20）。与信の照会のlinksからはcaptureが分からないため、注文の照会の<code>payments.captures[]</code>で特定する</td>
 </tr>
 <tr>
 <td>取消</td>
-<td>本文なし（204）の可能性</td>
-<td>─</td>
+<td>Sandboxでは、表現形式を求めるとHTTP 200で与信の表現（VOIDED）。204の可能性も残す</td>
+<td>与信の状態</td>
 <td>与信の照会でVOIDEDを確認</td>
 </tr>
 <tr>
 <td>返金</td>
-<td>返金の完全な表現</td>
+<td>返金の完全な表現。<code>seller_payable_breakdown.total_refunded_amount</code>（返金済みの合計）を含む</td>
 <td>返金ID、状態、金額</td>
-<td>返金の照会、元captureの照会（V6で確認）</td>
+<td>返金の照会。captureの照会には状態しかなく、返金済みの額や返金の一覧はない（D18）</td>
 </tr>
 </tbody>
 </table></div>
-<p>実際の応答の形はV2〜V7で記録し、この表と違えば更新する。</p>
+<p>この表は、2026-11-03のSandboxでのV2〜V7の結果（STATUSのF1〜F6）で更新した。</p>
+<p><strong>同じIDの再送・照会で返った応答の扱い（D19）</strong>：2026-11-03のSandboxでは、資源の状態が変わった後の同じIDの再送に対し、Orders API（注文の与信・売上確定）は注文の現在の状態を返し、Payments API（与信の売上確定・返金・取消）は元の結果を返した。これは観測であり、公式の保証ではない（公式の説明は、再送に対して現在の状態を返すとしている）。そのため、どちらの応答が返っても正しく動くようにする。</p>
+<ul>
+<li><strong>同定</strong>：返った資源は、ID、注文・与信・captureの親子関係、案件・条件の版・試行（custom_id）、金額・通貨・受取先を、保存した値と照合して特定する。一意に特定できなければ回復待ちとする。配列の末尾の資源や、custom_idだけで完了にしない。</li>
+<li><strong>次の操作の判定</strong>：同定とは別に、資源の現在の状態で次に進めるかを決める。VOIDED・EXPIREDの与信を再利用しない。REFUNDEDのcaptureを、Bの有効な支払いとしない。与信がCAPTUREDなら、対応するcaptureを探し、二度目の売上確定を始めない。</li>
+<li>アダプターが「結果不明」に資源を付けて返しても、それだけで完了にしない。資源の検証は構造の検査であり、本人・受取先・案件・条件・業務の成功までの検証ではない。</li>
+<li>再送防止IDの長期間の保持（RESTの資料にある「最大45日」）は確かめていない。数分以内の再送だけを前提にする（STATUS U05）。</li>
+</ul>
 <p>結果が不明な操作の確認方法：</p>
 <div class="table-wrap"><table>
 <thead>
@@ -633,7 +678,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>売上確定</td>
-<td><code>GET /v2/payments/authorizations/{id}</code>の状態、注文の照会での売上確定一覧（取得できるかはV4で確認）</td>
+<td><code>GET /v2/payments/authorizations/{id}</code>の状態と、注文の照会の<code>payments.captures[]</code>（V4で、ここからcaptureを特定できることを確認）。特定したcaptureを照会して受取先を照合する（D20）</td>
 <td>同じ再送防止IDで再送。それでも不明なら要対応</td>
 </tr>
 <tr>
@@ -643,8 +688,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>返金</td>
-<td>返金IDがあれば<code>GET /v2/payments/refunds/{id}</code>。なければ元captureの照会（確認方法はV6で確認）</td>
-<td>同じ再送防止IDで再送。新しい試行は作らない</td>
+<td>返金IDがあれば<code>GET /v2/payments/refunds/{id}</code>。返金IDがなければ、captureの照会では返金を特定できない（V6で確認）ため、同じ再送防止IDでの再送で特定する</td>
+<td>同じ再送防止IDで再送。新しい試行は作らない。特定できなければ要対応</td>
 </tr>
 </tbody>
 </table></div>
@@ -792,13 +837,13 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>OP2（与信）</td>
 <td>OP2がSENDING、O1あり</td>
-<td>注文O1を照会し、<code>payments.authorizations[]</code>にcustom_id（C7・版3・AT1）が一致する与信U1があれば、再送せずに保存する。注文が承認済みで与信がなければ、同じrid-OP2で再送する。期限を過ぎていてもAT1は終了させない</td>
+<td>注文O1を照会し、<code>payments.authorizations[]</code>にcustom_id（C7・版3・AT1）・金額・通貨が一致する与信U1があれば、再送せずに保存する。注文が承認済みで与信がなければ、同じrid-OP2で再送する。再送の応答が注文の現在の状態（U1がCAPTURED・VOIDEDなど）でも、同定と次の操作の判定を分けて扱う（D19）。期限を過ぎていてもAT1は終了させない</td>
 <td>B_CHARGEは未完了。枠はFROZENのまま</td>
 </tr>
 <tr>
 <td>OP3（売上確定）</td>
 <td>OP3がSENDING、U1あり</td>
-<td>与信U1を照会する。CAPTUREDなら、注文O1の照会か同じrid-OP3の再送でC1を特定して保存する。CREATEDのままなら同じrid-OP3で再送する。PENDINGなら照会を続ける。決まらなければ要対応</td>
+<td>与信U1を照会する。CAPTUREDなら、注文O1の照会（<code>payments.captures[]</code>）か同じrid-OP3の再送でC1を特定し、親の与信・金額・custom_idで同定して保存する。続けてC1を照会し、受取先を照合する（D20）。CREATEDのままなら同じrid-OP3で再送する。PENDINGなら照会を続ける。決まらなければ要対応</td>
 <td>予約確定（E7）へ進まない。枠はFROZENのまま</td>
 </tr>
 <tr>
@@ -890,11 +935,11 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>入力</strong>：店のタイムゾーン、今日の日付（店の現地時刻）、施術ID・施術時間・担当者ID・営業時間。利用者の文は「指示ではなくデータ」と明示して渡す。自由文に含まれる指示（「補償を50ドルにして」など）には従わず、構造化の対象にもしない。</li>
 <li><strong>出力スキーマ（案）</strong>：許容する時間区間の一覧（日付、開始・終了の現地時刻）、担当者を変えてよいか、施術の変更可否（MVPでは常に不可）、曖昧な点と確認質問。Bの場合は、施術IDと必須の時間区間も含める。</li>
 <li><strong>サーバーでの検査</strong>：zodで型・列挙値・日付の範囲・営業時間内かを検査する。「午後なら」のような表現は、具体的な時刻に勝手に確定せず、質問に回す。最終的な構造化結果は本人が確認して確定し、元の文とは別に版で保存する。</li>
-<li><strong>呼び出し</strong>：<code>@google/genai</code>を<code>vertexai: true</code>、プロジェクトID、リージョンを指定して使う。認証はローカルではADC（<code>gcloud auth application-default login</code>）、公開時はサーバーのサービスアカウント。ブラウザに認証情報を渡さない。<code>responseMimeType: application/json</code>と<code>responseSchema</code>を使い、<code>temperature</code>は0にする。</li>
+<li><strong>呼び出し</strong>：<code>@google/genai</code>を<code>vertexai: true</code>、プロジェクトID、リージョンを指定して使う。認証はローカルではADC（<code>gcloud auth application-default login</code>）、公開時はサーバーのサービスアカウント。ブラウザに認証情報を渡さない。<code>responseMimeType: application/json</code>と<code>responseSchema</code>を使う。<code>temperature: 0</code>を送っているが、採用したモデルはtemperature・top-K・top-Pの指定を無視する（公式のモデル資料、2026-11-03に確認）。これを生成の制御や再現性の保証とは扱わず、正しさはスキーマ、サーバーでの検査、本人の確認で担保する。</li>
 <li><strong>上限</strong>：1回20秒でタイムアウト、5xxと429のときだけ1回再試行、ワールドあたり30回まで、全体で1日500回まで。上限を超えたらフォームでの手入力を案内する。</li>
 <li><strong>失敗時</strong>：AIが失敗したら、フォームでの手入力に切り替えることを明示して案内する。模擬のAIに黙って切り替えない。模擬モードは試験とオフライン用の固定ルールで、画面に「AI：模擬」と表示する。</li>
 <li><strong>入力の出所</strong>：構造化した条件ごとに、AI（Vertex）・AI（模擬）・手入力のどれで作ったかを保存し、画面に表示する。手入力や模擬の結果は、実AIが成功した証拠（AC03）に含めない。</li>
-<li><strong>モデル</strong>：Vertex AIのGeminiのうち、構造化出力に対応する低遅延のモデル（Flash系を想定）を候補にする。実際のモデル名とリージョンは接続検証（V9）で、このプロジェクトで使えるものを確認してから決め、STATUSに記録する。</li>
+<li><strong>モデル</strong>：<code>gemini-3.5-flash-lite</code>、リージョン<code>global</code>、思考はモデルの既定（2026-11-03に決定、Codexの確認で採用可）。公式資料で構造化出力に対応し、提供終了は2027-07-21以降。V9で3例がスキーマどおりに返り、遅延は約1秒だった。V9は最小接続の根拠であり、任意の予約文での精度を保証するものではない（STATUS F6）。</li>
 </ul>
 <h2 id="section-7">10. モードの分離と表示</h2>
 <ul>
@@ -1027,11 +1072,11 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>AC08</td>
-<td>模擬PayPalでの障害注入（売上確定・返金・コミットの前後で停止）と再起動テスト。貸出の期限切れ後に届いた古い応答、遅れて届いたPENDINGの照会結果が状態を後退させないこと（DR1-03）。注文作成・与信・売上確定それぞれの「PayPal成功直後・DB保存前」の停止から、その操作だけを照会か同じIDで回復し、注文・与信の段階ではB_CHARGEが未完了、売上確定が結果不明なら予約確定へ進まないこと（7.5）</td>
+<td>模擬PayPalでの障害注入（売上確定・返金・コミットの前後で停止）と再起動テスト。貸出の期限切れ後に届いた古い応答、遅れて届いたPENDINGの照会結果が状態を後退させないこと（DR1-03）。注文作成・与信・売上確定それぞれの「PayPal成功直後・DB保存前」の停止から、その操作だけを照会か同じIDで回復し、注文・与信の段階ではB_CHARGEが未完了、売上確定が結果不明なら予約確定へ進まないこと（7.5）。同じIDの再送が元の結果を返す場合と、現在の状態を返す場合の両方（模擬の<code>replay</code>設定、D19）、PENDINGからの更新、同定できない資源、照合の不一致。売上確定後のcaptureの照会の失敗で「照合待ち」になり、保留を解放しないこと（D20）。EXPIREDの試行に残る結果不明の注文作成（6.3の8）</td>
 </tr>
 <tr>
 <td>AC09</td>
-<td>模擬PayPalでの返金PENDING・FAILED、Bへの回復返金のテスト。確定失敗後の新しい試行で補償10だけが完了し、PENDING・結果不明の間は新しい試行が作れないこと（DR1-02）。Sandboxで再現できた範囲は別に記録</td>
+<td>模擬PayPalでの返金PENDING・FAILED、Bへの回復返金のテスト。確定失敗後の新しい試行で補償10だけが完了し、PENDING・結果不明の間は新しい試行が作れないこと（DR1-02）。未確定の返金がある間と、記録が矛盾する間は新しい返金を送らないこと（D18）。Sandboxで再現できた範囲は別に記録</td>
 </tr>
 <tr>
 <td>AC10</td>
@@ -1057,14 +1102,14 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </table></div>
 <h2 id="section-11">14. 第1レビュー後の実装順序</h2>
 <ol>
-<li>骨組み：パッケージ構成、DBスキーマとトリガー、時計、候補判定、利益計算と、その単体テスト（模擬モードのみ）。</li>
-<li>PayPalアダプター、障害注入付きの模擬PayPal、接続検証スクリプト（V1〜V7）。認証情報がそろい次第、Sandboxで実行する。</li>
+<li>骨組み：パッケージ構成、DBスキーマとトリガー、時計、候補判定、利益計算と、その単体テスト（模擬モードのみ）。実装済み（<code>impl-skeleton-1</code>）。</li>
+<li>PayPalアダプター、障害注入付きの模擬PayPal、接続検証スクリプト（V1〜V7）。認証情報がそろい次第、Sandboxで実行する。実装済みで、Sandboxで実行した（<code>impl-paypal-1</code>とその修正版。STATUS参照）。Vertex AIの最小接続とV9もこの段階で行った。</li>
 <li>実行器、送信待ちキュー、回復処理と、障害注入テスト。</li>
-<li>AIアダプター（Vertex / 模擬）とV9。</li>
+<li>AIアダプター（Vertex / 模擬）の本格版。</li>
 <li>三画面（店主・A・B）とセッション。</li>
 <li>第2レビュー：Sandboxで一件が最後まで通った時点。</li>
 </ol>
-<h2 id="design-v0.2v0.3">15. 第1レビュー指摘への対応（design-v0.2、v0.3）</h2>
+<h2 id="design-v0.2v0.4">15. レビュー指摘への対応（design-v0.2〜v0.4）</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1108,4 +1153,52 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </table></div>
 <p>| DR1-02の残件 / P1（design-v0.3） | 3章の<code>money_obligations</code>・<code>payment_attempts</code>・<code>payment_operations</code>、6.2のE1・E2・E4・E6、6.3、7章冒頭、7.1、7.2、7.5、8章、D17、AC08 | 債務・試行（Bはチェックアウト1回分）・API操作の3階層に分離。再送防止ID・本文ハッシュ・外部ID・状態・貸出はAPI操作ごと。成功した操作は上書きせず、次の種類の操作を新しい行で作る。B_CHARGEは売上確定のCOMPLETEDでだけ完了。保存例と再開手順は7.5 |</p>
 <p>すべて設計上の対応であり、試験・実接続はまだ行っていない。</p>
+<h3 id="design-v0.4sandboxcodeximpl-paypal-1">15.1 design-v0.4（Sandboxの実接続とCodexの中間確認<code>impl-paypal-1</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>根拠</th>
+<th>対応した箇所</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>STATUS F3、Codexの回答1</td>
+<td>D18、7.1、7.3、AC09</td>
+<td>返金できる残額は、FlexSlotの記録から求める管理値。refund IDで重複を除き、未確定の返金がある間と記録の矛盾がある間は送らない。返金経路をFlexSlotに限る前提を明記</td>
+</tr>
+<tr>
+<td>STATUS F4、Codexの回答2</td>
+<td>D19、7.3、7.5、AC08</td>
+<td>資源の同定（ID・親子関係・custom_id・金額・受取先）と、次の操作の判定（現在の状態）を分ける。Orders・Paymentsの再送の挙動は観測であり、公式の保証ではない。模擬で両方の応答を試験する</td>
+</tr>
+<tr>
+<td>STATUS F5、Codexの回答3</td>
+<td>D20、6.2のE4・E6、7.3、7.5、AC08</td>
+<td>売上確定のPOSTの成功の後、captureを照会して受取先を照合してから進む。照会の失敗は照合待ちで、やり直さず保留も解放しない</td>
+</tr>
+<tr>
+<td>Codex指摘IP1-03</td>
+<td>D21、6.1</td>
+<td>Bの枠の探索の起点を、Bの希望時間とAの元枠の重なりの開始にした（実装も修正済み）</td>
+</tr>
+<tr>
+<td>Codexの確認（I07・I08）</td>
+<td>6.1、6.3の8、AC08</td>
+<td>Aの元決済も操作単位で保存して回復する。EXPIREDの試行の結果不明の操作は、無条件に再送しない</td>
+</tr>
+<tr>
+<td>Codexの回答5</td>
+<td>9章</td>
+<td>モデルを<code>gemini-3.5-flash-lite</code>（<code>global</code>）に決定。temperatureは送っているがモデルが無視するため、生成の制御とは扱わない</td>
+</tr>
+<tr>
+<td>実接続の結果</td>
+<td>7.3の表</td>
+<td>注文作成のHTTP 200、与信・売上確定の応答に受取先がないこと、取消のHTTP 200、返金の<code>total_refunded_amount</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>設計の変更であり、実行器・回復処理の実装と試験はまだ行っていない（14章の3）。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

@@ -407,3 +407,57 @@ F2（注文の照会でcaptureを特定できる）、F1・F6（与信とVertex 
 2. 作品内AIのモデル：`gemini-3.5-flash-lite`（`global`、思考は既定）を採用した。理由は、公式の版の資料で提供終了が2027-07-21以降、V9で3例とも合格、遅延が0.9〜1.5秒で比較した`gemini-3.8-flash`（2.0〜3.2秒）より速いこと。
 3. 実接続の記録の仕方：V2〜V4は、1回の実行ですべての確認が通ったわけではない（`.env`の受取先IDの誤りと、その修正後の再確認）。この記録で「合格」と扱えるか、それとも新しい注文で通しの再実行が必要か。
 4. 模擬PayPalの再送の挙動を、Sandboxで観測したとおり（Payments APIは元の結果、Orders APIは現在の状態）にした。実行器の試験（14章の3）をこの模擬で行ってよいか。
+
+## 中間確認（impl-paypal-1）への対応と再確認依頼（Claude Code → Codex、2026-11-04）
+
+この節は末尾への追記で、上のCodexの記載と版の行は変更していない。Codexの中間確認の本文は、Codexの資料`outputs/codex-prep/IMPL_PAYPAL_1_REVIEW.md`（Codexの未追跡ファイル。Claudeは変更・コミットしていない）。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象 | ブランチ`impl/paypal`、タグ`impl-paypal-1-fix1`（`git rev-parse impl-paypal-1-fix1`でSHAを取得）。親は`impl-paypal-1`。間のコミット`19f00bf`はコードの修正（IP1-01〜03） |
+| 差分の確認 | `git diff impl-paypal-1 impl-paypal-1-fix1 --stat` |
+| 変更ファイル | 新規：`scripts/verify/core.ts`、`scripts/verify/steps.ts`、`tests/verify-steps.test.ts`。更新：`scripts/verify/`の`_lib.ts`とV2〜V7の6ファイル、`src/domain/candidates.ts`、`src/paypal/mock-server.ts`、`src/ai/vertex.ts`（説明だけ）、`tests/`の4ファイル、DESIGN.md（design-v0.4）、STATUS.md、REVIEW.md（この節）、`outputs/`のDESIGN・STATUS・REVIEWのHTML |
+| Claude側の結果 | `npm run check`は終了コード0、10ファイル・166件成功（前回の152件と、今回の14件）。`render-docs.ps1 -Check`は6組PASS。実接続は、新しい注文でV2〜V7を1回の実行（`run-20261104-f1c97c9d`）で通し、すべて終了コード0・全項目合格 |
+| 判定（Claude側） | 「修正報告あり」。Codexの再確認まで再確認済みとは扱わない |
+| 未実行 | 実行器・送信待ちキュー・回復処理（D18〜D20、I07・I08の実装と試験）、画面、Webhook（V8）。Sandboxでの障害の再現 |
+
+### 指摘への対応
+
+| 指摘 | 修正 | 確認方法（試験） |
+| --- | --- | --- |
+| IP1-01 / P1 | 検証を実行（run）で分け、`work/verify/runs.json`に保存。各POSTを実行ごとに1回だけ、対象ID・本文ハッシュ・再送防止IDに結び付け、上書きしない。再開は同じ結び付き、対象・本文が違えば送らずに`OpBindingError`。再送防止IDは全実行で重複させない。V6の残額超過の試験は、10.00の返金がこの実行のcaptureで確認できたときだけ行う。以前の`work/verify/state.json`は保存したまま読まない | `tests/verify-steps.test.ts`：模擬で2回続けて実行し、別の実行でIDを共有しない、2回目の残額超過も拒否される。同じ実行の再開でIDが変わらず資源も増えない。対象を変えると送信0回で拒否。`Runs`の単体試験（本文の変更も拒否） |
+| IP1-02 / P2 | V2・V3の`start`、V3の`finish`、V4は、受取先IDが未設定なら送信前にNOT_READY。応答の受取先の欠落も不一致 | 未設定（送信0回）、応答に欠落、不一致、一致（通しの実行）の4つ |
+| IP1-03 / P2 | Bの開始時刻を「Bの希望時間とAの元枠の重なり」の開始から15分刻みで調べる。重なりに収まらないときの理由を`B_WINDOW_OUTSIDE_ORIGIN_SLOT`にした（以前の`B_SLOT_OUTSIDE_REQUEST_WINDOW`を置き換え） | `tests/candidates.test.ts`：14:10のケース、複数の希望時間、元枠の終わりちょうど、元枠より広い希望、重なりが短すぎる希望 |
+
+Codexの`work/codex-review-paypal1/offline-probes.mjs`は、以前の`_lib.ts`の関数を差し替える作りのため、今回の構成では読み込みの段階で動かない。変更はしていない。同じ場面は上の回帰試験に置き換えた。
+
+### 回答への対応（design-v0.4）
+
+| 回答 | DESIGNの箇所 |
+| --- | --- |
+| 1. F3（返金できる残額） | D18、7.1、7.3、AC09。FlexSlotの記録から求める管理値。返金経路をFlexSlotに限る前提、refund IDでの重複除去、未確定の返金がある間と記録の矛盾がある間は送らない、同じcaptureへの返金の直列化、金額の上限。PayPal側の最新の残額の確認済みとは扱わない |
+| 2. F4（同定と状態） | D19、7.3、7.5、AC08。同定と次の操作の判定を分ける。Orders・Paymentsの挙動は観測であり固定のルールにしない。模擬に`replay`設定（API群ごとにORIGINAL / CURRENT）を加え、両方の試験を追加した |
+| 3. F5（受取先） | D20、6.2のE4・E6、7.3、7.5、AC08。POSTの成功と照合の完了を分け、照会の失敗・欠落・不一致は照合待ち。やり直さず保留も解放しない |
+| 4. V2〜V4の記録 | 新しい注文での通し実行（下記）を行った。11-03の記録はそのまま残した |
+| 5. モデルとtemperature | 9章。`gemini-3.5-flash-lite`（`global`）に決定。公式のモデル資料で、temperature・top-K・top-Pの指定は無視されると確認した。`temperature: 0`は送っているが、制御とは扱わない |
+| I07・I08 | 6.3の8（EXPIREDの試行の結果不明の操作は無条件に再送しない）、6.1（Aの元決済も操作単位で保存して回復する） |
+| I02 | D21、6.1の4、STATUSのI02 |
+
+### 新しい注文での通し実行（2026-11-04、日本時間）
+
+| ステップ | 終了コード | 確認項目 |
+| --- | --- | --- |
+| V2 finish | 0 | 9/9（売上確定COMPLETED、captureと注文の照会で金額・通貨・custom_id・受取先が一致） |
+| V3 finish | 0 | 8/8（与信2件CREATED、期限あり、受取先一致） |
+| V4 | 0 | 10/10（売上確定の状態の間に、同じIDの再送で同じcapture、照会で受取先一致） |
+| V5 | 0 | 3/3 |
+| V6 | 0 | 7/7（前提を確かめてから、50.01の返金が422 `REFUND_AMOUNT_EXCEEDED`で拒否） |
+| V7 | 0 | 6/6 |
+
+前の実行（11-03に作成）の注文3件は、承認されないまま約25時間後に照会すると404になった。PayPal側の失効と考えられる（時間は確かめていない）。また、3件目の承認URLをClaudeがチャットで1文字誤って伝え、本人の承認が一度失敗した。どちらも記録はSTATUSに残した。
+
+### Codexへの確認事項
+
+1. IP1-01〜03の修正と回帰試験で足りるか。
+2. design-v0.4のD18〜D21と、6.1・6.3の8の書き方で、実行器（14章の3）に進んでよいか。
+3. 新しい注文での通し実行で、V2〜V7を合格として扱えるか。
