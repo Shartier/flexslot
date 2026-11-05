@@ -42,7 +42,7 @@ export function proposeInTx(db: Db, now: number, worldId: string, bRequestId: st
   const tz = shop.timezone;
   const services = servicesOf(db, shop.id);
   const req = db.prepare('SELECT * FROM b_requests WHERE id = ? AND world_id = ?').get(bRequestId, worldId) as
-    | { id: string; customer_id: string; structured_json: string }
+    | { id: string; customer_id: string; version: number; structured_json: string }
     | undefined;
   if (!req) throw new Error('unknown request');
   const bReq = JSON.parse(req.structured_json) as { serviceId: string; windows: LocalWindow[]; stylistId: string | null };
@@ -117,7 +117,18 @@ export function proposeInTx(db: Db, now: number, worldId: string, bRequestId: st
     a_capture_id: capture.capture_id,
     offer_expires_at: now + offerTtlMs,
   };
-  const terms = buildCaseTerms(row, shop.expected_payee_merchant_id);
+  // IE1-02 / D22: the approvals are bound to the parties, both services, B's duration and the versions of B's
+  // request and A's conditions this proposal was computed from; the executor re-checks them at E1 and E5.
+  const terms = buildCaseTerms(row, {
+    payeeMerchantId: shop.expected_payee_merchant_id,
+    aCustomerId: a.customer_id,
+    bCustomerId: req.customer_id,
+    aServiceId: a.service_id,
+    bServiceId: bService.id,
+    bServiceDurationMin: bService.duration_min,
+    bRequestVersion: req.version,
+    aPreferenceVersion: pref.version,
+  });
   db.exec('SAVEPOINT propose');
   try {
     db.prepare(

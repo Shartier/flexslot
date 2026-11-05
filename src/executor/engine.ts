@@ -62,8 +62,8 @@ export type WorkResult = 'PROGRESSED' | 'WAITING' | 'BUSY' | 'BLOCKED';
 export type Recovery =
   | { kind: 'RESOLVED'; resource: Resource }
   | { kind: 'RESEND' }
-  /** Definitively not processed by PayPal (e.g. authorize of an unapproved order): NOT_ACCEPTED. */
-  | { kind: 'NOT_PROCESSED'; reason: string }
+  // There is no "not processed" outcome of a recovery (IE1-01): only the answer to a send itself can say that a
+  // request was not accepted (NOT_ACCEPTED in #fromSend); a later query of an unconfirmed send cannot.
   /** Definitively impossible now (e.g. capture of a voided authorization): FAILED. */
   | { kind: 'FAILED'; reason: string }
   | { kind: 'WAIT'; reason: string; attention?: boolean };
@@ -236,8 +236,6 @@ export class OpEngine {
         if (!h.resendAllowed(op)) return this.#store(h, lease, op, { patch: { last_error_class: `${HOLD}RESEND_NOT_ALLOWED`, next_send_at: null }, attention: 'RESEND_NOT_ALLOWED' });
         if (op.sends >= MAX_SENDS) return this.#store(h, lease, op, { patch: { last_error_class: `${HOLD}RETRY_LIMIT`, next_send_at: null }, attention: 'RETRY_LIMIT' });
         return this.#sendNow(h, lease, false);
-      case 'NOT_PROCESSED':
-        return this.#store(h, lease, op, { patch: { status: 'NOT_ACCEPTED', last_error_class: decision.reason, next_send_at: null } });
       case 'FAILED':
         return this.#store(h, lease, op, { patch: { status: 'FAILED', last_error_class: decision.reason, next_send_at: null }, attention: decision.reason });
       case 'WAIT': {

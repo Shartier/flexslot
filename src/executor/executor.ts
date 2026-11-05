@@ -43,7 +43,7 @@ import {
   succeededOp,
   type ObligationRow,
 } from './store.ts';
-import { readTerms, termsMismatches, type CaseRow } from './terms.ts';
+import { frozenTermsProblems, readTerms, slotTimeProblems, termsMismatches, type CaseRow } from './terms.ts';
 
 export const PAYMENT_WINDOW_MS = 15 * 60_000;
 
@@ -160,7 +160,8 @@ export class Executor {
       if (c.version !== req.version || c.terms_hash !== req.termsHash) return no('TERMS_CHANGED');
       if (now >= c.offer_expires_at) return no('OFFER_EXPIRED');
       const b = db.prepare('SELECT customer_id FROM b_requests WHERE id = ?').get(c.b_request_id) as { customer_id: string } | undefined;
-      if (b?.customer_id !== req.bPartyId) return no('NOT_B');
+      const frozen = readTerms(c);
+      if (b?.customer_id !== req.bPartyId || (frozen && frozen.bCustomerId !== req.bPartyId)) return no('NOT_B');
       const problems = this.#executionProblems(c, 'ACTIVE', ['OWNER', 'A']);
       if (problems.length) return no(problems[0]!);
       // DESIGN 6.2: exactly one execution right (AC06, C04).
@@ -189,13 +190,19 @@ export class Executor {
     });
   }
 
-  /** Re-checks of E1 and E5: terms, approvals, A's booking and payment, the destination hold, payee, mode. */
+  /**
+   * Re-checks of E1 and E5: terms (with the frozen request, services, parties and versions, IE1-02), the time of
+   * the three slots on the server clock (IE1-03), approvals, A's booking and payment, the destination hold, payee,
+   * mode.
+   */
   #executionProblems(c: CaseRow, holdStatus: 'ACTIVE' | 'FROZEN', roles: readonly string[]): string[] {
     const db = this.#db;
     const now = this.#clock.now();
     const out: string[] = [];
     const terms = readTerms(c);
     if (!terms || termsMismatches(c, terms).length) out.push('TERMS_INVALID');
+    else out.push(...frozenTermsProblems(db, terms));
+    out.push(...slotTimeProblems(c, now));
     const world = db.prepare('SELECT mode_payment FROM worlds WHERE id = ?').get(c.world_id) as { mode_payment: string } | undefined;
     if (world?.mode_payment !== this.#paypal.mode) out.push('MODE_MISMATCH');
     for (const role of roles) {
@@ -376,6 +383,11 @@ export class Executor {
         if (charge.status !== 'SETTLED') return false;
         const capOp = getOp(db, T, charge.settled_by_operation_id!)!;
         const createOp = succeededOp(db, capOp.attempt_id!, 'ORDER_CREATE')!;
+        // IE1-02: B's booking comes from the approved snapshot only (customer, service), never from the mutable request.
+        const terms = readTerms(c);
+        if (!terms) throw new BookingImpossible('TERMS_INVALID');
+        // IE1-03: a slot that has started (server clock) cannot be swapped any more: A keeps the booking, B is refunded.
+        if (slotTimeProblems(c, now).length) throw new BookingImpossible('SLOT_TIME_PASSED');
         // DESIGN 4.4: hold CONVERTED -> A moves to the destination -> B takes the original slot (triggers check each).
         const hold = db
           .prepare("UPDATE slot_holds SET status = 'CONVERTED' WHERE case_id = ? AND status = 'FROZEN' AND stylist_id = ? AND start_ms = ? AND end_ms = ?")
@@ -387,22 +399,19 @@ export class Executor {
           )
           .run(c.dest_start_ms, c.dest_end_ms, c.a_booking_id, c.a_booking_version, c.origin_start_ms, c.origin_end_ms);
         if (moved.changes !== 1) throw new BookingImpossible('A_BOOKING_CHANGED');
-        const req = db.prepare('SELECT customer_id, structured_json FROM b_requests WHERE id = ?').get(c.b_request_id) as { customer_id: string; structured_json: string };
-        const serviceId = (JSON.parse(req.structured_json) as { serviceId?: string }).serviceId;
-        if (!serviceId) throw new BookingImpossible('B_SERVICE_MISSING');
         const shopId = (db.prepare('SELECT shop_id FROM bookings WHERE id = ?').get(c.a_booking_id) as { shop_id: string }).shop_id;
         const bBookingId = `${c.id}:booking:b`;
         db.prepare(
           `INSERT INTO bookings (id, shop_id, stylist_id, customer_id, service_id, start_ms, end_ms, status, version, price_minor)
            VALUES (?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', 1, ?)`,
-        ).run(bBookingId, shopId, c.stylist_id, req.customer_id, serviceId, c.b_start_ms, c.b_end_ms, c.b_price_minor);
+        ).run(bBookingId, shopId, c.stylist_id, terms.bCustomerId, terms.bServiceId, c.b_start_ms, c.b_end_ms, c.b_price_minor);
         // payments references bookings, so B's row is written here, with the reconciled capture (DESIGN 7.5).
         db.prepare(
           `INSERT INTO payments (id, booking_id, kind, order_id, capture_id, amount_minor, currency, payee_merchant_id, status_raw, verified_at)
            VALUES (?, ?, 'B_SWAP', ?, ?, ?, ?, ?, ?, ?)`,
         ).run(
           `${c.id}:payment:b`, bBookingId, createOp.result_external_id!, capOp.result_external_id!, charge.amount_minor, charge.currency,
-          readTerms(c)!.payeeMerchantId, capOp.external_status ?? 'COMPLETED', capOp.reconciled_at,
+          terms.payeeMerchantId, capOp.external_status ?? 'COMPLETED', capOp.reconciled_at,
         );
         // Processed marker (DESIGN 6.2): status, compensation grant and A's refund obligation, all or nothing.
         db.prepare('INSERT INTO compensation_grants (booking_id, case_id, granted_at) VALUES (?, ?, ?)').run(c.a_booking_id, c.id, now);

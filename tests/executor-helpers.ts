@@ -8,7 +8,7 @@ import { openDatabase, type Db } from '../src/db/database.ts';
 import type { CrashPoint, ExecutorHooks, HookInfo } from '../src/executor/engine.ts';
 import { Executor } from '../src/executor/executor.ts';
 import type { OpRow } from '../src/executor/ops.ts';
-import { buildCaseTerms, termsHash, type CaseRow } from '../src/executor/terms.ts';
+import { buildCaseTerms, termsHash, type CaseRow, type FixedTerms } from '../src/executor/terms.ts';
 import { MOCK_CLIENT_ID, MOCK_CLIENT_SECRET, MOCK_MERCHANT_ID, MockPayPalServer, type MockRoute, type ReplayModes } from '../src/paypal/mock-server.ts';
 import { MOCK_API_BASE, PayPalRestAdapter, type FetchLike } from '../src/paypal/rest.ts';
 import { SAMPLE_NOW_MS, seedSampleWorld, type SampleWorldIds } from '../src/sample.ts';
@@ -177,7 +177,7 @@ export async function swapWorld(o: { replay?: ReplayModes; timeoutMs?: number; c
     a_capture_id: aCaptureId,
     offer_expires_at: SAMPLE_NOW_MS + 3 * 3_600_000,
   };
-  const terms = buildCaseTerms(row, MOCK_MERCHANT_ID);
+  const terms = buildCaseTerms(row, sampleFixedTerms(ids));
   const hash = termsHash(terms);
   db.prepare(
     `INSERT INTO swap_cases (id, world_id, version, status, terms_json, terms_hash, a_booking_id, a_booking_version, b_request_id, stylist_id,
@@ -203,6 +203,20 @@ export async function swapWorld(o: { replay?: ReplayModes; timeoutMs?: number; c
       const r = ex.startPayment({ caseId, version: 1, termsHash: hash, bPartyId: ids.customerBId });
       if (!r.ok) throw new Error(`startPayment refused: ${r.reason}`);
     },
+  };
+}
+
+/** IE1-02: the parties, services and versions the sample case is approved with. */
+export function sampleFixedTerms(ids: SampleWorldIds): FixedTerms {
+  return {
+    payeeMerchantId: MOCK_MERCHANT_ID,
+    aCustomerId: ids.customerAId,
+    bCustomerId: ids.customerBId,
+    aServiceId: ids.cutServiceId,
+    bServiceId: ids.cutServiceId,
+    bServiceDurationMin: 60,
+    bRequestVersion: 1,
+    aPreferenceVersion: 1,
   };
 }
 
