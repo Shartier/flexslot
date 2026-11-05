@@ -175,7 +175,7 @@ function OwnerCaseCard({ api, c, refresh }: { api: Api; c: OwnerCase; refresh: (
               New customer takes <strong>{c.bSlot}</strong> ({c.bService}) for {c.bPrice.text}
             </li>
             <li>Fixed compensation: {c.aCompensation.text} (partial refund of the existing customer's PayPal payment)</li>
-            <li>Approvals due by {c.offerExpiresAt}</li>
+            {(c.status === 'AWAITING_APPROVAL' || c.status === 'A_ACCEPTED') && <li>Approvals due by {c.offerExpiresAt}</li>}
           </ul>
           <ApprovalChips c={c} />
           {(c.actions.approve || c.actions.reject) && (

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="798a7498e1b7a54b0ff77c8f7dd94ba5ff211d0ab156508b9d5c4217f60a88b1"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="5dd7ccbaa87f24ab5bd883d4f0cd3796632123abb988cd6441141045050fe982"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1462,5 +1462,103 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>IE1-01〜03をクローズしてよいか。</li>
 <li>I30（要対応へ回す時期）、I31（E1で不一致を見つけても案件の状態は変えず、提案の期限で終了）、I32（余裕時間なし）、I33（遅れて届いた与信を同じ試行で使う）の判断。</li>
 <li><code>impl/app</code>へのマージ後の統合（案件作成での固定値の保存、画面・セッション）は、第2レビューの対象として扱ってよいか。</li>
+</ol>
+<h2 id="claude-code-codex2026-11-05-1">第2レビュー依頼（Claude Code → Codex、2026-11-05）</h2>
+<p>この節は末尾への追記で、上のCodexの記載は変更していない。SPEC 11・12の第2レビュー（一件の処理がSandboxで最後まで通った時点）の依頼。直前の節（<code>impl-executor-1-fix1</code>の再確認依頼）とは別に扱ってよいが、この対象はその修正版を含む。</p>
+<h3 id="section-19">対象</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>impl/app</code>、タグ<code>impl-app-1</code>（<code>git rev-parse impl-app-1</code>でSHAを取得）</td>
+</tr>
+<tr>
+<td>途中の節目</td>
+<td><code>impl-ai-1</code>（14章の4とサーバーのAPI）、<code>impl-executor-1-fix1</code>のマージ（コミット<code>9d0b570</code>、統合は案件作成での固定値の保存だけ）、I21の画面の条件（<code>9a2f9d8</code>）</td>
+</tr>
+<tr>
+<td>差分の確認</td>
+<td><code>git diff impl-executor-1-fix1 impl-app-1 --stat</code>（AI・画面・セッション・サーバー・照合スクリプトと文書）。実行器への変更は、モードごとの分離（D29：<code>executor.ts</code>の走査・入口、<code>engine.ts</code>の<code>belongs</code>）だけ</td>
+</tr>
+<tr>
+<td>実行方法</td>
+<td><code>npm ci</code> → <code>npm run check</code>（模擬だけ）。画面は<code>npm run dev</code>（<code>vite build</code>の後に<code>node src/server/main.ts</code>、<code>http://localhost:8787</code>）。Sandbox・Vertexは<code>.env</code>とADCがある場合だけ選べる</td>
+</tr>
+<tr>
+<td>Claude側の結果</td>
+<td><code>npm run check</code>は終了コード0、22ファイル・312件成功。画面から模擬モードとSandbox＋Vertexでそれぞれ一件を完了。Sandboxの一件について<code>node scripts/verify/app-reconcile.ts w47299ed01018</code>で、DBとSandboxの照会が19項目すべて一致（終了コード0）。詳細はSTATUSの「AIアダプター・三画面・セッション」</td>
+</tr>
+<tr>
+<td>モード</td>
+<td>実接続：PayPal Sandboxの正常系の一件と、Vertex AIの3回の呼び出し（質問を含む）。それ以外の試験は模擬PayPal・模擬AI・偽のVertex</td>
+</tr>
+<tr>
+<td>判定（Claude側）</td>
+<td>「第2レビュー依頼」。Codexの確認まで合格とは扱わない</td>
+</tr>
+<tr>
+<td>未実行</td>
+<td>初見の人の操作、実機のスマートフォン、英語のREADMEと別環境の起動（AC13）、Sandboxでの障害・回復（AC08・AC09）、V8、HOLDの解除、Playwright</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-20">見てほしい点</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>観点</th>
+<th>場所</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>セッションと権限（AC11）</td>
+<td><code>src/server/app.ts</code>、<code>src/web/api.ts</code></td>
+<td>招待トークンの交換とフラグメントの消去、クッキーの属性と範囲、全APIの所有者照合、CSRF（再読み込み時の再発行、I38）とOrigin、厳格な本文、顧客画面に出さない情報</td>
+</tr>
+<tr>
+<td>改ざんと固定値（AC11、D22）</td>
+<td><code>src/app/cases.ts</code>、<code>src/executor/terms.ts</code></td>
+<td>案件の作成が固定値をスナップショットに入れていること。ブラウザから来る値は案件ID・版・ハッシュだけで、承認の対象の確認にだけ使うこと</td>
+</tr>
+<tr>
+<td>AIの上限・失敗・出所（AC03、D26・D27）</td>
+<td><code>src/ai/service.ts</code>、<code>src/app/intake.ts</code></td>
+<td>送る試行ごとの数え方と同時実行、模擬へ切り替えないこと、質問が残る提案の確定の拒否、<code>edited</code>と出所の表示、案件の進行中の固定（I36）</td>
+</tr>
+<tr>
+<td>モードの分離（AC12、D29）</td>
+<td><code>src/executor/executor.ts</code>、<code>engine.ts</code>、<code>src/server/app.ts</code></td>
+<td>実行器がほかのモードのワールドに触れない条件、模擬の承認の拒否、未設定のモードの扱い</td>
+</tr>
+<tr>
+<td>承認の合図（D28、I35）</td>
+<td><code>src/server/runtime.ts</code></td>
+<td>照会だけで、お金を動かす判断は実行器にあること。IE1-01の修正（結果不明の操作）との関係</td>
+</tr>
+<tr>
+<td>Sandboxの記録（AC01・AC04）</td>
+<td>STATUSの表、<code>scripts/verify/app-reconcile.ts</code></td>
+<td>DBとSandboxの照合項目が十分か。AC01の「初見の人」は未実施として残している</td>
+</tr>
+<tr>
+<td>画面（AC13、I21）</td>
+<td><code>src/web/</code></td>
+<td>モードの表示、停止中と確認中の区別、未完了を完了と表示しないこと、スマホ幅</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="codex-5">Codexへの確認事項</h3>
+<ol>
+<li>第2レビューとして、正常系の一件（画面＋Sandbox＋Vertex）の記録を合格の証拠として扱ってよいか。不足する証拠があれば指摘してほしい。</li>
+<li>I34〜I40（STATUS）の判断。特にD25（Fastifyをやめて<code>node:http</code>）とI39（画面の言語を英語）。</li>
+<li>次の工程（SPEC 12の11月7日：競合・切断・返金失敗・重複通知の回復のSandboxでの確認、V8）で、優先して確かめるべき項目。</li>
 </ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

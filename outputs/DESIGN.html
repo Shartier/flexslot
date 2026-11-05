@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="aa0124078846aa9147e3f70204d9289cdfa936a13e84595ad125d38ac55b88d6"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="96400ccffa1d49e637f728a999575e376cd167ea037dd42201de7fc2d6f17e1b"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,11 +8,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html" aria-current="page">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：DESIGN.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-1">FlexSlot — 技術設計（第1レビュー対象）</h1>
-<p>版：design-v0.6 / 作成日：2026-11-03、更新：2026-11-05（日本時間）/ 作成：Claude Code / 状態：骨組み・PayPalアダプター・接続検証（V1〜V7・V9）、実行器・送信待ちキュー・回復処理（14章の3、模擬PayPalで試験）と、そのCodexレビューの指摘IE1-01〜03の修正まで実装済み（STATUS参照）。画面は未実装（この版の時点）。</p>
+<p>版：design-v0.7 / 作成日：2026-11-03、更新：2026-11-05（日本時間）/ 作成：Claude Code / 状態：14章の1〜5（骨組み、PayPalアダプター、実行器とその修正版、AIアダプター、三画面とセッション）まで実装済み。画面からSandboxで一件の振替を最後まで通した（STATUS参照）。第2レビュー待ち。</p>
 <p>SPEC.md（spec-v0.1）の「設計案」を検証し、実装できる粒度まで具体化した文書。合意済みの範囲は変えない。SPECの条件を弱めた箇所はない。追加・具体化した箇所は「1. SPECとの差分」に列挙する。</p>
 <p>design-v0.2の変更：Codexの第1レビュー指摘DR1-01〜05と小修正を反映した。対応箇所の一覧は15章。</p>
 <p>design-v0.3の変更：DR1-02の残件に対応し、支払いの保存単位を「債務・試行・API操作」の3階層に分けた（D17、3章、6.2、6.3、7章、7.5）。</p>
 <p>design-v0.4の変更：Sandboxでの実接続（V1〜V7）の結果と、Codexの中間確認（<code>impl-paypal-1</code>、指摘IP1-01〜03と回答）を反映した。返金できる残額の管理値（D18）、再送・照会の応答での資源の同定と次の操作の判定の分離（D19）、売上確定後の照会による受取先の照合（D20）、候補探索の起点（D21）、I07・I08の回復条件、作品内AIのモデルとtemperatureの扱い。対応箇所は15章。</p>
+<p>design-v0.7の変更：14章の4（AIアダプター）と5（三画面とセッション）の実装で具体化した点を反映した（D25〜D30、5章、9章、10章、14章、15.4）。</p>
 <p>design-v0.6の変更：Codexの実行器レビュー（<code>impl-executor-1</code>、2026-11-05）を反映した。与信も注文の照会で照合してから進む（I17の採用、6.2のE4・7.5の進み方3）。結果不明の送信を未承認の照会だけで終わらせない（D24、IE1-01）。承認の対象に、B依頼の版・施術・施術時間・A/Bの当事者・Aの移動条件の版を加え、E7はこの固定値で予約する（D22、IE1-02）。三つの枠のどれかが始まった後は振り替えない（D23、IE1-03）。対応箇所は15.3。</p>
 <p>design-v0.5の変更：Codexの再確認（<code>impl-paypal-1-fix1</code>、2026-11-04）の指摘IP1-04と6.1の小修正を反映した。売上確定のPOSTの成功の後の「照合待ち」を操作の行に永続的に記録し（<code>reconcile_status</code>）、6.2のE6、7.1、7.2、7.5の保存・再開の手順をD20に揃えた。Aの元決済の注文作成で、送信前と応答後に保存する値を分けた（6.1）。対応箇所は15.2。</p>
 <h2 id="spec">1. SPECとの差分</h2>
@@ -187,6 +188,48 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>結果の照会（7.3）</td>
 <td>送信中・結果不明の与信やAの注文の売上確定を、「注文が未承認」という照会だけで未受理にしない。同じ操作・同じ再送防止IDのまま照会を続け、注文が承認されたら同じIDで再送する。Bの支払い期限から30分（Aの元決済は、その売上確定の操作を作ってから3時間）を過ぎても未承認なら、店主の要対応にする。この間、試行の終了・枠の解放・新しい操作の作成はしない</td>
 <td>7.1、7.3、6.3。Codex指摘IE1-01（STATUS I23の一部を取り消し）</td>
+</tr>
+<tr>
+<td>D25</td>
+<td>変更</td>
+<td>API：Fastify（D01）</td>
+<td>Node内蔵の<code>node:http</code>と小さな経路の処理、入力検証はzod（未知の項目は拒否）。試験は要求を直接渡す（Fastifyの注入と同じ形）</td>
+<td>依存を増やさない。Fastifyの利点（検証の統合・注入）はzodと自前の注入で足りる。クッキー・静的配信の追加パッケージも不要</td>
+</tr>
+<tr>
+<td>D26</td>
+<td>具体化</td>
+<td>AIの上限（9章）</td>
+<td>回数は、Vertexへ実際に送る試行（再試行を含む）を数える。送る前に<code>BEGIN IMMEDIATE</code>の中で、ワールドあたり30回・全体で1日（UTCの日付）500回を確かめてから数える。模擬AIは数えない。呼び出しごとに、モード・モデル・結果・試行数・遅延・検査を通った構造化結果を<code>ai_calls</code>に保存する（利用者の文は保存しない）</td>
+<td>再起動しても上限が戻らない。同時の要求が最後の1回を両方取らない</td>
+</tr>
+<tr>
+<td>D27</td>
+<td>追加</td>
+<td>自由文の構造化と本人の確認（9章）</td>
+<td>AIの提案と質問は下書き（<code>intake_drafts</code>）に残す。曖昧な点の質問があるまま、提案をそのまま確定することは拒否する（本人が答えてAIに再度送るか、フォームで時刻を直す）。確定すると、元の文・確定した構造・入力の出所・本人が提案を直したか（<code>edited</code>）を、新しい版として保存する。案件が進行中の間は、AとBの条件の変更を受け付けない</td>
+<td>「午後なら」を勝手に確定しない（SPEC 5）。D22の固定値と合わせ、承認後に条件が動かない</td>
+</tr>
+<tr>
+<td>D28</td>
+<td>追加</td>
+<td>Bの承認の検知（E3）</td>
+<td>ブラウザからの合図（PayPalの戻りページ、「承認しました」ボタン）に加え、サーバーが承認待ちの注文を5秒ごとに照会し、APPROVEDなら同じ合図を実行器に渡す（Bは支払い期限内、Aの元決済は操作の作成から3時間）。照会は与信・売上確定を行わない</td>
+<td>本人が別のブラウザで承認しても進む。お金を動かす判断は実行器だけが行う</td>
+</tr>
+<tr>
+<td>D29</td>
+<td>具体化</td>
+<td>モードの分離（10章）</td>
+<td>実行器は決済モードごとに1つ作り、それぞれ自分のモードのワールドの操作・案件だけを走査・送信する（走査のSQL、入口の関数、操作の処理の前の検査）。模擬の承認ボタンは、模擬のワールドでだけ受け付ける</td>
+<td>1つのDBに両方のモードのワールドがあっても、模擬の実行器がSandboxの操作を送らない（AC12）</td>
+</tr>
+<tr>
+<td>D30</td>
+<td>具体化</td>
+<td>デモのワールド（D10、SPEC 4）</td>
+<td>ワールドの作成時に、店の現地日付を基準日として保存し、Aの予約を基準日＋2日の14:00–15:00、例文の移動先を基準日＋5日に置く。Aの予約は未払いで作り、A自身が画面で支払う（Sandbox、または模擬の承認）</td>
+<td>日付が過ぎても同じ相対条件でデモできる。基準日を記録する</td>
 </tr>
 <tr>
 <td>D21</td>
@@ -444,7 +487,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>招待リンク</strong>：ワールド作成時に、役割ごとに256ビットの乱数トークンを発行し、SHA-256だけを保存する。トークンはURLのフラグメント（<code>#</code>以降）に入れる。フラグメントはサーバーへ送られないため、アクセスログや参照元に残らない。画面のスクリプトがトークンをPOSTでセッションに交換し、直後に<code>history.replaceState</code>でURLから消す。<code>Referrer-Policy: no-referrer</code>も付ける。</li>
 <li><strong>クッキー</strong>：<code>HttpOnly</code>、<code>SameSite=Strict</code>、HTTPSでは<code>Secure</code>。パスを<code>/w/{ワールドID}/{役割}</code>に限定し、1つのブラウザで三役割のタブを開いても混ざらないようにする。ただしパスの分離は表示の都合であり、認可の境界にはしない。権限の判断は、すべて次のサーバー側の検査で行う。</li>
 <li><strong>サーバー側の検査</strong>：すべてのAPIで、セッションのワールド・役割・当事者IDと、操作対象の案件・予約の所有者を照合する。画面の役割切替ボタンは招待リンクを開くだけで、認証の代わりにはしない。デモでは作成者が三役割のリンクを持つが、本来は当事者がそれぞれ自分のリンクだけを受け取る前提であることを画面とREADMEに書く。</li>
-<li><strong>CSRF</strong>：変更系のAPIは、セッションに紐付いたCSRFトークン（<code>X-CSRF-Token</code>ヘッダー）と<code>Origin</code>の一致を必須にする。</li>
+<li><strong>CSRF</strong>：変更系のAPIは、セッションに紐付いたCSRFトークン（<code>X-CSRF-Token</code>ヘッダー）と<code>Origin</code>の一致を必須にする。CSRFトークンはハッシュだけを保存し、画面はメモリにだけ持つ。再読み込みや新しいタブでは、クッキーと<code>Origin</code>を確かめたうえで新しいトークンを発行する（古いトークンは無効になる）。</li>
+<li><strong>実装（14章の5）</strong>：招待リンクは<code>/w/{ワールドID}/{owner|a|b}/#t={トークン}</code>。画面は最初に<code>replaceState</code>でフラグメントを消してから、トークンをPOSTで交換する。セッションは24時間（ワールドの期限を超えない）。サーバーは<code>127.0.0.1</code>だけで待ち受け、応答にContent-Security-Policy（同じ生成元のスクリプト・スタイルだけ）、<code>Referrer-Policy: no-referrer</code>などを付ける。顧客の画面には、PayPalのID・再送防止ID・内部の状態名を出さない。</li>
 <li><strong>改ざん対策</strong>：ブラウザから来た金額・通貨・受取先・order ID・capture IDは使わない。サーバーは案件IDだけを受け取り、値はDBの条件スナップショットから取る（AC11）。</li>
 </ul>
 <h2 id="section-4">6. 振替の流れと状態</h2>
@@ -982,13 +1026,14 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>呼び出し</strong>：<code>@google/genai</code>を<code>vertexai: true</code>、プロジェクトID、リージョンを指定して使う。認証はローカルではADC（<code>gcloud auth application-default login</code>）、公開時はサーバーのサービスアカウント。ブラウザに認証情報を渡さない。<code>responseMimeType: application/json</code>と<code>responseSchema</code>を使う。<code>temperature: 0</code>を送っているが、採用したモデルはtemperature・top-K・top-Pの指定を無視する（公式のモデル資料、2026-11-03に確認）。これを生成の制御や再現性の保証とは扱わず、正しさはスキーマ、サーバーでの検査、本人の確認で担保する。</li>
 <li><strong>上限</strong>：1回20秒でタイムアウト、5xxと429のときだけ1回再試行、ワールドあたり30回まで、全体で1日500回まで。上限を超えたらフォームでの手入力を案内する。</li>
 <li><strong>失敗時</strong>：AIが失敗したら、フォームでの手入力に切り替えることを明示して案内する。模擬のAIに黙って切り替えない。模擬モードは試験とオフライン用の固定ルールで、画面に「AI：模擬」と表示する。</li>
-<li><strong>入力の出所</strong>：構造化した条件ごとに、AI（Vertex）・AI（模擬）・手入力のどれで作ったかを保存し、画面に表示する。手入力や模擬の結果は、実AIが成功した証拠（AC03）に含めない。</li>
+<li><strong>入力の出所</strong>：構造化した条件ごとに、AI（Vertex）・AI（模擬）・手入力のどれで作ったかを保存し、画面に表示する。手入力や模擬の結果は、実AIが成功した証拠（AC03）に含めない。本人が提案を直して確定した場合は、出所を残したまま<code>edited</code>を立てる（D27）。</li>
+<li><strong>実装（14章の4）</strong>：AIのポート（<code>src/ai/port.ts</code>）に、Vertex（<code>@google/genai</code>）と模擬（固定の規則、<code>mock-rules-v1</code>）の2つの実装を置く。上限と記録はD26、下書きと確定はD27。</li>
 <li><strong>モデル</strong>：<code>gemini-3.5-flash-lite</code>、リージョン<code>global</code>、思考はモデルの既定（2026-11-03に決定、Codexの確認で採用可）。公式資料で構造化出力に対応し、提供終了は2027-07-21以降。V9で3例がスキーマどおりに返り、遅延は約1秒だった。V9は最小接続の根拠であり、任意の予約文での精度を保証するものではない（STATUS F6）。</li>
 </ul>
 <h2 id="section-7">10. モードの分離と表示</h2>
 <ul>
 <li>AIのモード（Vertex / 模擬）と決済のモード（Sandbox / 模擬）は独立して設定し、ワールドの作成時に固定する。三画面の上部に常に表示する。</li>
-<li>決済のIDはモードを付けて保存する。模擬モードのIDをSandboxのAPIに渡す操作、Sandboxのワールドで模擬の結果を使う操作は、サーバーで拒否する（AC12）。</li>
+<li>決済のIDはモードを付けて保存する。模擬モードのIDをSandboxのAPIに渡す操作、Sandboxのワールドで模擬の結果を使う操作は、サーバーで拒否する（AC12）。実行器はモードごとに分ける（D29）。設定がないモード（Vertex・Sandbox）のワールドは作れず、模擬に切り替えない。</li>
 <li>Live接続のコードは書かない。設定でLiveのURLを指定できないようにする。</li>
 </ul>
 <h2 id="section-8">11. 公開とローカル起動（保留・本人確認後）</h2>
@@ -1149,8 +1194,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>骨組み：パッケージ構成、DBスキーマとトリガー、時計、候補判定、利益計算と、その単体テスト（模擬モードのみ）。実装済み（<code>impl-skeleton-1</code>）。</li>
 <li>PayPalアダプター、障害注入付きの模擬PayPal、接続検証スクリプト（V1〜V7）。認証情報がそろい次第、Sandboxで実行する。実装済みで、Sandboxで実行した（<code>impl-paypal-1</code>とその修正版。STATUS参照）。Vertex AIの最小接続とV9もこの段階で行った。</li>
 <li>実行器、送信待ちキュー、回復処理と、障害注入テスト。実装済みで、模擬PayPalで試験した（<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を<code>impl-executor-1-fix1</code>で修正した。Sandboxでは未実行。STATUS参照。</li>
-<li>AIアダプター（Vertex / 模擬）の本格版。</li>
-<li>三画面（店主・A・B）とセッション。</li>
+<li>AIアダプター（Vertex / 模擬）の本格版。実装済み（<code>impl-ai-1</code>。ブランチ<code>impl/app</code>）。</li>
+<li>三画面（店主・A・B）とセッション。実装済みで、模擬モードと、Sandbox＋Vertexで一件を通した（<code>impl-app-1</code>。STATUS参照）。</li>
 <li>第2レビュー：Sandboxで一件が最後まで通った時点。</li>
 </ol>
 <h2 id="design-v0.2v0.4">15. レビュー指摘への対応（design-v0.2〜v0.4）</h2>
@@ -1301,4 +1346,27 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>画面・セッション（14章の5）とAIアダプター（14章の4）は別のブランチ（<code>impl/app</code>）で進めており、この版の時点の対象外。</p>
+<h3 id="design-v0.71445">15.4 design-v0.7（14章の4・5の実装）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>根拠</th>
+<th>対応した箇所</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>実装での具体化</td>
+<td>D25〜D30、5章、9章、10章、14章</td>
+<td>APIは<code>node:http</code>（D25）。AIの上限は送る試行ごとにDBで数える（D26）。下書き・質問・確定と<code>edited</code>（D27）。承認待ちの注文の照会を合図にする（D28）。実行器をモードごとに分ける（D29）。基準日からのデモのワールド（D30）</td>
+</tr>
+<tr>
+<td>Codexの回答3（I21の画面側の条件）</td>
+<td>店主の画面</td>
+<td>「停止中・店主の操作が必要」（現在のHOLDとNEEDS_ATTENTION）と「確認を継続中・不一致あり」（現在のMISMATCHなど）を、操作の現在の状態から分けて表示する。過去の監査ログの要対応は履歴にだけ出す</td>
+</tr>
+</tbody>
+</table></div>
+<p>画面の言語は、提出と審査を考えて英語にした（文言は数ファイルに集めてあり、変更は容易）。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
