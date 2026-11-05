@@ -553,7 +553,7 @@ Codexのレビュー本文は、Codexの資料`outputs/codex-prep/IMPL_EXECUTOR_
 | 改ざんしたコピー（`v8-webhook.ts tamper`、終了コード0） | 届いた正規の`PAYMENT.CAPTURE.REFUNDED`の本文を書き換え、同じヘッダーでローカルのサーバーへ送った。保存され（200）、PayPalの署名検証APIがFAILUREを返してINVALID。正規のイベントの登録・処理は変わらなかった |
 | 再配送 | 本人が開発者画面でAの`PAYMENT.CAPTURE.COMPLETED`を「Resend」した。再配送は届いてVERIFIEDになったが、登録済みのイベントの重複として扱われ、二度目の処理はなかった（処理したイベントは6件のまま） |
 | 終了 | 07:25:04にトンネルと中継を止めた。その後、公開URLは530（Cloudflareから接続先なし）、cloudflaredのプロセスなし、8790番の待ち受けなし |
-| 本人に残すこと | 開発者画面でWebhookを削除し、`.env`の`PAYPAL_WEBHOOK_ID`を空に戻す |
+| 後片付け | 本人が開発者画面でWebhookを削除し、`.env`の`PAYPAL_WEBHOOK_ID`を空に戻した（Claudeは値が空であることだけ確かめ、サーバーを再起動した） |
 
 合格の証拠（DESIGN 12.1）：PayPalから実際に届いた配送が、PayPalの署名検証APIでSUCCESSになり、`webhook_deliveries`と`webhook_events`の行が同じ取引のイベントと一致した。改ざんしたコピーはINVALIDで正規の処理を妨げず、再配送は二重に処理されなかった。開発者画面の配送履歴との突き合わせは、本人が画面で見た範囲（Resendの操作を含む）に留まり、Claudeは開発者画面を見ていない。
 
