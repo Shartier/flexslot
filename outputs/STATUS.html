@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="4e3dd06f9f8cfca762108ea96b7dc552c7dd2c2de2e4b54f5a5ae1b0e2d93bcc"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="6c5343f21c381e927b1fef3f2162ad422d78ae9e979c54760795ab8a16c74f4e"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,9 +8,9 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
-<p>更新日：2026-11-05（日本時間）/ 文書版：status-v0.9。</p>
+<p>更新日：2026-11-05（日本時間）/ 文書版：status-v0.10。</p>
 <h2 id="section">現在地</h2>
-<p>実装の第3段階（DESIGN 14章の3：実行器・送信待ちキュー・回復処理）を、模擬PayPalでの試験まで終えた段階。状況を「設計の再確認」と「実装・実接続」に分けて記す。</p>
+<p>実装の第3段階（DESIGN 14章の3：実行器・送信待ちキュー・回復処理）を模擬PayPalでの試験まで終え、そのCodexレビュー（2026-11-05）の指摘IE1-01〜03を修正した段階（修正版<code>impl-executor-1-fix1</code>、Codexの再確認待ち）。状況を「設計の再確認」と「実装・実接続」に分けて記す。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -21,11 +21,11 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tbody>
 <tr>
 <td>設計の再確認（Codex）</td>
-<td><code>design-review-1-fix2</code>でDR1-02の残件を含めて第1レビューを完了し、design-v0.3を基準に実装開始を可とした（REVIEWの「第1レビュー完了・実装開始可」）。2026-11-04の再確認で、design-v0.4を実行器の基準として採用可とし、指摘IP1-04（D20の照合待ちを7.5へ反映）を出した。design-v0.5でIP1-04の文書を直した。アプリの動作・実接続の合格判定ではない</td>
+<td><code>design-review-1-fix2</code>でDR1-02の残件を含めて第1レビューを完了し、design-v0.3を基準に実装開始を可とした（REVIEWの「第1レビュー完了・実装開始可」）。2026-11-04の再確認で、design-v0.4を実行器の基準として採用可とし、指摘IP1-04（D20の照合待ちを7.5へ反映）を出した。design-v0.5でIP1-04の文書を直した。2026-11-05の実行器レビューでIP1-04をクローズし、I17を採用し、指摘IE1-01〜03（P1）を出した。design-v0.6で反映した（D22〜D24、15.3）。アプリの動作・実接続の合格判定ではない</td>
 </tr>
 <tr>
 <td>実装</td>
-<td>14章の1（骨組み）はタグ<code>impl-skeleton-1</code>。14章の2（PayPalアダプター、障害注入付きの模擬PayPal、Vertex AIの最小接続、接続検証スクリプトV0〜V7・V9）はタグ<code>impl-paypal-1</code>と修正版<code>impl-paypal-1-fix1</code>（ブランチ<code>impl/paypal</code>）。修正版はCodexの再確認で、IP1-01〜03がクローズした。14章の3（実行器・送信待ちキュー・回復処理と障害注入の試験）はブランチ<code>impl/executor</code>、タグ<code>impl-executor-1</code>で、Codexの確認待ち（「実行器・送信待ちキュー・回復処理」の節）。14章の4以降（本格的なAIアダプター、画面、セッション、Webhook）は未着手</td>
+<td>14章の1（骨組み）はタグ<code>impl-skeleton-1</code>。14章の2（PayPalアダプター、障害注入付きの模擬PayPal、Vertex AIの最小接続、接続検証スクリプトV0〜V7・V9）はタグ<code>impl-paypal-1</code>と修正版<code>impl-paypal-1-fix1</code>（ブランチ<code>impl/paypal</code>）。修正版はCodexの再確認で、IP1-01〜03がクローズした。14章の3（実行器・送信待ちキュー・回復処理と障害注入の試験）はブランチ<code>impl/executor</code>、タグ<code>impl-executor-1</code>。Codexのレビューの指摘IE1-01〜03の修正は、<code>impl-executor-1</code>から分けたブランチ<code>impl/executor-fix1</code>、タグ<code>impl-executor-1-fix1</code>で、Codexの再確認待ち（「実行器レビューへの対応」の節）。14章の4・5（AIアダプター、画面、セッション）はブランチ<code>impl/app</code>で進行中（<code>impl-ai-1</code>まで。修正版を取り込んでから続ける）。Webhookは未着手</td>
 </tr>
 <tr>
 <td>実接続</td>
@@ -915,6 +915,229 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>承認URLの受け渡し（<code>createOrder</code>は注文IDだけを返す）。</li>
 <li>D18の限界：FlexSlotの外の返金は、captureの照会の状態で分かる範囲でしか検出できない（部分返金の後に外部で返金されても状態が変わらない場合は検出できない）。MVPの前提（返金はFlexSlotからだけ）のまま。</li>
 </ul>
+<h2 id="impl-executor-1-fix1claude-code2026-11-05">実行器レビューへの対応（<code>impl-executor-1-fix1</code>、Claude Code、2026-11-05）</h2>
+<p>Codexのレビュー本文は、Codexの資料<code>outputs/codex-prep/IMPL_EXECUTOR_1_REVIEW.md</code>（Codexの未追跡ファイル。Claudeは変更・コミットしていない）。再現スクリプトは<code>work/codex-review-executor1/probes.mjs</code>。</p>
+<p>対象：<code>impl-executor-1</code>から分けたブランチ<code>impl/executor-fix1</code>、タグ<code>impl-executor-1-fix1</code>。共有フォルダのブランチを切り替えないため、別の作業ツリー（<code>git worktree</code>）で修正した。変更は実行器（<code>src/executor/terms.ts</code>、<code>executor.ts</code>、<code>handlers.ts</code>、<code>engine.ts</code>）、試験（<code>tests/executor-fix1.test.ts</code>を追加、<code>tests/executor-helpers.ts</code>を修正）、文書（DESIGN・STATUS・REVIEWとHTML）だけ。<code>impl/app</code>のAI・画面の変更は含まない。決済：模擬PayPalだけで、外部へは接続していない。</p>
+<h3 id="codex">Codexの判定の記録</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IP1-04</td>
+<td>クローズ</td>
+</tr>
+<tr>
+<td>I17</td>
+<td>採用。DESIGN 6.2のE4と7.5の進み方3を、注文の照会で照合する形に揃えた（design-v0.6）</td>
+</tr>
+<tr>
+<td>I18・I19・I22・I24・I27・I28</td>
+<td>採用（I24はほんとうに確定した失敗に限る。I27はD18のMVP前提に限る）</td>
+</tr>
+<tr>
+<td>I20</td>
+<td>方針採用。IE1-01の照会の分岐にも結果不明の扱いを通す</td>
+</tr>
+<tr>
+<td>I21</td>
+<td>採用。画面では「処理を停止し店主の操作が必要」と「確認を継続中だが不一致がある」を区別し、過去の監査履歴を現在の停止理由として表示し続けない。HOLD解除は未実装のまま完成扱いしない</td>
+</tr>
+<tr>
+<td>I23</td>
+<td>一部不採用。未承認の照会だけで未受理にしない（IE1-01）。確定したVOIDED・EXPIREDの扱いと、承認済みのときの同じIDでの回復は維持</td>
+</tr>
+<tr>
+<td>I25</td>
+<td>方針採用。条件の固定と時刻の検査をIE1-02・03で補う</td>
+</tr>
+<tr>
+<td>I26</td>
+<td>要修正（IE1-02）</td>
+</tr>
+<tr>
+<td>I29</td>
+<td>防御の意図は採用。適用範囲が不足（IE1-01）</td>
+</tr>
+<tr>
+<td>実行器全体の合格</td>
+<td>IE1-01〜03の修正まで保留</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-9">修正の内容</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指摘</th>
+<th>修正</th>
+<th>場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IE1-01 / P1</td>
+<td>回復の判断から「未処理（NOT_PROCESSED）」を削除した。送信中・結果不明の与信とAの注文の売上確定は、注文が未承認と照会されても未受理（NOT_ACCEPTED）にしない。照合待ちと同じく10秒ごとに照会を続け、注文が承認されたら同じ再送防止IDで再送する。Bは支払い期限から30分、Aはその売上確定の操作を作ってから3時間を過ぎても未承認なら、<code>HOLD:UNCONFIRMED_ORDER_NOT_APPROVED</code>で店主の要対応にする（B_CHARGEはNEEDS_ATTENTION）。この間、試行の終了（支払い期限の処理は、結果不明の与信があれば終了させない）・枠の解放・新しい操作の作成はしない。未受理と扱うのは、送信自体への確定した拒否応答（以前に結果不明の送信がないときの400・422）だけ</td>
+<td><code>handlers.ts</code>の<code>recover</code>（BとA）、<code>engine.ts</code>の<code>Recovery</code>型</td>
+</tr>
+<tr>
+<td>IE1-01（I29）</td>
+<td>与信の照合が済んだときに、試行がORDER_CREATEDでない、または案件がPAYMENT_STARTEDでない（終了した試行・案件）なら、その与信を使わずに取消の債務を作り、監査ログに要対応を残す</td>
+<td><code>handlers.ts</code>の<code>followOn</code></td>
+</tr>
+<tr>
+<td>IE1-02 / P1</td>
+<td>条件スナップショット（<code>CaseTerms</code>）に、A・Bの当事者ID、Aの施術ID、Bの施術IDと施術時間、B依頼の版、Aの移動条件の版を加えた（受取先は既存）。<code>readTerms</code>はこれらが欠けたスナップショットを拒否する。E1とE5は、DBの現在の値（B依頼の顧客・版・施術と、それが最新の確定版であること、施術時間とBの枠の長さ、Aの予約の顧客・施術、Aの移動条件の最新版）と照合し、違えばE1は開始せず（再承認が必要）、E5は取消（E-V）。E7は、可変の<code>b_requests</code>を読まず、スナップショットの顧客・施術で予約する</td>
+<td><code>terms.ts</code>の<code>FixedTerms</code>・<code>frozenTermsProblems</code>、<code>executor.ts</code>の<code>#executionProblems</code>・<code>startPayment</code>・<code>#commitBooking</code></td>
+</tr>
+<tr>
+<td>IE1-03 / P1</td>
+<td>元枠・Bの枠・移動先のうち最も早い開始時刻を、サーバーの時計が過ぎたら（開始時刻ちょうどを含む、半開区間）振り替えない。E1は<code>SLOT_TIME_PASSED</code>で開始しない。E5は取消。E7は<code>BookingImpossible</code>としてB全額返金（E-R）、Aの元予約を維持、補償なし。売上確定などが結果不明の間は時刻で打ち切らず、照会で確定させてから同じ判定をする</td>
+<td><code>terms.ts</code>の<code>slotTimeProblems</code>、<code>executor.ts</code>の<code>#executionProblems</code>・<code>#commitBooking</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-10">実行したコマンドと結果</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>コマンド</th>
+<th>終了コード</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>npm run check</code>（作業ツリー<code>impl/executor-fix1</code>）</td>
+<td>0</td>
+<td>型チェック成功、17ファイル・271件成功（<code>impl-executor-1</code>の257件と追加の14件）</td>
+</tr>
+<tr>
+<td>変異の確認（一時的に修正を1つずつ元に戻して<code>tests/executor-fix1.test.ts</code>を実行し、毎回元に戻した。最後に<code>git status</code>で差分が修正だけであることを確認）</td>
+<td>1（意図した失敗）</td>
+<td>8種すべて検出：Bの与信を未承認の照会で終わらせる（2件失敗）、Aの売上確定を同様に終わらせる（1件）、固定値の照合なし（2件）、E7が可変の依頼の顧客を読む（1件）、E1・E5の時刻の検査なし（2件）、E7の時刻の検査なし（2件）、開始時刻ちょうどを許す（3件）、終了した試行の与信を取消さない（1件）</td>
+</tr>
+<tr>
+<td><code>pwsh -NoProfile -File tools/render-docs.ps1</code>と<code>-Check</code></td>
+<td>0</td>
+<td>コミット直前に実行。結果は報告メッセージに記載</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="testsexecutor-fix1.test.tspaypal">試験で確認したこと（<code>tests/executor-fix1.test.ts</code>、模擬PayPal）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Codexのシナリオ・観点</th>
+<th>試験</th>
+<th>確認内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>late_authorize_after_negative_query_and_expiry</td>
+<td>同名の試験</td>
+<td>未承認の照会の後も、与信の操作は未受理にならない（<code>prior_unknown=1</code>、<code>ORDER_NOT_APPROVED</code>で照会を継続）。支払い期限でも試行・案件・枠・B_CHARGEは終了しない。遅れて届いたPOSTの応答は古い貸出として採用されず、照会で同じ操作の与信として取り込まれる。与信の操作は1つ、再送防止IDは1種類、売上確定は1回で完了し、PayPal側の与信はCAPTURED（取り残されない）</td>
+</tr>
+<tr>
+<td>同上の変形</td>
+<td>承認が照会の後に来る、承認されない</td>
+<td>応答喪失の後、未承認の間は照会だけ、承認後に同じIDで再送して完了。承認されないまま期限から30分過ぎると店主の要対応になり、キューは送らず、案件・枠はそのまま</td>
+</tr>
+<tr>
+<td>late_a_capture_after_negative_query</td>
+<td>同名の試験</td>
+<td>Aの売上確定の操作は未受理にならず、承認と遅れたPOSTの後に照合済みになり、<code>payments</code>に1件記録される。操作は1つ、再送防止IDは1種類</td>
+</tr>
+<tr>
+<td>I29の範囲</td>
+<td>終了した試行に与信が見つかる場合</td>
+<td>（修正後の実行器では起きない状態をSQLで作り）与信を取消し、監査ログに要対応、売上確定なし</td>
+</tr>
+<tr>
+<td>b_request_service_changed_after_authorization</td>
+<td>同名の試験</td>
+<td>与信後に依頼の版と施術を変えると、E5で<code>B_REQUEST_CHANGED</code>として取消（REJECTED、売上確定なし、Bの予約なし）</td>
+</tr>
+<tr>
+<td>開始前の変更</td>
+<td>依頼の新しい版、依頼の施術、施術時間、Aの移動条件の新しい版、Aの予約の顧客</td>
+<td>E1が開始せず、案件はA_ACCEPTEDのまま、債務も作られない</td>
+</tr>
+<tr>
+<td>スナップショットの欠け</td>
+<td>固定値のない古い形式、別のB</td>
+<td><code>TERMS_INVALID</code>、<code>NOT_B</code></td>
+</tr>
+<tr>
+<td>E6後の再開</td>
+<td>E7の直前で停止し、依頼の顧客・施術を変えてから再開</td>
+<td>E7はスナップショットの顧客・施術・60分で予約し、案件はCOMPLETED</td>
+</tr>
+<tr>
+<td>E1の境界</td>
+<td>開始1ミリ秒前、開始時刻ちょうど、開始後</td>
+<td>開始前だけ開始でき、ちょうどと後は<code>SLOT_TIME_PASSED</code></td>
+</tr>
+<tr>
+<td>past_service_time_before_capture</td>
+<td>開始ちょうど・開始後にE5</td>
+<td>取消（REJECTED）、売上確定なし、補償なし、枠は解放。開始1ミリ秒前なら完了</td>
+</tr>
+<tr>
+<td>past_service_time_after_capture_before_e7</td>
+<td>E7の直前で停止し、開始ちょうど・開始後に再開</td>
+<td>B全額返金（60.00、COMPENSATED）、Aの予約は元のまま、補償の権利なし、Bの予約なし</td>
+</tr>
+<tr>
+<td>結果不明と時刻</td>
+<td>売上確定の応答が失われたまま開始時刻を過ぎる</td>
+<td>時刻で打ち切らず、照会で売上確定を特定してからE7の時刻の検査でB全額返金。売上確定のPOSTは1回</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="codex-1">実装で決めた点（Codexの確認を求める点）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>内容</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I30</td>
+<td>未承認の照会が続く結果不明の操作を店主の要対応へ回す時期：Bは支払い期限から30分、Aは売上確定の操作の作成から3時間。要対応の後も、起動時の回復は一度照会する</td>
+<td>無期限の自動照会を避けつつ、結果不明のまま枠・資金の状態を捨てないため</td>
+</tr>
+<tr>
+<td>I31</td>
+<td>E1で固定値の不一致を見つけても、案件の状態は変えない（承認の失効は、案件の版を上げた新しい提案で行う）。不一致の案件は、提案の期限で終了して枠を解放する</td>
+<td>実行器が提案を作り直さないため。画面（<code>impl/app</code>）は、案件の進行中に条件の変更を受け付けない</td>
+</tr>
+<tr>
+<td>I32</td>
+<td>施術を実施できるかの判定は、三つの枠のうち最も早い開始時刻より前（<code>now &lt; start</code>）。余裕時間は設けない</td>
+<td>SPEC 4の半開区間に合わせる。店の準備時間はMVPの範囲外</td>
+</tr>
+<tr>
+<td>I33</td>
+<td>遅れて届いた与信を、期限を過ぎていても同じ試行の与信として使い、E5の検査を通れば売上確定へ進む</td>
+<td>DESIGN 6.3の3（結果不明の与信がある試行は期限で終了しない）と整合し、成立した与信を取り残さないため</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-11">未実施の範囲（この修正版）</h3>
+<ul>
+<li>Sandboxでの実行器の実行（模擬だけで試験した）。Sandboxでの遅延・障害の再現。</li>
+<li>HOLDの解除（原因を直した後の再開）。I21の画面側の表示の区別は<code>impl/app</code>で行う。</li>
+<li><code>impl/app</code>への取り込みと、画面・AIを含む全体の試験（取り込み後に行う）。</li>
+</ul>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1024,7 +1247,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <p>以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。</p>
 <p>Gitのuser.name/user.emailは未登録だったため、初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定した。ユーザーのローカル/グローバルGit設定は変更していない。</p>
 <p>参照：<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a>、<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal決済</a>、<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth">Google Cloud認証</a>。</p>
-<h2 id="section-9">実行した確認とテスト</h2>
+<h2 id="section-12">実行した確認とテスト</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1144,6 +1367,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>終了コード0、16ファイル・257件成功。変異7種をすべて検出。詳細は「実行器・送信待ちキュー・回復処理」</td>
 </tr>
 <tr>
+<td>11-05 Claude</td>
+<td>実行器の修正（模擬）</td>
+<td><code>npm run check</code>、変異の確認、<code>render-docs.ps1 -Check</code></td>
+<td>終了コード0、17ファイル・271件成功。変異8種をすべて検出。詳細は「実行器レビューへの対応」</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
 <td>E2E・画面・実APIでの実行器・実機</td>
@@ -1151,7 +1380,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<h2 id="section-10">未確認事項</h2>
+<h2 id="section-13">未確認事項</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1238,13 +1467,13 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかと、匿名化した照合結果だけを確認する。</li>
 <li><strong>今後も本人が行うこと</strong>：Sandboxの買い手アカウントでの承認（ログインとパスワードの入力）。V8の受信経路の公開の承認。</li>
 </ol>
-<h2 id="section-11">次に行う作業</h2>
+<h2 id="section-14">次に行う作業</h2>
 <ol>
 <li>Codexによる修正版の再確認は2026-11-04に完了した（「Codexの再確認の結果」の節）。</li>
-<li>DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ<code>impl-executor-1</code>）。Codexの中間確認（REVIEWの最後の節）を待つ。IP1-04の実装の確認と、I17〜I29の判断を求めている。</li>
-<li>次は14章の4（AIアダプターの本格版）か5（画面とセッション。キューのタイマー、承認URLの受け渡し、画面からの<code>onBuyerApproved</code>を含む）。その後、V8（本人確認後）、Sandboxでの一件の通し、第2レビューへ進む。</li>
+<li>DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を修正した（タグ<code>impl-executor-1-fix1</code>）。Codexの再確認（REVIEWの最後の節）を待つ。</li>
+<li>修正版を<code>impl/app</code>（14章の4・5）へ取り込み、条件スナップショットの固定値を案件の作成に通してから、画面からSandboxで一件を通す。その後、V8（本人確認後）、第2レビューへ進む。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
-<h2 id="section-12">今後の検証記録の書式</h2>
+<h2 id="section-15">今後の検証記録の書式</h2>
 <p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

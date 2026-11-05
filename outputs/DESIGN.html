@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="bc15c7f18a835d0b54fb2ab5e4204257cf0de11904594e55d03343ef9882f72b"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="aa0124078846aa9147e3f70204d9289cdfa936a13e84595ad125d38ac55b88d6"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,11 +8,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html" aria-current="page">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：DESIGN.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-1">FlexSlot — 技術設計（第1レビュー対象）</h1>
-<p>版：design-v0.5 / 作成日：2026-11-03、更新：2026-11-04（日本時間）/ 作成：Claude Code / 状態：骨組み・PayPalアダプター・接続検証（V1〜V7・V9）、実行器・送信待ちキュー・回復処理（14章の3、模擬PayPalで試験）まで実装済み（STATUS参照）。画面は未実装。</p>
+<p>版：design-v0.6 / 作成日：2026-11-03、更新：2026-11-05（日本時間）/ 作成：Claude Code / 状態：骨組み・PayPalアダプター・接続検証（V1〜V7・V9）、実行器・送信待ちキュー・回復処理（14章の3、模擬PayPalで試験）と、そのCodexレビューの指摘IE1-01〜03の修正まで実装済み（STATUS参照）。画面は未実装（この版の時点）。</p>
 <p>SPEC.md（spec-v0.1）の「設計案」を検証し、実装できる粒度まで具体化した文書。合意済みの範囲は変えない。SPECの条件を弱めた箇所はない。追加・具体化した箇所は「1. SPECとの差分」に列挙する。</p>
 <p>design-v0.2の変更：Codexの第1レビュー指摘DR1-01〜05と小修正を反映した。対応箇所の一覧は15章。</p>
 <p>design-v0.3の変更：DR1-02の残件に対応し、支払いの保存単位を「債務・試行・API操作」の3階層に分けた（D17、3章、6.2、6.3、7章、7.5）。</p>
 <p>design-v0.4の変更：Sandboxでの実接続（V1〜V7）の結果と、Codexの中間確認（<code>impl-paypal-1</code>、指摘IP1-01〜03と回答）を反映した。返金できる残額の管理値（D18）、再送・照会の応答での資源の同定と次の操作の判定の分離（D19）、売上確定後の照会による受取先の照合（D20）、候補探索の起点（D21）、I07・I08の回復条件、作品内AIのモデルとtemperatureの扱い。対応箇所は15章。</p>
+<p>design-v0.6の変更：Codexの実行器レビュー（<code>impl-executor-1</code>、2026-11-05）を反映した。与信も注文の照会で照合してから進む（I17の採用、6.2のE4・7.5の進み方3）。結果不明の送信を未承認の照会だけで終わらせない（D24、IE1-01）。承認の対象に、B依頼の版・施術・施術時間・A/Bの当事者・Aの移動条件の版を加え、E7はこの固定値で予約する（D22、IE1-02）。三つの枠のどれかが始まった後は振り替えない（D23、IE1-03）。対応箇所は15.3。</p>
 <p>design-v0.5の変更：Codexの再確認（<code>impl-paypal-1-fix1</code>、2026-11-04）の指摘IP1-04と6.1の小修正を反映した。売上確定のPOSTの成功の後の「照合待ち」を操作の行に永続的に記録し（<code>reconcile_status</code>）、6.2のE6、7.1、7.2、7.5の保存・再開の手順をD20に揃えた。Aの元決済の注文作成で、送信前と応答後に保存する値を分けた（6.1）。対応箇所は15.2。</p>
 <h2 id="spec">1. SPECとの差分</h2>
 <div class="table-wrap"><table>
@@ -165,6 +166,27 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>売上確定の応答で受取先を確認（design-v0.3）</td>
 <td>売上確定のPOSTの成功と、照合を終えて業務を進められることを分ける。POSTの成功の後にcaptureを照会し、受取先などを照合してから債務の完了・E7へ進む。照会の失敗・欠落・不一致は「照合待ち」</td>
 <td>6.2のE6、7.3。売上確定の応答に受取先がない（STATUS F5）</td>
+</tr>
+<tr>
+<td>D22</td>
+<td>追加</td>
+<td>条件スナップショットの項目（SPEC 6）</td>
+<td>承認の対象（<code>terms_json</code>）に、B依頼の版、Bの施術IDと施術時間、Aの施術ID、A・Bの当事者ID、Aの移動条件の版、受取先を加える。E1・E5で、DBの現在の値と照合する。E7は、可変の依頼を読み直さず、この固定値で予約する</td>
+<td>3章、6.2。Codex指摘IE1-02</td>
+</tr>
+<tr>
+<td>D23</td>
+<td>追加</td>
+<td>過去の予約を有効に見せない（SPEC 4）</td>
+<td>元枠・Bの枠・移動先の、どれかの開始時刻をサーバーの時計が過ぎたら（開始時刻ちょうどを含む）、振り替えない。E1は開始しない、E5は与信を取消す、E7はBへ全額返金しAの元予約を維持する。結果不明の操作は時刻で打ち切らない</td>
+<td>6.2、8章。Codex指摘IE1-03</td>
+</tr>
+<tr>
+<td>D24</td>
+<td>変更</td>
+<td>結果の照会（7.3）</td>
+<td>送信中・結果不明の与信やAの注文の売上確定を、「注文が未承認」という照会だけで未受理にしない。同じ操作・同じ再送防止IDのまま照会を続け、注文が承認されたら同じIDで再送する。Bの支払い期限から30分（Aの元決済は、その売上確定の操作を作ってから3時間）を過ぎても未承認なら、店主の要対応にする。この間、試行の終了・枠の解放・新しい操作の作成はしない</td>
+<td>7.1、7.3、6.3。Codex指摘IE1-01（STATUS I23の一部を取り消し）</td>
 </tr>
 <tr>
 <td>D21</td>
@@ -353,7 +375,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<p><code>terms_json</code>は、案件ID、版、店・担当者、A/BのID、元予約とその版、元枠と移動先、施術と時間、Bの料金、Aの補償、通貨、受取店舗、Aの元capture ID、期限を含む不変のスナップショット（SPEC 6）。<code>terms_hash</code>はその正規化JSONのSHA-256。条件が変われば版を上げ、それまでの承認は一致しなくなるため自動的に無効になる。</p>
+<p><code>terms_json</code>は、案件ID、版、店・担当者、A/BのID、元予約とその版、元枠と移動先、施術と時間、Bの料金、Aの補償、通貨、受取店舗、Aの元capture ID、期限を含む不変のスナップショット（SPEC 6）。D22により、A・Bの当事者ID、Aの施術ID、Bの施術IDと施術時間、B依頼の版、Aの移動条件の版も含める。E1・E5は、これらがDBの現在の値と一致することを確かめる（B依頼は、同じ顧客の最新の確定版であることも確かめる）。<code>terms_hash</code>はその正規化JSONのSHA-256。条件が変われば版を上げ、それまでの承認は一致しなくなるため自動的に無効になる。</p>
 <h2 id="section-2">4. 予約枠の競合防止</h2>
 <ol>
 <li><strong>直列化</strong>：予約・保留・案件状態を変える処理は、すべて<code>BEGIN IMMEDIATE</code>の短いトランザクションで行う。SQLiteは書き込みを1本に直列化するため、「確認してから書く」間に別の書き込みが割り込まない。外部APIの呼び出し中はトランザクションを開かない。</li>
@@ -447,7 +469,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tbody>
 <tr>
 <td>E1 実行開始</td>
-<td>Bが条件を承認して支払いボタンを押す。<code>BEGIN IMMEDIATE</code>で版・期限・三者の承認・予約・保留・金額・通貨・受取先を再検査し、保留をFROZENにして条件を凍結する。同じトランザクションで、B_CHARGEの債務と、その最初のチェックアウト試行（支払い期限つき）と、注文作成の操作（ORDER_CREATE、PREPARED）を作る</td>
+<td>Bが条件を承認して支払いボタンを押す。<code>BEGIN IMMEDIATE</code>で版・期限・三者の承認・予約・保留・金額・通貨・受取先と、D22の固定値（依頼・施術・当事者・移動条件の版）、D23の枠の時刻を再検査し（一致しなければ開始せず、案件は再承認が要る）、保留をFROZENにして条件を凍結する。同じトランザクションで、B_CHARGEの債務と、その最初のチェックアウト試行（支払い期限つき）と、注文作成の操作（ORDER_CREATE、PREPARED）を作る</td>
 <td>PAYMENT_STARTED</td>
 </tr>
 <tr>
@@ -462,12 +484,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>E4 与信</td>
-<td>試行が有効（期限内で終了していない）であることを条件付き更新で確かめ、同じトランザクションで与信の操作（ORDER_AUTHORIZE、対象はorder ID）を作り、SENDINGを記録してから<code>POST /v2/checkout/orders/{id}/authorize</code>を送る。応答で金額・通貨・custom_id（案件・版・試行）・受取先・与信の状態（CREATED）を照合し、authorization IDを操作に保存する。与信のオブジェクトには受取先がないため、応答の注文の<code>purchase_units[].payee</code>で照合する（STATUS F5）。B_CHARGEはまだ未完了</td>
+<td>試行が有効（期限内で終了していない）であることを条件付き更新で確かめ、同じトランザクションで与信の操作（ORDER_AUTHORIZE、対象はorder ID）を作り、SENDINGを記録してから<code>POST /v2/checkout/orders/{id}/authorize</code>を送る。応答で与信を同定し（D19）、authorization IDと照合待ちを操作に保存する。続けて注文を照会（<code>GET /v2/checkout/orders/{id}</code>）し、与信ID・custom_id（案件・版・試行）・金額・通貨・注文の受取先（<code>purchase_units[].payee</code>、与信のオブジェクトには受取先がない、STATUS F5）・与信の現在の状態（CREATED）を照合できたときだけ、試行と案件をAUTHORIZEDにする（STATUS I17をCodexが採用）。照会の失敗は同じ操作の照合待ちとして保ち、新しい与信の理由にしない。B_CHARGEはまだ未完了</td>
 <td>AUTHORIZED</td>
 </tr>
 <tr>
 <td>E5 売上確定前の検査</td>
-<td>元予約・保留・承認・凍結・与信の状態を再検査する。不成立なら取消（E-V）へ</td>
+<td>元予約・保留・承認・凍結・与信の状態と、D22の固定値・D23の枠の時刻を再検査する。不成立（凍結を破る変更、始まった枠を含む）なら取消（E-V）へ</td>
 <td>CAPTURING</td>
 </tr>
 <tr>
@@ -477,7 +499,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>E7 予約確定</td>
-<td>1つのトランザクションで、Aの予約を移動先へ、Bの予約を元枠へ確定し、保留をCONVERTEDにし、補償の権利（予約単位で一意）と、A_COMPENSATION_REFUNDの債務・最初の試行（未送信）を作る（D05）</td>
+<td>枠の時刻（D23）を確かめたうえで、1つのトランザクションで、Aの予約を移動先へ、Bの予約を元枠へ確定し（Bの顧客・施術は条件スナップショットの固定値、D22）、保留をCONVERTEDにし、補償の権利（予約単位で一意）と、A_COMPENSATION_REFUNDの債務・最初の試行（未送信）を作る（D05）</td>
 <td>BOOKING_COMMITTED</td>
 </tr>
 <tr>
@@ -510,7 +532,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>その試行に、売上確定の操作（AUTH_CAPTURE）がない。</li>
 </ul>
 </li>
-<li><strong>送信中・結果不明なら解放しない</strong>：与信の操作がSENDINGまたは結果不明なら、期限を過ぎても終了させない。照会で与信の有無を確定させてから進める。注文作成の操作（ORDER_CREATE）だけが結果不明の場合は、お金が動かないため、期限で終了させてよい。</li>
+<li><strong>送信中・結果不明なら解放しない</strong>：与信の操作がSENDINGまたは結果不明なら、期限を過ぎても終了させない。照会で与信の有無を確定させてから進める。注文が未承認という照会の結果だけでは、その操作を未受理にしない（D24）。未受理と扱えるのは、その操作の送信自体への確定した拒否応答（以前に結果不明の送信がないときの400・422）だけ。注文作成の操作（ORDER_CREATE）だけが結果不明の場合は、お金が動かないため、期限で終了させてよい。</li>
 <li><strong>遅れて来た承認・応答の拒否</strong>：E4は「試行が有効」を条件付き更新で確かめてから与信を記録するため、期限処理と与信開始は<code>BEGIN IMMEDIATE</code>で直列化され、どちらか一方しか成立しない。終了した試行への承認通知、ブラウザからの再開要求、Webhookは、与信を開始せず「支払い期限切れ」を返す。</li>
 <li><strong>防御</strong>：照会や通知で、終了した試行に紐付く与信が見つかった場合（本来は起きない）は、ただちに取消（B_AUTH_VOID）の債務を作り、店主に要対応として表示する。</li>
 <li><strong>再開</strong>：期限切れの後は、同じ依頼から新しい案件（新しい版、新しい保留）を作り、店主・A・Bの承認からやり直す。古い試行や古い注文を再利用しない。</li>
@@ -676,8 +698,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>与信</td>
-<td><code>GET /v2/checkout/orders/{id}</code>の与信一覧</td>
-<td>同じ再送防止IDで再送。期限を過ぎても試行は終了させない</td>
+<td><code>GET /v2/checkout/orders/{id}</code>の与信一覧。注文が承認済みで与信がなければ同じ再送防止IDで再送。注文が未承認なら、照会を続ける（D24：未承認の照会は、先に送ったPOSTが後から成立しない証拠にならない）</td>
+<td>同じ再送防止IDで再送。期限を過ぎても試行は終了させない。支払い期限から30分を過ぎても未承認なら店主の要対応（枠は保留のまま）</td>
 </tr>
 <tr>
 <td>売上確定</td>
@@ -814,7 +836,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <ol>
 <li>E1：OB1（OPEN）、AT1（OPEN）、OP1（PREPARED）を1つのトランザクションで作る。OP1には、再送防止ID・固定した入力・本文ハッシュを保存する。注文はまだないため、order IDはない。</li>
 <li>E2：OP1をSENDINGにしてから送る。応答のO1を保存してOP1をSUCCEEDEDにし、同じトランザクションでAT1をORDER_CREATEDにする。OB1はOPENのまま。</li>
-<li>E4：Bの承認後、AT1が期限内でORDER_CREATEDであることを条件に、OP2をSENDINGで作ってから送る。U1を保存してOP2をSUCCEEDEDにし、AT1をAUTHORIZEDにする。OB1はまだOPEN。</li>
+<li>E4：Bの承認後、AT1が期限内でORDER_CREATEDであることを条件に、OP2をSENDINGで作ってから送る。応答でU1を同定し、OP2をSUCCEEDEDと照合待ち（<code>reconcile_status = AWAITING</code>）で保存する。続けて注文O1を照会し、U1・custom_id・金額・通貨・注文の受取先・U1の状態（CREATED）を照合できたときだけ、OP2を照合済み（MATCHED）、AT1をAUTHORIZEDにする（I17）。OB1はまだOPEN。</li>
 <li>E6（POST）：OP3をSENDINGで作ってから送る。応答のC1がCOMPLETEDなら、1つのトランザクションでOP3にC1・COMPLETED・SUCCEEDEDと照合待ち（<code>reconcile_status = AWAITING</code>）を保存する。AT1はAUTHORIZED、OB1はOPEN、両方の枠（移動先の保留はFROZEN、元枠はAの予約のまま）は変えない。</li>
 <li>E6（照合）：OP3の貸出を取ってC1を照会し、ID・親の与信U1と注文O1・金額・通貨・状態・custom_id・受取先を照合する。照合できたときだけ、1つのトランザクションでOP3を照合済み（MATCHED）、AT1をCAPTURED、OB1をSETTLED（<code>settled_by_operation_id</code>＝OP3）にする。そのあとE7へ進む。<code>payments</code>のBの行は、Bの予約を作るE7のトランザクションで、C1と一緒に記録する（<code>payments</code>は予約を参照するため）。照会の失敗・受取先の欠落・不一致なら照合待ちのままとし、OB1・AT1・枠を変えずに照会を再開する。</li>
 </ol>
@@ -911,6 +933,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>再起動時に、CAPTUREDの案件にE7の記録がない</td>
 <td>条件が有効なら同じ案件のE7を再実行する。確定的に不能（DBの制約違反など）ならBへ全額返金（E-R）</td>
 <td>予約を確定中</td>
+</tr>
+<tr>
+<td>振り替える枠が始まった（D23）</td>
+<td>E1・E5・E7の時刻の検査</td>
+<td>E1は開始しない。E5（売上確定前）は与信を取消す（E-V）。E7（売上確定後）はAの元予約を維持し、Bへ全額返金する（E-R）。売上確定などが結果不明の間は時刻で打ち切らず、照会で確定させてから同じ判定をする</td>
+<td>不成立・与信取消を確認中、または振替不成立・B返金</td>
 </tr>
 <tr>
 <td>予約確定のコミット応答が不明</td>
@@ -1076,7 +1104,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>AC05</td>
-<td>時計を注入した状態遷移テスト（期限の境界、版の変更、古い承認の拒否）。支払い期限の処理と与信開始の競合、期限切れ後に届いた承認・応答の拒否（DR1-01）</td>
+<td>時計を注入した状態遷移テスト（期限の境界、版の変更、古い承認の拒否、D22の固定値の変更、D23の枠の開始の直前・ちょうど・後）。支払い期限の処理と与信開始の競合、期限切れ後に届いた承認・応答の拒否（DR1-01）</td>
 </tr>
 <tr>
 <td>AC06</td>
@@ -1120,7 +1148,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <ol>
 <li>骨組み：パッケージ構成、DBスキーマとトリガー、時計、候補判定、利益計算と、その単体テスト（模擬モードのみ）。実装済み（<code>impl-skeleton-1</code>）。</li>
 <li>PayPalアダプター、障害注入付きの模擬PayPal、接続検証スクリプト（V1〜V7）。認証情報がそろい次第、Sandboxで実行する。実装済みで、Sandboxで実行した（<code>impl-paypal-1</code>とその修正版。STATUS参照）。Vertex AIの最小接続とV9もこの段階で行った。</li>
-<li>実行器、送信待ちキュー、回復処理と、障害注入テスト。実装済みで、模擬PayPalで試験した（<code>impl-executor-1</code>。Sandboxでは未実行。STATUS参照）。</li>
+<li>実行器、送信待ちキュー、回復処理と、障害注入テスト。実装済みで、模擬PayPalで試験した（<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を<code>impl-executor-1-fix1</code>で修正した。Sandboxでは未実行。STATUS参照。</li>
 <li>AIアダプター（Vertex / 模擬）の本格版。</li>
 <li>三画面（店主・A・B）とセッション。</li>
 <li>第2レビュー：Sandboxで一件が最後まで通った時点。</li>
@@ -1240,4 +1268,37 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>7.5の<code>payments</code>のBの行は、Bの予約を作るE7のトランザクションで記録すると明記した（<code>payments</code>が予約を参照するため）。</p>
+<h3 id="design-v0.6codeximpl-executor-1">15.3 design-v0.6（Codexの実行器レビュー<code>impl-executor-1</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>根拠</th>
+<th>対応した箇所</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Codexの回答2（I17の採用）</td>
+<td>6.2のE4、7.5の進み方3</td>
+<td>与信も、応答で同定して照合待ちにし、注文の照会で照合してからAUTHORIZEDにする。照会の失敗は同じ操作の照合待ち</td>
+</tr>
+<tr>
+<td>Codex指摘IE1-01</td>
+<td>D24、6.3の3、7.3の結果不明の表</td>
+<td>未承認という照会だけでは、送信中・結果不明の操作を未受理にしない。同じIDのまま照会と再送を続け、長く未承認なら店主の要対応。試行の終了・枠の解放・新しい操作の作成はしない</td>
+</tr>
+<tr>
+<td>Codex指摘IE1-02</td>
+<td>D22、3章の<code>terms_json</code>、6.2のE1・E5・E7</td>
+<td>承認の対象に依頼の版・施術・施術時間・当事者・移動条件の版を加え、E1・E5で照合。E7は固定値で予約。開始前の変更は再承認、開始後の変更は売上確定前なら取消</td>
+</tr>
+<tr>
+<td>Codex指摘IE1-03</td>
+<td>D23、6.2のE1・E5・E7、8章</td>
+<td>枠の開始時刻（ちょうどを含む）を過ぎたら振り替えない。売上確定前は取消、確定後はBへ全額返金。結果不明は時刻で打ち切らない</td>
+</tr>
+</tbody>
+</table></div>
+<p>画面・セッション（14章の5）とAIアダプター（14章の4）は別のブランチ（<code>impl/app</code>）で進めており、この版の時点の対象外。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

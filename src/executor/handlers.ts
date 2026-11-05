@@ -60,6 +60,14 @@ import {
 } from './store.ts';
 import { readTerms, type CaseRow } from './terms.ts';
 
+/**
+ * IE1-01: how long an unconfirmed authorization (after B's payment deadline) or an unconfirmed capture of A's order
+ * (after its creation) keeps being queried automatically while the order stays unapproved, before it is handed to
+ * the owner. Nothing is ended or released by this; startup recovery still queries it once more.
+ */
+export const UNCONFIRMED_HOLD_AFTER_MS = 30 * 60_000;
+export const A_UNCONFIRMED_HOLD_AFTER_MS = 3 * 3_600_000;
+
 export interface Services {
   db: Db;
   paypal: PayPalPort;
@@ -289,7 +297,15 @@ export class BOpHandler implements OpHandler {
         if (id.ok) return { kind: 'RESOLVED', resource: { type: 'order', order } };
         if (moneyInOrder(order).authorizations.length > 0) return { kind: 'WAIT', reason: `UNIDENTIFIED:${id.reason}`, attention: true };
         if (order.status === 'APPROVED') return { kind: 'RESEND' };
-        if (order.status === 'CREATED' || order.status === 'PAYER_ACTION_REQUIRED') return { kind: 'NOT_PROCESSED', reason: 'ORDER_NOT_APPROVED' };
+        // IE1-01: "not approved yet, no authorization" is a snapshot, not proof that the earlier POST will never take
+        // effect. The operation stays unconfirmed (same id, attempt open, slot frozen); it is queried again, resent
+        // with the same id once the order is approved, and handed to the owner if it stays open long after the deadline.
+        if (order.status === 'CREATED' || order.status === 'PAYER_ACTION_REQUIRED') {
+          const deadline = (x.attempt.expires_at ?? op.created_at) + UNCONFIRMED_HOLD_AFTER_MS;
+          return this.#s.clock.now() >= deadline
+            ? { kind: 'WAIT', reason: `${HOLD}UNCONFIRMED_ORDER_NOT_APPROVED`, attention: true }
+            : { kind: 'WAIT', reason: 'ORDER_NOT_APPROVED' };
+        }
         return { kind: 'WAIT', reason: `ORDER_${order.status}` };
       }
       case 'AUTH_CAPTURE': {
@@ -382,8 +398,13 @@ export class BOpHandler implements OpHandler {
           if (attempt.status === 'OPEN') setAttempt(db, attempt.id, ['OPEN'], 'ORDER_CREATED');
           else if (attempt.status === 'EXPIRED' && resource?.type === 'order') this.#defendEndedAttempt(c, resource.order);
         } else if (this.#kind === 'ORDER_AUTHORIZE' && matchedNow) {
-          setAttempt(db, attempt.id, ['ORDER_CREATED'], 'AUTHORIZED');
-          setCase(db, c, ['PAYMENT_STARTED'], 'AUTHORIZED');
+          const moved = setAttempt(db, attempt.id, ['ORDER_CREATED'], 'AUTHORIZED') && setCase(db, c, ['PAYMENT_STARTED'], 'AUTHORIZED');
+          // DESIGN 6.3 item 5 / I29 (IE1-01): an authorization that turns up for an attempt or case that has already
+          // ended is never used; it is voided and shown to the owner.
+          if (!moved && after.result_external_id) {
+            this.#audit(c, 'ATTENTION', { reason: 'MONEY_ON_ENDED_ATTEMPT', authorizations: 1, attempt: attempt.status, case: c.status });
+            startVoid(db, now, c, after.result_external_id, x.charge, 'MONEY_ON_ENDED_ATTEMPT', this.#s.owner);
+          }
         } else if (this.#kind === 'AUTH_CAPTURE') {
           if (matchedNow) {
             setAttempt(db, attempt.id, ['AUTHORIZED'], 'CAPTURED');
@@ -562,7 +583,12 @@ export class AOpHandler implements OpHandler {
     if (this.identify(op, { type: 'order', order: q.resource }).ok) return { kind: 'RESOLVED', resource: { type: 'order', order: q.resource } };
     if (moneyInOrder(q.resource).captures.length > 0) return { kind: 'WAIT', reason: 'UNIDENTIFIED:capture', attention: true };
     if (q.resource.status === 'APPROVED') return { kind: 'RESEND' };
-    if (q.resource.status === 'CREATED' || q.resource.status === 'PAYER_ACTION_REQUIRED') return { kind: 'NOT_PROCESSED', reason: 'ORDER_NOT_APPROVED' };
+    // IE1-01: as for B's authorization, a negative query never ends an unconfirmed capture of A's order.
+    if (q.resource.status === 'CREATED' || q.resource.status === 'PAYER_ACTION_REQUIRED') {
+      return this.#s.clock.now() >= op.created_at + A_UNCONFIRMED_HOLD_AFTER_MS
+        ? { kind: 'WAIT', reason: `${HOLD}UNCONFIRMED_ORDER_NOT_APPROVED`, attention: true }
+        : { kind: 'WAIT', reason: 'ORDER_NOT_APPROVED' };
+    }
     return { kind: 'WAIT', reason: `ORDER_${q.resource.status}` };
   }
 
