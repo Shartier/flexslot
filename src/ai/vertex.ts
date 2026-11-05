@@ -1,5 +1,6 @@
-// Minimal Gemini on Vertex AI call (DESIGN 9): ADC authentication, structured output (response schema),
-// 20 s timeout, one retry on 5xx/429 only. The full AI adapter (mock mode, quotas, input source) comes later.
+// Gemini on Vertex AI call (DESIGN 9): ADC authentication, structured output (response schema), 20 s timeout,
+// one retry on 5xx/429 only. Quotas are checked by the caller before every attempt (`beforeAttempt`, AiService);
+// the mock structurer and the input source live in mock.ts and service.ts.
 // temperature 0 is sent, but Gemini 3.5 Flash-Lite ignores custom temperature/top-K/top-P (official model page,
 // checked 2026-11-03), so it is not a generation control or a reproducibility guarantee. Correctness rests on the
 // response schema, the server-side zod checks and the customer's confirmation.
@@ -60,11 +61,20 @@ export type StructureOutcome<K extends StructureKind> =
   | { kind: 'OK'; value: Structured<K>; latencyMs: number; usage: Usage; attempts: number }
   | { kind: 'INVALID_OUTPUT'; issues: string[]; latencyMs: number; usage: Usage; attempts: number }
   | { kind: 'TIMEOUT'; latencyMs: number; attempts: number }
-  | { kind: 'API_ERROR'; httpStatus?: number; errorName: string; latencyMs: number; attempts: number };
+  | { kind: 'API_ERROR'; httpStatus?: number; errorName: string; latencyMs: number; attempts: number }
+  /** The caller's quota refused the next attempt before it was sent (DESIGN 9: 30 per world, 500 per day). */
+  | { kind: 'QUOTA'; scope: QuotaScope; latencyMs: number; attempts: number };
+
+export type QuotaScope = 'WORLD' | 'DAY';
 
 export interface StructureOptions {
   timeoutMs?: number;
   thinkingLevel?: ThinkingLevel;
+  /**
+   * Called before every attempt (the first and the retry). Returning a scope refuses the attempt: nothing is sent
+   * and the outcome is QUOTA. Returning null lets it through (the caller has already counted it).
+   */
+  beforeAttempt?: (attempt: number) => QuotaScope | null;
 }
 
 export async function structureText<K extends StructureKind>(
@@ -79,6 +89,8 @@ export async function structureText<K extends StructureKind>(
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
   for (let attempt = 1; ; attempt++) {
+    const refused = opts.beforeAttempt?.(attempt) ?? null;
+    if (refused) return { kind: 'QUOTA', scope: refused, latencyMs: elapsed(), attempts: attempt - 1 };
     // The timeout covers this attempt only. Aborting stops waiting on our side; Vertex may still finish the call.
     const signal = AbortSignal.timeout(timeoutMs);
     try {

@@ -8,15 +8,19 @@ import { SAMPLE_NOW_MS, seedSampleWorld } from '../src/sample.ts';
 import { insertCase, seeded, sha256 } from './helpers.ts';
 
 // a_payment_operations: A's original payment per operation (STATUS I08, schema version 2).
+// ai_calls, intake_drafts, candidate_evaluations: AI adapter and screens (DESIGN 14.4-14.5, schema version 3).
 const DESIGN_3_TABLES = [
   'a_payment_operations',
+  'ai_calls',
   'approvals',
   'audit_log',
   'b_requests',
   'bookings',
+  'candidate_evaluations',
   'compensation_grants',
   'customers',
   'flex_preferences',
+  'intake_drafts',
   'invites',
   'money_obligations',
   'payment_attempts',

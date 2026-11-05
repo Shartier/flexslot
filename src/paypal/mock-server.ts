@@ -49,6 +49,16 @@ export interface MockRequestRecord {
   hasBody: boolean;
 }
 
+export interface MockState {
+  version: 1;
+  seq: number;
+  orders: MockOrder[];
+  authorizations: MockAuthorization[];
+  captures: MockCapture[];
+  refunds: MockRefund[];
+  idempotent: Array<[string, { status: number; body: string; kind: ReplayKind; resourceId: string }]>;
+}
+
 interface MockOrder {
   id: string;
   intent: 'CAPTURE' | 'AUTHORIZE';
@@ -212,6 +222,41 @@ export class MockPayPalServer {
 
   count(kind: 'orders' | 'authorizations' | 'captures' | 'refunds'): number {
     return { orders: this.#orders, authorizations: this.#auths, captures: this.#captures, refunds: this.#refunds }[kind].size;
+  }
+
+  /**
+   * The mock's resources as plain data, so the app's mock mode survives a server restart (AC10). Tokens, the
+   * request log and queued faults are not part of it. Mock only: no Sandbox data is ever written here.
+   */
+  exportState(): MockState {
+    return {
+      version: 1,
+      seq: this.#seq,
+      orders: [...this.#orders.values()],
+      authorizations: [...this.#auths.values()],
+      captures: [...this.#captures.values()],
+      refunds: [...this.#refunds.values()],
+      idempotent: [...this.#idempotent.entries()],
+    };
+  }
+
+  importState(state: MockState): void {
+    if (state.version !== 1) throw new Error('mock state version not supported');
+    this.#seq = state.seq;
+    for (const [map, items] of [
+      [this.#orders, state.orders],
+      [this.#auths, state.authorizations],
+      [this.#captures, state.captures],
+      [this.#refunds, state.refunds],
+    ] as Array<[Map<string, { id: string }>, Array<{ id: string }>]>) {
+      map.clear();
+      for (const item of items) {
+        if (!item.id.startsWith('MOCK-')) throw new Error('mock state may only hold mock ids');
+        map.set(item.id, structuredClone(item));
+      }
+    }
+    this.#idempotent.clear();
+    for (const [k, v] of state.idempotent) this.#idempotent.set(k, v);
   }
 
   // ---- fetch -------------------------------------------------------------------

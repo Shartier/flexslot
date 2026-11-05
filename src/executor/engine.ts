@@ -110,6 +110,8 @@ export interface EngineDeps {
   owner: string;
   hooks?: ExecutorHooks | undefined;
   handlerFor(table: OpTable, op: OpRow): OpHandler;
+  /** DESIGN 10: false when the operation belongs to a world of another payment mode; it is then never worked on. */
+  belongs?(table: OpTable, op: OpRow): boolean;
 }
 
 const RETRYABLE = new Set(['NETWORK', 'TIMEOUT', 'HTTP_5XX', 'HTTP_429']);
@@ -136,6 +138,7 @@ export class OpEngine {
     const got = immediate(db, (): Lease | WorkResult => {
       const op = getOp(db, table, opId);
       if (!op || !isWorkable(op)) return 'WAITING';
+      if (this.#d.belongs && !this.#d.belongs(table, op)) return 'BLOCKED';
       if (!opts.force && op.last_error_class?.startsWith(HOLD)) return 'BLOCKED';
       if (!opts.force && op.next_send_at !== null && op.next_send_at > now) return 'WAITING';
       if (!this.#d.handlerFor(table, op).mayWork(op)) return 'BLOCKED';

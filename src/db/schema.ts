@@ -2,8 +2,13 @@
 // Raised error messages (SLOT_CONFLICT etc.) are part of the contract with the application code.
 // Version 2 (executor, DESIGN 14.3): operation rows keep their fixed input, the reconciliation marker
 // (D20 / IP1-04) and timestamps; A's original payment has its own operation table (STATUS I08).
+// Version 3 (AI adapter and screens, DESIGN 14.4-14.5): AI call records and quotas, intake drafts, the person's
+// edit marker on confirmed versions, candidate evaluations, the world's base date and the profit assumptions.
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
+
+export const INPUT_SOURCES = ['AI_VERTEX', 'AI_MOCK', 'MANUAL'] as const;
+export const AI_CALL_OUTCOMES = ['IN_FLIGHT', 'OK', 'INVALID_OUTPUT', 'TIMEOUT', 'API_ERROR', 'QUOTA'] as const;
 
 export const CASE_STATUSES = [
   'DRAFT',
@@ -124,6 +129,8 @@ CREATE TABLE worlds (
   mode_payment TEXT NOT NULL CHECK (mode_payment IN ('SANDBOX', 'MOCK')),
   created_at INTEGER NOT NULL,
   expires_at INTEGER NOT NULL,
+  -- Shop-local date the sample bookings were generated from (SPEC 4: regenerate relative to the demo day).
+  base_local_date TEXT,
   CHECK (expires_at > created_at)
 ) STRICT;
 
@@ -137,6 +144,8 @@ CREATE TABLE shops (
   expected_payee_merchant_id TEXT,
   business_open_min INTEGER NOT NULL CHECK (business_open_min BETWEEN 0 AND 1439),
   business_close_min INTEGER NOT NULL CHECK (business_close_min BETWEEN 1 AND 1440),
+  -- SPEC 9 assumptions shown with the owner's profit estimate (fictional values, not PayPal rates).
+  profit_assumptions_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(profit_assumptions_json)),
   CHECK (business_close_min > business_open_min)
 ) STRICT;
 
@@ -188,15 +197,62 @@ CREATE TABLE payments (
   verified_at INTEGER
 ) STRICT;
 
+-- DESIGN 9: one row per structuring request to the AI (never a mock fallback for a failed Vertex call).
+-- attempts counts the requests actually sent to the model (the one retry on 5xx/429 included); the quotas
+-- (per world, per UTC day) are checked and counted before every attempt. No customer text is stored here.
+CREATE TABLE ai_calls (
+  id TEXT PRIMARY KEY,
+  world_id TEXT NOT NULL REFERENCES worlds(id),
+  kind TEXT NOT NULL CHECK (kind IN ('A_PREFERENCE', 'B_REQUEST')),
+  mode TEXT NOT NULL CHECK (mode IN ('VERTEX', 'MOCK')),
+  model TEXT NOT NULL,
+  utc_day TEXT NOT NULL,
+  outcome TEXT NOT NULL CHECK (outcome IN (${sqlList(AI_CALL_OUTCOMES)})),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts BETWEEN 0 AND 2),
+  latency_ms INTEGER,
+  http_status INTEGER,
+  issues_json TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(issues_json)),
+  result_json TEXT CHECK (result_json IS NULL OR json_valid(result_json)),
+  usage_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(usage_json)),
+  created_at INTEGER NOT NULL
+) STRICT;
+CREATE INDEX ai_calls_world ON ai_calls(world_id);
+CREATE INDEX ai_calls_day ON ai_calls(utc_day);
+
+-- A structuring proposal waiting for the person's confirmation (DESIGN 9). Confirming writes a new version of
+-- flex_preferences / b_requests; the draft keeps the AI's proposal and its questions as they were.
+CREATE TABLE intake_drafts (
+  id TEXT PRIMARY KEY,
+  world_id TEXT NOT NULL REFERENCES worlds(id),
+  kind TEXT NOT NULL CHECK (kind IN ('A_PREFERENCE', 'B_REQUEST')),
+  party_id TEXT NOT NULL,
+  raw_text TEXT NOT NULL CHECK (length(raw_text) BETWEEN 1 AND 2000),
+  source TEXT NOT NULL CHECK (source IN (${sqlList(INPUT_SOURCES)})),
+  ai_call_id TEXT REFERENCES ai_calls(id),
+  -- Why the person is filling the form by hand: NULL (chose AI), or the AI failure / quota / CHOSEN_MANUAL.
+  manual_reason TEXT,
+  proposal_json TEXT CHECK (proposal_json IS NULL OR json_valid(proposal_json)),
+  questions_json TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(questions_json)),
+  previous_draft_id TEXT REFERENCES intake_drafts(id),
+  status TEXT NOT NULL CHECK (status IN ('OPEN', 'CONFIRMED', 'SUPERSEDED')),
+  created_at INTEGER NOT NULL,
+  CHECK ((source = 'MANUAL') = (ai_call_id IS NULL)),
+  CHECK (source = 'MANUAL' OR proposal_json IS NOT NULL)
+) STRICT;
+CREATE INDEX intake_drafts_party ON intake_drafts(world_id, party_id);
+
 CREATE TABLE flex_preferences (
   id TEXT PRIMARY KEY,
   booking_id TEXT NOT NULL REFERENCES bookings(id),
   version INTEGER NOT NULL CHECK (version >= 1),
   raw_text TEXT NOT NULL,
   structured_json TEXT NOT NULL CHECK (json_valid(structured_json)),
-  input_source TEXT NOT NULL CHECK (input_source IN ('AI_VERTEX', 'AI_MOCK', 'MANUAL')),
+  input_source TEXT NOT NULL CHECK (input_source IN (${sqlList(INPUT_SOURCES)})),
   confirmed_at INTEGER,
   compensation_minor INTEGER NOT NULL CHECK (compensation_minor >= 0),
+  draft_id TEXT REFERENCES intake_drafts(id),
+  -- 1 when the person changed the AI's proposal before confirming (the source still names who proposed it).
+  edited INTEGER NOT NULL DEFAULT 0 CHECK (edited IN (0, 1)),
   UNIQUE (booking_id, version)
 ) STRICT;
 
@@ -207,8 +263,22 @@ CREATE TABLE b_requests (
   version INTEGER NOT NULL CHECK (version >= 1),
   raw_text TEXT NOT NULL,
   structured_json TEXT NOT NULL CHECK (json_valid(structured_json)),
-  input_source TEXT NOT NULL CHECK (input_source IN ('AI_VERTEX', 'AI_MOCK', 'MANUAL')),
-  confirmed_at INTEGER
+  input_source TEXT NOT NULL CHECK (input_source IN (${sqlList(INPUT_SOURCES)})),
+  confirmed_at INTEGER,
+  draft_id TEXT REFERENCES intake_drafts(id),
+  edited INTEGER NOT NULL DEFAULT 0 CHECK (edited IN (0, 1)),
+  UNIQUE (customer_id, version)
+) STRICT;
+
+-- DESIGN 6.1 step 4: the program's verdict for one confirmed B request version, with reasons when infeasible.
+CREATE TABLE candidate_evaluations (
+  id TEXT PRIMARY KEY,
+  world_id TEXT NOT NULL REFERENCES worlds(id),
+  b_request_id TEXT NOT NULL REFERENCES b_requests(id),
+  evaluated_at INTEGER NOT NULL,
+  feasible INTEGER NOT NULL CHECK (feasible IN (0, 1)),
+  case_id TEXT,
+  result_json TEXT NOT NULL CHECK (json_valid(result_json))
 ) STRICT;
 
 CREATE TABLE swap_cases (

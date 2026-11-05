@@ -81,6 +81,12 @@ const ACTIVE_CASE_STATUSES = [
 ] as const;
 /** DESIGN 6.3 item 8 / STATUS I07, as SQL over payment_operations o JOIN payment_attempts t. Only order creation. */
 const EXCLUDED_SQL = `(t.status = 'EXPIRED' AND o.op_kind = 'ORDER_CREATE' AND o.result_external_id IS NULL)`;
+/**
+ * DESIGN 10 / AC12: an executor works only on worlds of its own payment mode. These joins name the world of a
+ * B operation (o JOIN payment_attempts t) and of an A operation (a_payment_operations o).
+ */
+const B_WORLD_JOIN = 'JOIN money_obligations mo ON mo.id = t.obligation_id JOIN swap_cases mc ON mc.id = mo.case_id JOIN worlds mw ON mw.id = mc.world_id';
+const A_WORLD_JOIN = 'JOIN bookings mb ON mb.id = o.booking_id JOIN shops ms ON ms.id = mb.shop_id JOIN worlds mw ON mw.id = ms.world_id';
 
 class BookingImpossible extends Error {
   constructor(reason: string) {
@@ -110,7 +116,36 @@ export class Executor {
     this.#returnUrl = o.returnUrl ?? 'http://localhost:5173/paypal/return';
     this.#cancelUrl = o.cancelUrl ?? 'http://localhost:5173/paypal/cancel';
     const handlerFor = handlerFactory({ db: o.db, paypal: o.paypal, clock: o.clock, owner: this.owner });
-    this.#engine = new OpEngine({ db: o.db, clock: o.clock, owner: this.owner, hooks: o.hooks, handlerFor });
+    this.#engine = new OpEngine({ db: o.db, clock: o.clock, owner: this.owner, hooks: o.hooks, handlerFor, belongs: (table, op) => this.#ownsOp(table, op) });
+  }
+
+  /** The payment mode this executor serves (DESIGN 10). */
+  get mode(): string {
+    return this.#paypal.mode;
+  }
+
+  /** True when the operation belongs to a world of this executor's payment mode (DESIGN 10, AC12). */
+  #caseInMode(caseId: string): boolean {
+    const row = this.#db.prepare('SELECT w.mode_payment AS mode FROM swap_cases c JOIN worlds w ON w.id = c.world_id WHERE c.id = ?').get(caseId) as
+      | { mode: string }
+      | undefined;
+    return row?.mode === this.#paypal.mode;
+  }
+
+  #bookingInMode(bookingId: string): boolean {
+    const row = this.#db
+      .prepare('SELECT w.mode_payment AS mode FROM bookings b JOIN shops s ON s.id = b.shop_id JOIN worlds w ON w.id = s.world_id WHERE b.id = ?')
+      .get(bookingId) as { mode: string } | undefined;
+    return row?.mode === this.#paypal.mode;
+  }
+
+  #ownsOp(table: OpTable, op: OpRow): boolean {
+    const sql =
+      table === 'payment_operations'
+        ? `SELECT mw.mode_payment AS mode FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id ${B_WORLD_JOIN} WHERE o.id = ?`
+        : `SELECT mw.mode_payment AS mode FROM a_payment_operations o ${A_WORLD_JOIN} WHERE o.id = ?`;
+    const row = this.#db.prepare(sql).get(op.id) as { mode: string } | undefined;
+    return row?.mode === this.#paypal.mode;
   }
 
   // ---- E1: start (B approves the terms and presses pay) ----------------------------------------------
@@ -192,6 +227,7 @@ export class Executor {
   // ---- E2: create the order -----------------------------------------------------------------------------
 
   async createOrder(caseId: string): Promise<{ ok: true; orderId: string } | Refusal> {
+    if (!this.#caseInMode(caseId)) return no('MODE_MISMATCH');
     const charge = obligationOf(this.#db, caseId, 'B_CHARGE');
     const att = charge && latestAttempt(this.#db, charge.id);
     const op = att && latestOp(this.#db, att.id, 'ORDER_CREATE');
@@ -205,6 +241,7 @@ export class Executor {
   // ---- E3 / E4: B approved on PayPal (browser signal, webhook or executor) -> authorize -----------------
 
   async onBuyerApproved(caseId: string): Promise<{ ok: true; status: string } | Refusal> {
+    if (!this.#caseInMode(caseId)) return no('MODE_MISMATCH');
     const db = this.#db;
     const now = this.#clock.now();
     const r = immediate(db, (): Refusal | { opId: string; leaseGen: number | null } => {
@@ -248,6 +285,8 @@ export class Executor {
 
   /** Drives one case as far as it can go now (E4-E8, E-V, E-R). Returns the case status. */
   async advance(caseId: string): Promise<string> {
+    // DESIGN 10: never move a case of the other payment mode (E5 would otherwise see MODE_MISMATCH and void).
+    if (!this.#caseInMode(caseId)) return getCase(this.#db, caseId)?.status ?? 'MISSING';
     for (let i = 0; i < 60; i++) {
       if ((await this.#step(caseId)) !== 'PROGRESSED') break;
     }
@@ -405,9 +444,11 @@ export class Executor {
     const due = db
       .prepare(
         `SELECT t.id FROM payment_attempts t JOIN money_obligations o ON o.id = t.obligation_id
-         WHERE o.kind = 'B_CHARGE' AND t.status IN ('OPEN', 'ORDER_CREATED') AND t.expires_at IS NOT NULL AND t.expires_at <= ?`,
+         JOIN swap_cases c ON c.id = o.case_id JOIN worlds w ON w.id = c.world_id
+         WHERE o.kind = 'B_CHARGE' AND t.status IN ('OPEN', 'ORDER_CREATED') AND t.expires_at IS NOT NULL AND t.expires_at <= ?
+           AND w.mode_payment = ?`,
       )
-      .all(now) as Array<{ id: string }>;
+      .all(now, this.#paypal.mode) as Array<{ id: string }>;
     const ended: string[] = [];
     for (const { id } of due) {
       immediate(db, () => {
@@ -460,10 +501,10 @@ export class Executor {
     const excluded = (
       db
         .prepare(
-          `SELECT o.id FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id
-           WHERE o.status IN ('PREPARED', 'SENDING', 'UNKNOWN', 'PENDING') AND ${EXCLUDED_SQL}`,
+          `SELECT o.id FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id ${B_WORLD_JOIN}
+           WHERE o.status IN ('PREPARED', 'SENDING', 'UNKNOWN', 'PENDING') AND ${EXCLUDED_SQL} AND mw.mode_payment = ?`,
         )
-        .all() as Array<{ id: string }>
+        .all(this.#paypal.mode) as Array<{ id: string }>
     ).map((r) => r.id);
     const targets = this.#scan({ now, due: false, unconfirmedOnly: true });
     const busy: string[] = [];
@@ -482,18 +523,27 @@ export class Executor {
       : `(o.status IN ('PREPARED', 'SENDING', 'UNKNOWN', 'PENDING') OR (o.status = 'SUCCEEDED' AND o.reconcile_status = 'AWAITING'))`;
     const schedule = o.due ? `AND (o.next_send_at IS NULL OR o.next_send_at <= ${o.now}) AND (o.last_error_class IS NULL OR o.last_error_class NOT LIKE 'HOLD:%')` : '';
     const lease = `AND (o.lease_until IS NULL OR o.lease_until < ${o.now})`;
+    const mode = this.#paypal.mode;
     const b = db
-      .prepare(`SELECT o.id FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id WHERE ${state} ${schedule} ${lease} AND NOT ${EXCLUDED_SQL} ORDER BY o.rowid`)
-      .all() as Array<{ id: string }>;
-    const a = db.prepare(`SELECT o.id FROM a_payment_operations o WHERE ${state} ${schedule} ${lease} ORDER BY o.rowid`).all() as Array<{ id: string }>;
+      .prepare(
+        `SELECT o.id FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id ${B_WORLD_JOIN}
+         WHERE ${state} ${schedule} ${lease} AND NOT ${EXCLUDED_SQL} AND mw.mode_payment = ? ORDER BY o.rowid`,
+      )
+      .all(mode) as Array<{ id: string }>;
+    const a = db
+      .prepare(`SELECT o.id FROM a_payment_operations o ${A_WORLD_JOIN} WHERE ${state} ${schedule} ${lease} AND mw.mode_payment = ? ORDER BY o.rowid`)
+      .all(mode) as Array<{ id: string }>;
     return [...b.map((r) => ({ table: T, id: r.id })), ...a.map((r) => ({ table: A, id: r.id }))];
   }
 
   #activeCases(): string[] {
     return (
-      this.#db.prepare(`SELECT id FROM swap_cases WHERE status IN (${ACTIVE_CASE_STATUSES.map(() => '?').join(', ')}) ORDER BY rowid`).all(...ACTIVE_CASE_STATUSES) as Array<{
-        id: string;
-      }>
+      this.#db
+        .prepare(
+          `SELECT c.id FROM swap_cases c JOIN worlds w ON w.id = c.world_id
+           WHERE c.status IN (${ACTIVE_CASE_STATUSES.map(() => '?').join(', ')}) AND w.mode_payment = ? ORDER BY c.rowid`,
+        )
+        .all(...ACTIVE_CASE_STATUSES, this.#paypal.mode) as Array<{ id: string }>
     ).map((r) => r.id);
   }
 
@@ -505,6 +555,7 @@ export class Executor {
     return immediate(db, () => {
       const ob = db.prepare('SELECT * FROM money_obligations WHERE id = ?').get(obligationId) as ObligationRow | undefined;
       if (!ob) return no('OBLIGATION_NOT_FOUND');
+      if (!this.#caseInMode(ob.case_id)) return no('MODE_MISMATCH');
       if (ob.kind === 'B_CHARGE') return no('NOT_RETRYABLE'); // a new checkout needs a new case (6.3 item 6)
       if (ob.status === 'SETTLED') return no('ALREADY_SETTLED');
       if (ob.status === 'CANCELLED') return no('NOT_RETRYABLE');
@@ -578,6 +629,7 @@ export class Executor {
   }
 
   async createAOrder(bookingId: string): Promise<{ ok: true; orderId: string } | Refusal> {
+    if (!this.#bookingInMode(bookingId)) return no('MODE_MISMATCH');
     const op = this.#db
       .prepare("SELECT id FROM a_payment_operations WHERE booking_id = ? AND op_kind = 'ORDER_CREATE' ORDER BY op_seq DESC LIMIT 1")
       .get(bookingId) as { id: string } | undefined;
@@ -590,6 +642,7 @@ export class Executor {
 
   /** A approved on PayPal: capture the order, then reconcile with GET capture before A's booking counts as paid. */
   async captureAPayment(bookingId: string): Promise<{ ok: true; paid: boolean } | Refusal> {
+    if (!this.#bookingInMode(bookingId)) return no('MODE_MISMATCH');
     const db = this.#db;
     const now = this.#clock.now();
     const r = immediate(db, (): Refusal | { opId: string; leaseGen: number | null } => {
