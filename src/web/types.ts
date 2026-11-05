@@ -100,8 +100,9 @@ export interface OwnerState {
   request: Conditions | null;
   evaluation: { at: string; feasible: boolean; reasons: Array<{ code: string; text: string }>; detail: unknown } | null;
   cases: OwnerCase[];
-  attention: Array<{ at: string; action: string; detail: Record<string, unknown> }>;
-  heldOperations: number;
+  stopped: Array<{ obligation: string; operation: string; status: string; reason: string }>;
+  checking: Array<{ obligation: string; operation: string; status: string; reason: string }>;
+  needsAttentionObligations: string[];
   history: Array<{ at: string; actor: string; action: string; detail: Record<string, unknown> }>;
   aiUsage: Array<{ mode: string; model: string; kind: string; outcome: string; attempts: number; latencyMs: number | null }>;
 }

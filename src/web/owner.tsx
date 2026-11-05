@@ -7,6 +7,7 @@ import type { OwnerCase, OwnerState } from './types.ts';
 import { ApprovalChips, ConditionsSummary, DemoNote, Events, Notice, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
 
 const KIND: Record<string, string> = {
+  A_ORIGINAL: "Existing customer's booking payment",
   B_CHARGE: "New customer's payment",
   B_AUTH_VOID: 'Release of the authorization',
   A_COMPENSATION_REFUND: 'Compensation refund to the existing customer',
@@ -19,7 +20,9 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
       <TopBar header={state.header} roleName="Shop owner" />
       <main>
         <DemoNote header={state.header} />
-        {state.heldOperations > 0 && <Notice kind="error">{state.heldOperations} payment operation(s) stopped and need your attention. See “Needs attention”.</Notice>}
+        {(state.stopped.length > 0 || state.needsAttentionObligations.length > 0) && (
+          <Notice kind="error">Automatic payment processing stopped for {Math.max(state.stopped.length, state.needsAttentionObligations.length)} item(s). Your action is needed (see “Stopped”).</Notice>
+        )}
 
         <Section title="Bookings">
           <div className="table-wrap">
@@ -82,12 +85,28 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
           <OwnerCaseCard key={c.id} api={api} c={c} refresh={refresh} />
         ))}
 
-        {state.attention.length > 0 && (
-          <Section title="Needs attention">
+        {(state.stopped.length > 0 || state.needsAttentionObligations.length > 0) && (
+          <Section title="Stopped: your action is needed">
+            <p className="small">FlexSlot stopped these automatically and does not retry them by itself. Nothing new is charged or refunded until you act. (Releasing a stop is not available in this demo yet.)</p>
             <ul className="history">
-              {state.attention.map((e, i) => (
+              {state.stopped.map((e, i) => (
                 <li key={i}>
-                  <span className="muted-text">{e.at}</span> <strong>{e.action}</strong> <span className="mono small">{JSON.stringify(e.detail)}</span>
+                  {KIND[e.obligation] ?? e.obligation} · {e.operation} ({e.status}) · <span className="mono small">{e.reason}</span>
+                </li>
+              ))}
+              {state.needsAttentionObligations.map((k, i) => (
+                <li key={`o${i}`}>{KIND[k] ?? k}: needs attention (use “Recover” in the payment records if offered)</li>
+              ))}
+            </ul>
+          </Section>
+        )}
+        {state.checking.length > 0 && (
+          <Section title="Still checking with PayPal (a difference was seen)">
+            <p className="small">FlexSlot keeps querying PayPal for these and continues once the records match. Nothing moves meanwhile.</p>
+            <ul className="history">
+              {state.checking.map((e, i) => (
+                <li key={i}>
+                  {KIND[e.obligation] ?? e.obligation} · {e.operation} · <span className="mono small">{e.reason}</span>
                 </li>
               ))}
             </ul>

@@ -347,17 +347,29 @@ export function ownerView(db: Db, worldId: string, now: number, ai: AiInfo) {
     }));
     return { ...caseView(db, c, 'OWNER', now), profit: profitView(db, c), obligations: obs };
   });
-  const attention = (
-    db.prepare("SELECT action, detail_json, created_at FROM audit_log WHERE world_id = ? AND action IN ('ATTENTION', 'PRE_CAPTURE_CHECK_FAILED', 'RECOVERY_EXCLUDED') ORDER BY id DESC LIMIT 20").all(worldId) as Array<{
-      action: string; detail_json: string; created_at: number;
-    }>
-  ).map((e) => ({ at: formatLocal(e.created_at, tz), action: e.action, detail: sanitizeDetail(e.detail_json) }));
-  const held = db
-    .prepare(
-      `SELECT count(*) AS n FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id JOIN money_obligations m ON m.id = t.obligation_id
-       JOIN swap_cases c ON c.id = m.case_id WHERE c.world_id = ? AND o.last_error_class LIKE 'HOLD:%'`,
-    )
-    .get(worldId) as { n: number };
+  // I21 (Codex): what is stopped now (owner action needed) is kept apart from what is still being checked with a
+  // mismatch seen; both come from the operations' current state, never from past audit entries.
+  const current = (
+    db
+      .prepare(
+        `SELECT o.op_kind, o.status, o.last_error_class, m.kind AS obligation_kind, m.status AS obligation_status
+         FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id JOIN money_obligations m ON m.id = t.obligation_id
+         JOIN swap_cases c ON c.id = m.case_id
+         WHERE c.world_id = ? AND (o.status IN ('PREPARED', 'SENDING', 'UNKNOWN', 'PENDING') OR (o.status = 'SUCCEEDED' AND o.reconcile_status = 'AWAITING'))
+           AND o.last_error_class IS NOT NULL
+         UNION ALL
+         SELECT o.op_kind, o.status, o.last_error_class, 'A_ORIGINAL' AS obligation_kind, NULL AS obligation_status
+         FROM a_payment_operations o JOIN bookings b ON b.id = o.booking_id JOIN shops s ON s.id = b.shop_id
+         WHERE s.world_id = ? AND (o.status IN ('PREPARED', 'SENDING', 'UNKNOWN', 'PENDING') OR (o.status = 'SUCCEEDED' AND o.reconcile_status = 'AWAITING'))
+           AND o.last_error_class IS NOT NULL`,
+      )
+      .all(worldId, worldId) as Array<{ op_kind: string; status: string; last_error_class: string; obligation_kind: string; obligation_status: string | null }>
+  ).map((r) => ({ obligation: r.obligation_kind, operation: r.op_kind, status: r.status, reason: r.last_error_class }));
+  const stopped = current.filter((r) => r.reason.startsWith('HOLD:')).map((r) => ({ ...r, reason: r.reason.slice(5) }));
+  const checking = current.filter((r) => /^(MISMATCH|UNIDENTIFIED|UNEXPECTED_STATUS):/.test(r.reason));
+  const failedObligations = (
+    db.prepare("SELECT m.kind FROM money_obligations m JOIN swap_cases c ON c.id = m.case_id WHERE c.world_id = ? AND m.status = 'NEEDS_ATTENTION'").all(worldId) as Array<{ kind: string }>
+  ).map((r) => r.kind);
   const history = (
     db.prepare('SELECT actor, action, detail_json, created_at, case_id FROM audit_log WHERE world_id = ? ORDER BY id DESC LIMIT 60').all(worldId) as Array<{
       actor: string; action: string; detail_json: string; created_at: number; case_id: string | null;
@@ -381,8 +393,9 @@ export function ownerView(db: Db, worldId: string, now: number, ai: AiInfo) {
         }
       : null,
     cases,
-    attention,
-    heldOperations: held.n,
+    stopped,
+    checking,
+    needsAttentionObligations: failedObligations,
     history,
     aiUsage: aiUsage(db, worldId),
   };
