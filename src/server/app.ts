@@ -377,7 +377,9 @@ export function createApp(d: AppDeps): App {
 
   // ---- top level -------------------------------------------------------------------------------------------------
 
-  async function handle(req: Req): Promise<Res> {
+  async function handle(incoming: Req): Promise<Res> {
+    // HEAD is answered like GET (node:http drops the body).
+    const req = incoming.method === 'HEAD' ? { ...incoming, method: 'GET' } : incoming;
     const path = req.path;
     if (req.method === 'GET' && (path === '/' || path === '/paypal/return' || path === '/paypal/cancel')) return indexHtml();
     if (req.method === 'GET' && path.startsWith('/assets/')) return asset(path);

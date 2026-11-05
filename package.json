@@ -8,8 +8,11 @@
     "node": ">=24.22.1 <25"
   },
   "scripts": {
+    "build": "vite build",
+    "start": "node src/server/main.ts",
+    "dev": "vite build && node src/server/main.ts",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.web.json",
     "check": "npm run typecheck && npm test",
     "verify:v0": "node scripts/verify/v0-env.ts",
     "verify:v1": "node scripts/verify/v1-token.ts",
@@ -23,11 +26,16 @@
   },
   "devDependencies": {
     "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "typescript": "7.0.2",
+    "vite": "8.3.5",
     "vitest": "5.0.5"
   },
   "dependencies": {
     "@google/genai": "2.30.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "zod": "4.6.7"
   }
 }
