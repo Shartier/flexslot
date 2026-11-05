@@ -4,6 +4,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 export interface Req {
+  /** The connection's remote address (for the webhook rate limit only). */
+  remote?: string;
   method: string;
   path: string;
   query: URLSearchParams;
@@ -18,6 +20,8 @@ export interface Res {
 }
 
 export const MAX_BODY_BYTES = 16 * 1024;
+/** DESIGN 7.4: webhook bodies up to 64 KB are stored; one byte more is refused before reading on. */
+export const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
 
 export class BodyTooLarge extends Error {}
 
@@ -51,13 +55,13 @@ export function parseCookies(header: string | undefined): Array<[string, string]
     });
 }
 
-async function readBody(req: IncomingMessage): Promise<string> {
+async function readBody(req: IncomingMessage, limit: number): Promise<string> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of req) {
     const b = chunk as Buffer;
     size += b.length;
-    if (size > MAX_BODY_BYTES) throw new BodyTooLarge();
+    if (size > limit) throw new BodyTooLarge();
     chunks.push(b);
   }
   return Buffer.concat(chunks).toString('utf8');
@@ -72,8 +76,9 @@ export function nodeHandler(handle: (req: Req) => Promise<Res>, log: (line: Reco
       const url = new URL(req.url ?? '/', 'http://localhost');
       const headers: Record<string, string | undefined> = {};
       for (const [k, v] of Object.entries(req.headers)) headers[k.toLowerCase()] = Array.isArray(v) ? v.join(', ') : v;
-      const body = req.method === 'GET' || req.method === 'HEAD' ? '' : await readBody(req);
-      out = await handle({ method: (req.method ?? 'GET').toUpperCase(), path: url.pathname, query: url.searchParams, headers, body });
+      const limit = url.pathname === '/webhooks/paypal' ? MAX_WEBHOOK_BODY_BYTES : MAX_BODY_BYTES;
+      const body = req.method === 'GET' || req.method === 'HEAD' ? '' : await readBody(req, limit);
+      out = await handle({ method: (req.method ?? 'GET').toUpperCase(), path: url.pathname, query: url.searchParams, headers, body, remote: req.socket.remoteAddress ?? 'unknown' });
     } catch (e) {
       out = e instanceof BodyTooLarge ? fail(413, 'BODY_TOO_LARGE') : fail(500, 'INTERNAL');
       if (!(e instanceof BodyTooLarge)) log({ event: 'http.error', error: e instanceof Error ? e.name : 'unknown' });

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="68453fe2666a8c8f03ddbd2d3b4d6defddc87005a28f3549ba05e16ab1800941"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="511106a4c1300b3c8be14d17a31e0e5c51688447101e420af6b9b3a1f292866a"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1431,8 +1431,127 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>初見の人による三画面の操作（AC01の「初見」）。今回の操作はClaudeが内蔵ブラウザで行い、PayPalのbuyerのログインと承認は本人が行った。</li>
 <li>実機のスマートフォンでの操作（AC13）。スマホ幅はブラウザの幅の模擬で確認しただけ。英語のREADMEとクリーンな環境からの起動（AC13）。</li>
 <li>Sandboxでの障害・回復（AC08・AC09）、与信の取消（E-V）とBへの回復返金（E-R）の画面からの実行。Sandboxの通しは正常系の一件だけ。</li>
-<li>Webhook（V8、本人確認後）。HOLDの解除。Playwrightでの画面の自動試験。</li>
+<li>Webhookの実配送（V8、本人確認後）。受信箱は次の節で実装した。HOLDの解除。Playwrightでの画面の自動試験。</li>
 <li>公開・デプロイ・応募（本人確認後）。</li>
+</ul>
+<h2 id="readmewebhookclaude-code2026-11-05">英語のREADMEとWebhookの受信箱（Claude Code、2026-11-05）</h2>
+<p>対象：ブランチ<code>impl/app</code>、<code>impl-app-1</code>の後のコミット（タグ<code>impl-webhook-1</code>）。<code>impl-app-1</code>（第2レビューの対象）は変えていない。</p>
+<h3 id="readmeac13">英語のREADMEと別環境での起動（AC13の一部）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>README.md</td>
+<td>英語。概要、アカウントなしの模擬モードでの起動と三画面の操作手順、PayPal SandboxとVertex AIの設定（変数名と取得場所だけ、値は書かない）、スクリプト、仕組み、未実施・制限、ライセンス未定。<code>tools/render-docs.ps1</code>の対象に加え、<code>outputs/README.html</code>を生成</td>
+</tr>
+<tr>
+<td>別環境での起動</td>
+<td>別フォルダへ<code>git clone</code>（<code>impl/app</code>の<code>88ee986</code>）。<code>.env</code>はない状態。<code>npm ci</code>（終了コード0、約9秒。npm 11の既定で<code>protobufjs</code>のpostinstallは実行されない。元のフォルダと同じ条件）→ <code>npm run check</code>（終了コード0、22ファイル・312件）→ <code>npm run build</code>（0）→ <code>FLEXSLOT_PORT=8788</code>で起動。起動ログでSandbox・Vertexは未設定（変数名だけ表示）、<code>/api/config</code>は模擬だけ。HTTPでワールドの作成から三役割のログイン、Aの支払い、AとBの条件、店主とAの承認、Bの支払いまで行い、案件COMPLETED（Aは11-10 10:00–11:00、補償は返金済み、Bは支払い済み）。確認後にサーバーを止めた</td>
+</tr>
+<tr>
+<td>未確認</td>
+<td>別のPC・OS・クリーンなnpmキャッシュでの起動、READMEだけを読んだ人による起動</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="webhookdesign-7.4d31ac07">Webhookの受信箱（DESIGN 7.4、D31、AC07の模擬部分）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+<th>場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>受信</td>
+<td><code>POST /webhooks/paypal</code>。セッション・CSRF・Originは不要（PayPalのサーバーから届く）。署名関係の5つのヘッダーと本文（64KBまで、超えれば413で保存しない）、SHA-256を、検証の前に<code>webhook_deliveries</code>へ保存し、保存できたときだけ200。保存できなければ500。送信元ごとに1分120件まで（超えれば429で保存しない）</td>
+<td><code>src/server/app.ts</code>、<code>src/app/webhooks.ts</code></td>
+</tr>
+<tr>
+<td>検証</td>
+<td>PayPalの<code>/v1/notifications/verify-webhook-signature</code>に、保存したヘッダー・<code>PAYPAL_WEBHOOK_ID</code>・イベントを送る。SUCCESSだけがVERIFIED。FAILUREと4xxはINVALID（終端）。通信・5xx・429・認証はVERIFY_ERRORで、10秒から倍の間隔（最大10分）で再試行し、再起動後も続ける。本文がJSONでない・ヘッダーが欠けるものは、PayPalを呼ばずにINVALID。<code>PAYPAL_WEBHOOK_ID</code>がなければ保存だけ</td>
+<td><code>src/paypal/rest.ts</code>の<code>verifyWebhookSignature</code>、<code>src/app/webhooks.ts</code></td>
+</tr>
+<tr>
+<td>重複の排除</td>
+<td>VERIFIEDの配信だけが<code>webhook_events</code>（<code>event_id</code>一意）に登録する（DBのトリガーも既存）。同じ<code>event_id</code>の偽の配信が先に来ても、正規の配信は登録される。正規の配信が何度来ても1回だけ使う</td>
+<td><code>src/app/webhooks.ts</code>、<code>src/db/schema.ts</code></td>
+</tr>
+<tr>
+<td>利用</td>
+<td>イベントの資源のIDと関連ID（注文・与信・capture）を持つ、未確定・照合待ちの操作の次の照会・再送を「今」にする（店主の保留の操作は起こさない）。<code>CHECKOUT.ORDER.APPROVED</code>なら、承認の照会を間隔を待たずに今行う。状態を変えるのは、その後のREST照会の結果だけ（D06）。処理は監査ログに種類と起こした操作の数だけ残す</td>
+<td><code>src/app/webhooks.ts</code>、<code>src/server/runtime.ts</code></td>
+</tr>
+<tr>
+<td>模擬PayPal</td>
+<td>署名検証のAPIを追加。<code>signWebhook()</code>が作るHMACを正規とみなす（模擬の選択。PayPalの証明書・CRC32の方式は真似ていない）</td>
+<td><code>src/paypal/mock-server.ts</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="testswebhooks.test.tssandbox">試験（<code>tests/webhooks.test.ts</code>、模擬・偽のSandboxだけ）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>確認内容</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>検証の前に保存し、200は保存の後。検証の後に登録・利用。保存するヘッダーは5つだけ</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>同じ<code>event_id</code>の偽の配信が先：INVALID、正規の配信は登録・利用。正規の配信の重複（同時・利用の後）は1回だけ</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>JSONでない・ヘッダーの欠けはPayPalを呼ばずにINVALID。64KBを超える本文は413で保存しない</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>送信元ごとの上限（試験では3件）。別の送信元は受け付ける</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>検証APIの503：VERIFY_ERROR、間隔の前は再試行しない、新しいプロセスで再開してVERIFIED</td>
+<td>成功</td>
+</tr>
+<tr>
+<td><code>PAYPAL_WEBHOOK_ID</code>なし：保存だけで検証・利用しない</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>照合待ちのcaptureを<code>PAYMENT.CAPTURE.COMPLETED</code>が起こし、10秒を待たずに照会で照合してCOMPLETED（起こさなければ待つ）</td>
+<td>成功</td>
+</tr>
+<tr>
+<td><code>CHECKOUT.ORDER.APPROVED</code>で承認の照会が間隔を待たずに行われ、COMPLETED。未承認の注文への同じイベントでは何もしない（与信を送らない）</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>古いPENDING・重複したイベントが完了後に届いても、操作の状態も案件も変わらず、新しいPOSTもない</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>模擬のワールドはWebhookの影響を受けない</td>
+<td>成功</td>
+</tr>
+</tbody>
+</table></div>
+<p>変異の確認：署名のFAILUREを受け入れる、重複を排除しない、操作を起こさない、ヘッダーの欠けを検証に回す、の4種を一時的に入れ、毎回<code>tests/webhooks.test.ts</code>が失敗した（最初は重複の排除の変異を検出できなかったため、利用の後に届く重複の試験を加えた）。</p>
+<h3 id="section-16">未実施の範囲</h3>
+<ul>
+<li>V8（Sandboxからの実配送と、PayPalの署名検証APIでのSUCCESS）。サーバーは<code>127.0.0.1</code>だけで待ち受けるため、外部から届くHTTPSの経路が必要。受信先・公開する範囲（<code>/webhooks/paypal</code>だけ）・時間帯・停止方法を示して本人確認を受けてから行う。</li>
+<li>Sandboxの開発者画面でのWebhookの登録と、<code>PAYPAL_WEBHOOK_ID</code>の設定（本人が行う）。</li>
 </ul>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
@@ -1543,7 +1662,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <p>以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。</p>
 <p>Gitのuser.name/user.emailは未登録だったため、初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定した。ユーザーのローカル/グローバルGit設定は変更していない。</p>
 <p>参照：<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a>、<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal決済</a>、<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth">Google Cloud認証</a>。</p>
-<h2 id="section-16">実行した確認とテスト</h2>
+<h2 id="section-17">実行した確認とテスト</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1681,6 +1800,18 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>案件COMPLETED、DBとSandboxが19項目で一致、終了コード0</td>
 </tr>
 <tr>
+<td>11-05 Claude</td>
+<td>README・別環境での起動</td>
+<td>別フォルダへ<code>git clone</code>、<code>npm ci</code>、<code>npm run check</code>、<code>npm run build</code>、<code>.env</code>なしで起動、HTTPで一件</td>
+<td>すべて終了コード0、312件成功、模擬だけが選べ、一件がCOMPLETED。詳細は「英語のREADMEとWebhookの受信箱」</td>
+</tr>
+<tr>
+<td>11-05 Claude</td>
+<td>Webhookの受信箱（模擬）</td>
+<td><code>npm run check</code>、変異の確認</td>
+<td>終了コード0、23ファイル・322件成功。変異4種をすべて検出</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
 <td>Playwrightの画面試験・実機・初見の人の操作・Sandboxでの障害の再現</td>
@@ -1688,7 +1819,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<h2 id="section-17">未確認事項</h2>
+<h2 id="section-18">未確認事項</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1775,14 +1906,15 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかと、匿名化した照合結果だけを確認する。</li>
 <li><strong>今後も本人が行うこと</strong>：Sandboxの買い手アカウントでの承認（ログインとパスワードの入力）。V8の受信経路の公開の承認。</li>
 </ol>
-<h2 id="section-18">次に行う作業</h2>
+<h2 id="section-19">次に行う作業</h2>
 <ol>
 <li>Codexによる修正版の再確認は2026-11-04に完了した（「Codexの再確認の結果」の節）。</li>
 <li>DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を修正した（タグ<code>impl-executor-1-fix1</code>）。Codexの再確認（REVIEWの最後の節）を待つ。</li>
 <li>修正版を<code>impl/app</code>へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ<code>impl-app-1</code>）。第2レビュー（REVIEWの最後の節）を待つ。</li>
-<li>次は、第2レビューの指摘への対応、V8（本人確認後）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、英語のREADMEと別環境での起動、実機での確認（11月8日）。</li>
+<li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
+<li>次は、第2レビューの指摘への対応、V8（受信経路の本人確認後）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
-<h2 id="section-19">今後の検証記録の書式</h2>
+<h2 id="section-20">今後の検証記録の書式</h2>
 <p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

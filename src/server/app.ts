@@ -24,6 +24,7 @@ import { approveCase, isCaseParty, OFFER_TTL_MS, proposeInTx, reevaluateInTx, re
 import { answerDraft, confirmDraft, createDraft, type IntakeRole } from '../app/intake.ts';
 import { customerView, ownerView } from '../app/views.ts';
 import { createWorld, getWorld, idsFor, newToken, sha256, type PaymentMode, type Role } from '../app/world.ts';
+import { receiveWebhook } from '../app/webhooks.ts';
 import { fail, json, parseCookies, type Req, type Res } from './http.ts';
 
 export const COOKIE = 'fs_session';
@@ -44,6 +45,8 @@ export interface AppDeps {
   staticDir: string | null;
   offerTtlMs?: number;
   log?: (line: Record<string, unknown>) => void;
+  /** DESIGN 7.4: deliveries accepted per remote address per minute (default 120). */
+  webhookRatePerMinute?: number;
 }
 
 interface Session {
@@ -95,6 +98,7 @@ export interface App {
 
 export function createApp(d: AppDeps): App {
   const pending = new Set<Promise<unknown>>();
+  const webhookHits = new Map<string, { windowStart: number; count: number }>();
   const log = d.log ?? (() => {});
   const ttl = d.offerTtlMs ?? OFFER_TTL_MS;
 
@@ -383,6 +387,25 @@ export function createApp(d: AppDeps): App {
     const path = req.path;
     if (req.method === 'GET' && (path === '/' || path === '/paypal/return' || path === '/paypal/cancel')) return indexHtml();
     if (req.method === 'GET' && path.startsWith('/assets/')) return asset(path);
+
+    // DESIGN 7.4: PayPal's server calls this; no session, CSRF or Origin. Stored first, verified later (WebhookInbox).
+    if (path === '/webhooks/paypal' && req.method === 'POST') {
+      const now = d.clock.now();
+      const who = req.remote ?? 'unknown';
+      const hit = webhookHits.get(who);
+      const fresh = !hit || now - hit.windowStart >= 60_000;
+      const count = fresh ? 1 : hit.count + 1;
+      webhookHits.set(who, fresh ? { windowStart: now, count } : { windowStart: hit.windowStart, count });
+      if (count > (d.webhookRatePerMinute ?? 120)) return fail(429, 'RATE_LIMITED');
+      try {
+        const r = receiveWebhook(d.db, now, req.headers, req.body);
+        return r.ok ? json(200, { received: true }) : fail(r.status, r.reason);
+      } catch (e) {
+        // Not stored: never answer 200, so PayPal delivers it again.
+        log({ event: 'webhook.store_error', error: e instanceof Error ? e.name : 'unknown' });
+        return fail(500, 'NOT_STORED');
+      }
+    }
 
     if (path === '/api/config' && req.method === 'GET') {
       return json(200, {

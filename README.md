@@ -85,6 +85,7 @@ The detailed specification, design, status and reviews are in `SPEC.md`, `DESIGN
 ## Status and limitations
 
 - Verified: one swap end to end through the three screens on PayPal Sandbox with Gemini on Vertex AI, with the database matching Sandbox queries (see `STATUS.md`). Failure and recovery paths are tested against the mock PayPal with fault injection, not reproduced on the Sandbox.
-- Not yet done: PayPal webhook delivery from the Sandbox (the receiver is being added), checks on a real phone (phone widths were checked in a browser), public hosting.
+- Webhooks: `POST /webhooks/paypal` stores each delivery, verifies it with PayPal's verify-webhook-signature API (needs `PAYPAL_WEBHOOK_ID`), handles each event once, and uses it only to trigger the next query of the payment it names. It is tested with the mock; a real delivery from the Sandbox needs a public HTTPS route to this local server and has not been done yet.
+- Not yet done: checks on a real phone (phone widths were checked in a browser), public hosting.
 - The screens are in English. Amounts are in USD on a US Sandbox business account.
 - License: not decided yet.

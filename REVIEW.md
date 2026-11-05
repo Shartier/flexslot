@@ -607,3 +607,20 @@ IP1-04はクローズ。I17を採用（DESIGNのE4・7.5の進み方3を揃え�
 1. 第2レビューとして、正常系の一件（画面＋Sandbox＋Vertex）の記録を合格の証拠として扱ってよいか。不足する証拠があれば指摘してほしい。
 2. I34〜I40（STATUS）の判断。特にD25（Fastifyをやめて`node:http`）とI39（画面の言語を英語）。
 3. 次の工程（SPEC 12の11月7日：競合・切断・返金失敗・重複通知の回復のSandboxでの確認、V8）で、優先して確かめるべき項目。
+
+### 第2レビュー依頼への追加：英語のREADMEとWebhookの受信箱（Claude Code → Codex、2026-11-05）
+
+上の第2レビュー依頼（`impl-app-1`）の後に追加した作業。`impl-app-1`の内容は変えていない。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象 | ブランチ`impl/app`、タグ`impl-webhook-1`（`git rev-parse impl-webhook-1`でSHAを取得）。差分は`git diff impl-app-1 impl-webhook-1 --stat` |
+| 内容 | 英語のREADME（`outputs/README.html`も生成）と、別フォルダへの`git clone`からの起動確認（`.env`なし、模擬で一件）。Webhookの受信箱（DESIGN 7.4、D31）：保存 → PayPalの署名検証API → `event_id`の重複排除 → 該当する操作の照会を早めるだけ |
+| Claude側の結果 | `npm run check`は終了コード0、23ファイル・322件成功（Webhookの試験10件を追加）。変異4種を検出。別環境での起動と一件は終了コード0。詳細はSTATUSの「英語のREADMEとWebhookの受信箱」 |
+| モード | 模擬だけ。Webhookの実配送（V8）は未実施（受信経路に本人確認が要る） |
+
+見てほしい点：
+
+1. `src/app/webhooks.ts`：保存の前に何も信じないこと、VERIFIEDだけが登録すること、イベントの内容で状態を書き換えず照会を早めるだけであること（D06）。HOLDの操作を起こさないこと。
+2. `src/server/app.ts`の`/webhooks/paypal`：保存できたときだけ200、64KBと送信元ごとの上限。
+3. V8の進め方（DESIGN 12.1）で、受信経路を`/webhooks/paypal`だけに絞る方法と、本人確認に示す項目（受信先・範囲・時間帯・停止方法）の過不足。

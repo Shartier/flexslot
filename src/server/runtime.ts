@@ -9,6 +9,7 @@ import type { Executor } from '../executor/executor.ts';
 import type { PayPalPort } from '../paypal/port.ts';
 import { expireOffers, reevaluateInTx } from '../app/cases.ts';
 import type { PaymentMode } from '../app/world.ts';
+import type { WebhookInbox } from '../app/webhooks.ts';
 
 export const TICK_MS = 1_500;
 export const WATCH_EVERY_MS = 5_000;
@@ -22,6 +23,8 @@ export interface RuntimeDeps {
   paypal: Partial<Record<PaymentMode, PayPalPort>>;
   offerTtlMs?: number;
   log?: (line: Record<string, unknown>) => void;
+  /** DESIGN 7.4: verification and use of received webhooks (null: no inbox). */
+  webhooks?: WebhookInbox | null;
 }
 
 export class Runtime {
@@ -38,6 +41,11 @@ export class Runtime {
     this.#d.log?.(line);
   }
 
+  /** A verified CHECKOUT.ORDER.APPROVED: query this order at the next watch instead of waiting for the interval. */
+  orderApproved(orderId: string): void {
+    this.#lastWatch.delete(orderId);
+  }
+
   /** Startup recovery for every mode (DESIGN 7.5): unconfirmed operations first, then active cases. */
   async startup(): Promise<void> {
     for (const [mode, ex] of Object.entries(this.#d.executors)) {
@@ -51,6 +59,15 @@ export class Runtime {
     if (this.#running) return;
     this.#running = true;
     try {
+      // Webhooks first: verified events wake the operations they name before the queue looks at them (DESIGN 7.4).
+      if (this.#d.webhooks) {
+        try {
+          await this.#d.webhooks.verifyDue();
+          this.#d.webhooks.processPending();
+        } catch (e) {
+          this.#log({ event: 'webhook.error', error: e instanceof Error ? `${e.name}: ${e.message}` : 'unknown' });
+        }
+      }
       const expired = expireOffers(this.#d.db, this.#d.clock.now());
       if (expired.length) this.#log({ event: 'offers.expired', count: expired.length });
       for (const ex of Object.values(this.#d.executors)) {

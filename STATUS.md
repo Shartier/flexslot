@@ -446,8 +446,52 @@ Codexのレビュー本文は、Codexの資料`outputs/codex-prep/IMPL_EXECUTOR_
 - 初見の人による三画面の操作（AC01の「初見」）。今回の操作はClaudeが内蔵ブラウザで行い、PayPalのbuyerのログインと承認は本人が行った。
 - 実機のスマートフォンでの操作（AC13）。スマホ幅はブラウザの幅の模擬で確認しただけ。英語のREADMEとクリーンな環境からの起動（AC13）。
 - Sandboxでの障害・回復（AC08・AC09）、与信の取消（E-V）とBへの回復返金（E-R）の画面からの実行。Sandboxの通しは正常系の一件だけ。
-- Webhook（V8、本人確認後）。HOLDの解除。Playwrightでの画面の自動試験。
+- Webhookの実配送（V8、本人確認後）。受信箱は次の節で実装した。HOLDの解除。Playwrightでの画面の自動試験。
 - 公開・デプロイ・応募（本人確認後）。
+
+## 英語のREADMEとWebhookの受信箱（Claude Code、2026-11-05）
+
+対象：ブランチ`impl/app`、`impl-app-1`の後のコミット（タグ`impl-webhook-1`）。`impl-app-1`（第2レビューの対象）は変えていない。
+
+### 英語のREADMEと別環境での起動（AC13の一部）
+
+| 項目 | 内容 |
+| --- | --- |
+| README.md | 英語。概要、アカウントなしの模擬モードでの起動と三画面の操作手順、PayPal SandboxとVertex AIの設定（変数名と取得場所だけ、値は書かない）、スクリプト、仕組み、未実施・制限、ライセンス未定。`tools/render-docs.ps1`の対象に加え、`outputs/README.html`を生成 |
+| 別環境での起動 | 別フォルダへ`git clone`（`impl/app`の`88ee986`）。`.env`はない状態。`npm ci`（終了コード0、約9秒。npm 11の既定で`protobufjs`のpostinstallは実行されない。元のフォルダと同じ条件）→ `npm run check`（終了コード0、22ファイル・312件）→ `npm run build`（0）→ `FLEXSLOT_PORT=8788`で起動。起動ログでSandbox・Vertexは未設定（変数名だけ表示）、`/api/config`は模擬だけ。HTTPでワールドの作成から三役割のログイン、Aの支払い、AとBの条件、店主とAの承認、Bの支払いまで行い、案件COMPLETED（Aは11-10 10:00–11:00、補償は返金済み、Bは支払い済み）。確認後にサーバーを止めた |
+| 未確認 | 別のPC・OS・クリーンなnpmキャッシュでの起動、READMEだけを読んだ人による起動 |
+
+### Webhookの受信箱（DESIGN 7.4、D31、AC07の模擬部分）
+
+| 項目 | 内容 | 場所 |
+| --- | --- | --- |
+| 受信 | `POST /webhooks/paypal`。セッション・CSRF・Originは不要（PayPalのサーバーから届く）。署名関係の5つのヘッダーと本文（64KBまで、超えれば413で保存しない）、SHA-256を、検証の前に`webhook_deliveries`へ保存し、保存できたときだけ200。保存できなければ500。送信元ごとに1分120件まで（超えれば429で保存しない） | `src/server/app.ts`、`src/app/webhooks.ts` |
+| 検証 | PayPalの`/v1/notifications/verify-webhook-signature`に、保存したヘッダー・`PAYPAL_WEBHOOK_ID`・イベントを送る。SUCCESSだけがVERIFIED。FAILUREと4xxはINVALID（終端）。通信・5xx・429・認証はVERIFY_ERRORで、10秒から倍の間隔（最大10分）で再試行し、再起動後も続ける。本文がJSONでない・ヘッダーが欠けるものは、PayPalを呼ばずにINVALID。`PAYPAL_WEBHOOK_ID`がなければ保存だけ | `src/paypal/rest.ts`の`verifyWebhookSignature`、`src/app/webhooks.ts` |
+| 重複の排除 | VERIFIEDの配信だけが`webhook_events`（`event_id`一意）に登録する（DBのトリガーも既存）。同じ`event_id`の偽の配信が先に来ても、正規の配信は登録される。正規の配信が何度来ても1回だけ使う | `src/app/webhooks.ts`、`src/db/schema.ts` |
+| 利用 | イベントの資源のIDと関連ID（注文・与信・capture）を持つ、未確定・照合待ちの操作の次の照会・再送を「今」にする（店主の保留の操作は起こさない）。`CHECKOUT.ORDER.APPROVED`なら、承認の照会を間隔を待たずに今行う。状態を変えるのは、その後のREST照会の結果だけ（D06）。処理は監査ログに種類と起こした操作の数だけ残す | `src/app/webhooks.ts`、`src/server/runtime.ts` |
+| 模擬PayPal | 署名検証のAPIを追加。`signWebhook()`が作るHMACを正規とみなす（模擬の選択。PayPalの証明書・CRC32の方式は真似ていない） | `src/paypal/mock-server.ts` |
+
+### 試験（`tests/webhooks.test.ts`、模擬・偽のSandboxだけ）
+
+| 確認内容 | 結果 |
+| --- | --- |
+| 検証の前に保存し、200は保存の後。検証の後に登録・利用。保存するヘッダーは5つだけ | 成功 |
+| 同じ`event_id`の偽の配信が先：INVALID、正規の配信は登録・利用。正規の配信の重複（同時・利用の後）は1回だけ | 成功 |
+| JSONでない・ヘッダーの欠けはPayPalを呼ばずにINVALID。64KBを超える本文は413で保存しない | 成功 |
+| 送信元ごとの上限（試験では3件）。別の送信元は受け付ける | 成功 |
+| 検証APIの503：VERIFY_ERROR、間隔の前は再試行しない、新しいプロセスで再開してVERIFIED | 成功 |
+| `PAYPAL_WEBHOOK_ID`なし：保存だけで検証・利用しない | 成功 |
+| 照合待ちのcaptureを`PAYMENT.CAPTURE.COMPLETED`が起こし、10秒を待たずに照会で照合してCOMPLETED（起こさなければ待つ） | 成功 |
+| `CHECKOUT.ORDER.APPROVED`で承認の照会が間隔を待たずに行われ、COMPLETED。未承認の注文への同じイベントでは何もしない（与信を送らない） | 成功 |
+| 古いPENDING・重複したイベントが完了後に届いても、操作の状態も案件も変わらず、新しいPOSTもない | 成功 |
+| 模擬のワールドはWebhookの影響を受けない | 成功 |
+
+変異の確認：署名のFAILUREを受け入れる、重複を排除しない、操作を起こさない、ヘッダーの欠けを検証に回す、の4種を一時的に入れ、毎回`tests/webhooks.test.ts`が失敗した（最初は重複の排除の変異を検出できなかったため、利用の後に届く重複の試験を加えた）。
+
+### 未実施の範囲
+
+- V8（Sandboxからの実配送と、PayPalの署名検証APIでのSUCCESS）。サーバーは`127.0.0.1`だけで待ち受けるため、外部から届くHTTPSの経路が必要。受信先・公開する範囲（`/webhooks/paypal`だけ）・時間帯・停止方法を示して本人確認を受けてから行う。
+- Sandboxの開発者画面でのWebhookの登録と、`PAYPAL_WEBHOOK_ID`の設定（本人が行う）。
 
 ## Claude Codeの確認（2026-11-03、第1区切り）
 
@@ -511,6 +555,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | 11-05 Claude | 実行器の修正（模擬） | `npm run check`、変異の確認、`render-docs.ps1 -Check` | 終了コード0、17ファイル・271件成功。変異8種をすべて検出。詳細は「実行器レビューへの対応」 |
 | 11-05 Claude | AI・画面・セッション（模擬） | `npm run check`、`npx vite build` | 終了コード0、22ファイル・312件成功。詳細は「AIアダプター・三画面・セッション」 |
 | 11-05 Claude＋本人 | 実接続（画面から一件） | Sandbox＋Vertexのワールドで三画面を操作（PayPalの承認は本人）、`node scripts/verify/app-reconcile.ts` | 案件COMPLETED、DBとSandboxが19項目で一致、終了コード0 |
+| 11-05 Claude | README・別環境での起動 | 別フォルダへ`git clone`、`npm ci`、`npm run check`、`npm run build`、`.env`なしで起動、HTTPで一件 | すべて終了コード0、312件成功、模擬だけが選べ、一件がCOMPLETED。詳細は「英語のREADMEとWebhookの受信箱」 |
+| 11-05 Claude | Webhookの受信箱（模擬） | `npm run check`、変異の確認 | 終了コード0、23ファイル・322件成功。変異4種をすべて検出 |
 | ─ | アプリテスト | Playwrightの画面試験・実機・初見の人の操作・Sandboxでの障害の再現 | 未実行 |
 
 ## 未確認事項
@@ -543,7 +589,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 1. Codexによる修正版の再確認は2026-11-04に完了した（「Codexの再確認の結果」の節）。
 2. DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ`impl-executor-1`）。Codexのレビューの指摘IE1-01〜03を修正した（タグ`impl-executor-1-fix1`）。Codexの再確認（REVIEWの最後の節）を待つ。
 3. 修正版を`impl/app`へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ`impl-app-1`）。第2レビュー（REVIEWの最後の節）を待つ。
-4. 次は、第2レビューの指摘への対応、V8（本人確認後）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、英語のREADMEと別環境での起動、実機での確認（11月8日）。
+4. 英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。
+5. 次は、第2レビューの指摘への対応、V8（受信経路の本人確認後）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。
 
 11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。
 

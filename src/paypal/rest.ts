@@ -30,6 +30,8 @@ import type {
   SendContext,
   SendResult,
   TokenFailureReason,
+  WebhookVerifyInput,
+  WebhookVerifyResult,
 } from './port.ts';
 import {
   AuthorizationSchema,
@@ -202,6 +204,42 @@ export class PayPalRestAdapter implements PayPalPort {
 
   async getRefund(refundId: string): Promise<QueryResult<Refund>> {
     return this.#query(`/v2/payments/refunds/${this.#target(refundId)}`, '/v2/payments/refunds/{id}', RefundSchema);
+  }
+
+  // ---- port: webhook signature (DESIGN 7.4) ----------------------------------
+
+  async verifyWebhookSignature(input: WebhookVerifyInput): Promise<WebhookVerifyResult> {
+    const started = performance.now();
+    const ex = await this.#exchange('POST', '/v1/notifications/verify-webhook-signature', {
+      auth_algo: input.authAlgo,
+      cert_url: input.certUrl,
+      transmission_id: input.transmissionId,
+      transmission_sig: input.transmissionSig,
+      transmission_time: input.transmissionTime,
+      webhook_id: input.webhookId,
+      webhook_event: input.event,
+    }, {});
+    let result: WebhookVerifyResult;
+    if (ex.type === 'no_token') result = { kind: 'NOT_SENT', reason: ex.reason };
+    else if (ex.type === 'network') result = { kind: 'UNAVAILABLE', reason: 'NETWORK' };
+    else if (ex.type === 'timeout') result = { kind: 'UNAVAILABLE', reason: 'TIMEOUT' };
+    else if (ex.status >= 200 && ex.status < 300) {
+      const v = (ex.json as { verification_status?: unknown } | undefined)?.verification_status;
+      // Anything but an explicit SUCCESS is not a verification (an unknown answer is never success, DESIGN 6.2).
+      result = v === 'SUCCESS' ? { kind: 'SUCCESS' } : v === 'FAILURE' ? { kind: 'FAILURE' } : { kind: 'UNAVAILABLE', reason: 'INVALID_RESPONSE', httpStatus: ex.status };
+    } else if (ex.status === 401 || ex.status === 403) result = { kind: 'AUTH_ERROR', httpStatus: ex.status };
+    else if (ex.status === 429) result = { kind: 'UNAVAILABLE', reason: 'HTTP_429', httpStatus: 429 };
+    else if (ex.status >= 500) result = { kind: 'UNAVAILABLE', reason: 'HTTP_5XX', httpStatus: ex.status };
+    else result = { kind: 'REJECTED', httpStatus: ex.status };
+    this.#log({
+      event: 'paypal.verify',
+      mode: this.mode,
+      route: '/v1/notifications/verify-webhook-signature',
+      ...(ex.type === 'response' ? { httpStatus: ex.status } : {}),
+      outcome: result.kind,
+      durationMs: Math.round(performance.now() - started),
+    });
+    return result;
   }
 
   // ---- internals -----------------------------------------------------------

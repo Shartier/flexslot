@@ -23,6 +23,7 @@ import type { PaymentMode } from '../app/world.ts';
 import { createApp } from './app.ts';
 import { nodeHandler } from './http.ts';
 import { Runtime } from './runtime.ts';
+import { WebhookInbox } from '../app/webhooks.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const log = (line: Record<string, unknown>) => console.log(JSON.stringify({ t: new Date().toISOString(), ...line }));
@@ -59,10 +60,12 @@ const paypal: Partial<Record<PaymentMode, PayPalPort>> = {
   MOCK: new PayPalRestAdapter({ mode: 'MOCK', apiBase: MOCK_API_BASE, clientId: MOCK_CLIENT_ID, clientSecret: MOCK_CLIENT_SECRET, fetch: mockFetch, clock, logger: paypalLogger }),
 };
 let sandboxPayee: string | null = null;
+let webhookId: string | null = null;
 try {
   const cfg = loadPayPalConfig(env);
   paypal.SANDBOX = createSandboxPayPal(cfg, { clock, logger: paypalLogger });
   sandboxPayee = cfg.expectedMerchantId ?? null;
+  webhookId = cfg.webhookId ?? null;
 } catch (e) {
   if (!(e instanceof MissingConfigError)) throw e; // a non-Sandbox PAYPAL_API_BASE stops the server here
   log({ event: 'config', paypalSandbox: 'not configured', missing: e.missing });
@@ -97,7 +100,11 @@ const app = createApp({
   staticDir: join(ROOT, 'dist', 'web'),
   log,
 });
-const runtime = new Runtime({ db, clock, executors, paypal, log });
+// DESIGN 7.4: webhooks come only from the Sandbox; without PAYPAL_WEBHOOK_ID they are stored but never used.
+const runtimeRef: { current: Runtime | null } = { current: null };
+const webhooks = new WebhookInbox({ db, clock, paypal: paypal.SANDBOX ?? null, webhookId, onOrderApproved: (id) => runtimeRef.current?.orderApproved(id), log });
+const runtime = new Runtime({ db, clock, executors, paypal, log, webhooks });
+runtimeRef.current = runtime;
 
 await runtime.startup();
 runtime.start();

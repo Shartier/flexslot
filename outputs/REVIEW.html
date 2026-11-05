@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="5dd7ccbaa87f24ab5bd883d4f0cd3796632123abb988cd6441141045050fe982"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="0214b40150ea02d1b6f86c878c446e9f20d841e9cca2c87f7ece7ab31a280950"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1560,5 +1560,39 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>第2レビューとして、正常系の一件（画面＋Sandbox＋Vertex）の記録を合格の証拠として扱ってよいか。不足する証拠があれば指摘してほしい。</li>
 <li>I34〜I40（STATUS）の判断。特にD25（Fastifyをやめて<code>node:http</code>）とI39（画面の言語を英語）。</li>
 <li>次の工程（SPEC 12の11月7日：競合・切断・返金失敗・重複通知の回復のSandboxでの確認、V8）で、優先して確かめるべき項目。</li>
+</ol>
+<h3 id="readmewebhookclaude-code-codex2026-11-05">第2レビュー依頼への追加：英語のREADMEとWebhookの受信箱（Claude Code → Codex、2026-11-05）</h3>
+<p>上の第2レビュー依頼（<code>impl-app-1</code>）の後に追加した作業。<code>impl-app-1</code>の内容は変えていない。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>impl/app</code>、タグ<code>impl-webhook-1</code>（<code>git rev-parse impl-webhook-1</code>でSHAを取得）。差分は<code>git diff impl-app-1 impl-webhook-1 --stat</code></td>
+</tr>
+<tr>
+<td>内容</td>
+<td>英語のREADME（<code>outputs/README.html</code>も生成）と、別フォルダへの<code>git clone</code>からの起動確認（<code>.env</code>なし、模擬で一件）。Webhookの受信箱（DESIGN 7.4、D31）：保存 → PayPalの署名検証API → <code>event_id</code>の重複排除 → 該当する操作の照会を早めるだけ</td>
+</tr>
+<tr>
+<td>Claude側の結果</td>
+<td><code>npm run check</code>は終了コード0、23ファイル・322件成功（Webhookの試験10件を追加）。変異4種を検出。別環境での起動と一件は終了コード0。詳細はSTATUSの「英語のREADMEとWebhookの受信箱」</td>
+</tr>
+<tr>
+<td>モード</td>
+<td>模擬だけ。Webhookの実配送（V8）は未実施（受信経路に本人確認が要る）</td>
+</tr>
+</tbody>
+</table></div>
+<p>見てほしい点：</p>
+<ol>
+<li><code>src/app/webhooks.ts</code>：保存の前に何も信じないこと、VERIFIEDだけが登録すること、イベントの内容で状態を書き換えず照会を早めるだけであること（D06）。HOLDの操作を起こさないこと。</li>
+<li><code>src/server/app.ts</code>の<code>/webhooks/paypal</code>：保存できたときだけ200、64KBと送信元ごとの上限。</li>
+<li>V8の進め方（DESIGN 12.1）で、受信経路を<code>/webhooks/paypal</code>だけに絞る方法と、本人確認に示す項目（受信先・範囲・時間帯・停止方法）の過不足。</li>
 </ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

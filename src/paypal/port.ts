@@ -65,6 +65,26 @@ export interface OrderCaptureResult {
   capture: Capture;
 }
 
+/** DESIGN 7.4: the inputs of POST /v1/notifications/verify-webhook-signature (headers of the delivery + event). */
+export interface WebhookVerifyInput {
+  authAlgo: string;
+  certUrl: string;
+  transmissionId: string;
+  transmissionSig: string;
+  transmissionTime: string;
+  webhookId: string;
+  event: unknown;
+}
+
+/** SUCCESS / FAILURE are PayPal's verdict; REJECTED = 4xx (the input itself was refused); the rest = try again later. */
+export type WebhookVerifyResult =
+  | { kind: 'SUCCESS' }
+  | { kind: 'FAILURE' }
+  | { kind: 'REJECTED'; httpStatus: number }
+  | { kind: 'AUTH_ERROR'; httpStatus: number }
+  | { kind: 'UNAVAILABLE'; reason: QueryFailureReason; httpStatus?: number }
+  | { kind: 'NOT_SENT'; reason: TokenFailureReason };
+
 export interface PayPalPort {
   readonly mode: PaymentMode;
   /** Fetches a fresh OAuth token (V1). Reports only success and lifetime. */
@@ -80,11 +100,13 @@ export interface PayPalPort {
   refundCapture(captureId: string, input: RefundCaptureInput, ctx: SendContext): Promise<SendResult<Refund>>;
   getCapture(captureId: string): Promise<QueryResult<Capture>>;
   getRefund(refundId: string): Promise<QueryResult<Refund>>;
+  /** DESIGN 7.4: PayPal's signature verification of a received webhook. Changes nothing at PayPal. */
+  verifyWebhookSignature(input: WebhookVerifyInput): Promise<WebhookVerifyResult>;
 }
 
 /** Log entry written by the adapter. Never contains ids, headers, tokens, credentials or bodies. */
 export interface PayPalLogEntry {
-  event: 'paypal.token' | 'paypal.send' | 'paypal.query';
+  event: 'paypal.token' | 'paypal.send' | 'paypal.query' | 'paypal.verify';
   mode: PaymentMode;
   route: string;
   httpStatus?: number;

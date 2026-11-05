@@ -3,7 +3,8 @@
 // Every id starts with "MOCK-". Behaviour follows the public docs where known; where Sandbox behaviour is
 // still unconfirmed (STATUS U03-U05) the mock's choice is marked "mock choice" and must not be cited as PayPal's.
 
-import { randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomUUID } from 'node:crypto';
+import { canonicalJson } from './requests.ts';
 import { systemClock, type Clock } from '../clock.ts';
 import { fromPayPalValue, toPayPalValue, type Money } from './money.ts';
 import { MOCK_API_BASE, PayPalRestAdapter, type FetchLike } from './rest.ts';
@@ -24,7 +25,8 @@ export type MockRoute =
   | 'AUTH_VOID'
   | 'CAPTURE_GET'
   | 'CAPTURE_REFUND'
-  | 'REFUND_GET';
+  | 'REFUND_GET'
+  | 'WEBHOOK_VERIFY';
 
 export type MockFault =
   /** PayPal processes the request, then the connection drops before the response arrives. */
@@ -149,6 +151,7 @@ const ROUTES: ReadonlyArray<[string, RegExp, MockRoute]> = [
   ['GET', /^\/v2\/payments\/captures\/([^/]+)$/, 'CAPTURE_GET'],
   ['POST', /^\/v2\/payments\/captures\/([^/]+)\/refund$/, 'CAPTURE_REFUND'],
   ['GET', /^\/v2\/payments\/refunds\/([^/]+)$/, 'REFUND_GET'],
+  ['POST', /^\/v1\/notifications\/verify-webhook-signature$/, 'WEBHOOK_VERIFY'],
 ];
 
 const AUTHORIZATION_LIFETIME_MS = 29 * 24 * 60 * 60 * 1000;
@@ -297,6 +300,7 @@ export class MockPayPalServer {
     }
     const full = (headers.get('prefer') ?? '').includes('return=representation');
     if (route.endsWith('_GET')) return this.#get(route, id!);
+    if (route === 'WEBHOOK_VERIFY') return this.#verifyWebhook(parseBody(body));
 
     const requestId = headers.get('paypal-request-id');
     const key = requestId ? `${route} ${requestId}` : null;
@@ -340,6 +344,30 @@ export class MockPayPalServer {
         return full ? this.#renderRefund(r) : minimal(r.id, r.status);
       }
     }
+  }
+
+  /**
+   * Mock choice (DESIGN 7.4 tests): a delivery is genuine when its transmission signature is the HMAC that
+   * signWebhook() makes. PayPal's real algorithm (certificate, CRC32 of the raw body) is not imitated.
+   */
+  #verifyWebhook(b: Record<string, unknown> | null): Response {
+    const fields = ['auth_algo', 'cert_url', 'transmission_id', 'transmission_sig', 'transmission_time', 'webhook_id'] as const;
+    if (!b || fields.some((f) => typeof b[f] !== 'string' || b[f] === '') || b.webhook_event === undefined) {
+      return errorResponse(400, 'VALIDATION_ERROR', 'MISSING_REQUIRED_PARAMETER');
+    }
+    const expected = mockWebhookSignature(b.webhook_event, { transmissionId: b.transmission_id as string, transmissionTime: b.transmission_time as string, webhookId: b.webhook_id as string });
+    return jsonResponse(200, { verification_status: b.transmission_sig === expected ? 'SUCCESS' : 'FAILURE' });
+  }
+
+  /** Headers of a genuine delivery of `event` for the mock's signature check. */
+  signWebhook(event: unknown, o: { transmissionId: string; transmissionTime: string; webhookId: string }): Record<string, string> {
+    return {
+      'paypal-transmission-id': o.transmissionId,
+      'paypal-transmission-time': o.transmissionTime,
+      'paypal-transmission-sig': mockWebhookSignature(event, o),
+      'paypal-cert-url': 'https://api.sandbox.paypal.com/v1/notifications/certs/CERT-MOCK',
+      'paypal-auth-algo': 'SHA256withRSA',
+    };
   }
 
   #token(headers: Headers, body: string): Response {
@@ -652,6 +680,13 @@ export function createMockPayPal(server: MockPayPalServer, opts: { clock?: Clock
 }
 
 // ---- helpers ---------------------------------------------------------------------
+
+const MOCK_WEBHOOK_SECRET = 'MOCK-WEBHOOK-SECRET';
+
+function mockWebhookSignature(event: unknown, o: { transmissionId: string; transmissionTime: string; webhookId: string }): string {
+  const digest = createHash('sha256').update(canonicalJson(event)).digest('hex');
+  return createHmac('sha256', MOCK_WEBHOOK_SECRET).update(`${o.transmissionId}|${o.transmissionTime}|${o.webhookId}|${digest}`).digest('base64');
+}
 
 const JSON_HEADERS = { 'content-type': 'application/json' };
 

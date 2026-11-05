@@ -15,6 +15,7 @@ import { MOCK_API_BASE, PayPalRestAdapter, SANDBOX_API_BASE } from '../src/paypa
 import { createApp, type App } from '../src/server/app.ts';
 import type { Req, Res } from '../src/server/http.ts';
 import { Runtime } from '../src/server/runtime.ts';
+import { WebhookInbox } from '../src/app/webhooks.ts';
 import type { PaymentMode } from '../src/app/world.ts';
 import { SAMPLE_NOW_MS } from '../src/sample.ts';
 
@@ -31,12 +32,16 @@ export interface Harness {
   executors: Partial<Record<PaymentMode, Executor>>;
   paypal: Partial<Record<PaymentMode, PayPalPort>>;
   runtime: Runtime;
+  /** DESIGN 7.4 inbox, verifying with the fake Sandbox (webhook id "WH-TEST" unless given). */
+  inbox: WebhookInbox;
   ai: AiService;
   /** Runs queue ticks (advancing the clock a little each time) until nothing changes or `n` ticks. */
   ticks(n?: number): Promise<void>;
 }
 
-export function harness(o: { db?: Db; clock?: ManualClock; vertex?: GenerateContentLike | null; limits?: AiLimits; mock?: MockPayPalServer; fakeSandbox?: MockPayPalServer; owner?: string } = {}): Harness {
+export function harness(
+  o: { db?: Db; clock?: ManualClock; vertex?: GenerateContentLike | null; limits?: AiLimits; mock?: MockPayPalServer; fakeSandbox?: MockPayPalServer; owner?: string; webhookId?: string | null; webhookRate?: number } = {},
+): Harness {
   const clock = o.clock ?? new ManualClock(SAMPLE_NOW_MS);
   const db = o.db ?? openDatabase(':memory:');
   const mock = o.mock ?? new MockPayPalServer({ clock });
@@ -54,10 +59,14 @@ export function harness(o: { db?: Db; clock?: ManualClock; vertex?: GenerateCont
   const ai = new AiService({ db, clock, vertex, mock: new MockStructurer(), ...(o.limits ? { limits: o.limits } : {}) });
   const app = createApp({
     db, clock, origins: [ORIGIN], ai, executors, paypal, mockServer: mock, sandboxPayee: FAKE_SANDBOX_PAYEE, mockPayee: MOCK_MERCHANT_ID, staticDir: null,
+    ...(o.webhookRate ? { webhookRatePerMinute: o.webhookRate } : {}),
   });
-  const runtime = new Runtime({ db, clock, executors, paypal });
+  const ref: { runtime: Runtime | null } = { runtime: null };
+  const inbox = new WebhookInbox({ db, clock, paypal: paypal.SANDBOX!, webhookId: o.webhookId === undefined ? 'WH-TEST' : o.webhookId, onOrderApproved: (id) => ref.runtime?.orderApproved(id) });
+  const runtime = new Runtime({ db, clock, executors, paypal, webhooks: inbox });
+  ref.runtime = runtime;
   return {
-    app, db, clock, mock, fakeSandbox, executors, paypal, runtime, ai,
+    app, db, clock, mock, fakeSandbox, executors, paypal, runtime, ai, inbox,
     async ticks(n = 30) {
       for (let i = 0; i < n; i++) {
         await app.idle();
