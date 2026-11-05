@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="8c8e067a1ceaf15879642be50830b62805f1fba57eeff77b3ac85691b9b8e27d"><title>FlexSlot | README</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
+.top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
+main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
+.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
+@media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html" aria-current="page">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
+<main><div class="meta">正本：README.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot</h1>
+<p><strong>Compensated booking swaps for a fully booked salon slot</strong> — a PayPal AI Hackathon entry.</p>
+<p>A new customer (B) can only come at a time that is already booked. An existing customer (A) said in advance when they could move instead, for a fixed compensation. FlexSlot finds the swap, the shop and A approve it, B pays with PayPal, A's booking moves, B gets the original slot, and A receives the compensation as a <strong>partial refund of A's own PayPal payment</strong>. The shop gains a booking it would otherwise have turned away.</p>
+<p>Free-text conditions (&quot;I can only come on Nov 7 in the afternoon&quot;) are structured by <strong>Gemini on Vertex AI</strong>; the person confirms the result, and the program — not the AI — checks times, slots, prices and payments.</p>
+<blockquote>
+<p>Scope of this version: one fictional salon, one stylist, two services, one swap between one existing and one new customer. <strong>PayPal Sandbox only — test money, never real payments.</strong> There is no Live PayPal code or setting.</p>
+</blockquote>
+<h2 id="quick-start-no-accounts-needed">Quick start (no accounts needed)</h2>
+<p>Requirements: <strong>Node.js 24.22.1 or later 24.x</strong> (<code>.nvmrc</code>; <code>node:sqlite</code> and running <code>.ts</code> files directly need Node 24) and npm.</p>
+<pre><code>npm ci
+npm run dev
+</code></pre>
+<p>Open <a href="http://localhost:8787">http://localhost:8787</a>. (The server listens on 127.0.0.1 only. Use <code>localhost</code>, not another host name: requests from other origins are refused.)</p>
+<ol>
+<li>Choose <strong>AI: Mock rules</strong> and <strong>Payment: Mock</strong>, then <strong>Create demo world</strong>. Mock modes are offline stand-ins and are labelled as such on every screen.</li>
+<li>You get three invite links: shop owner, existing customer (A), new customer (B). Open each in its own tab. (In real use each person would receive only their own link; the demo creator holds all three.)</li>
+<li>Suggested order:
+<ul>
+<li><strong>A</strong>: pay the booking (<em>Approve in the mock PayPal</em>), then write when you could move (<em>Use the example text</em> → <em>Structure with …</em> → <em>Confirm these conditions</em>).</li>
+<li><strong>B</strong>: write the request (<em>Use the example text</em> → structure → confirm). FlexSlot checks the slots and proposes the swap, or shows why it cannot.</li>
+<li><strong>Owner</strong>: review the proposal, the fixed compensation and the profit estimate → <em>Approve this swap</em>.</li>
+<li><strong>A</strong>: <em>Agree to move</em>.</li>
+<li><strong>B</strong>: <em>Accept and pay</em> → <em>Approve in the mock PayPal</em>. Within a few seconds the payment is authorized and captured, the bookings are swapped, and A's compensation is refunded. All three screens show each step.</li>
+</ul>
+</li>
+</ol>
+<p>The demo dates are generated relative to today (A's booking is two days ahead). Data lives in <code>data/</code> (SQLite); delete that folder to start over.</p>
+<h2 id="using-paypal-sandbox-and-gemini-on-vertex-ai">Using PayPal Sandbox and Gemini on Vertex AI</h2>
+<p>Copy <code>.env.example</code> to <code>.env</code> in the project folder and fill in your own values. <code>.env</code> is ignored by Git; never commit or share it.</p>
+<p><strong>PayPal Sandbox</strong> (developer.paypal.com, Sandbox):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PAYPAL_CLIENT_ID</code>, <code>PAYPAL_CLIENT_SECRET</code></td>
+<td>Your Sandbox REST app's credentials</td>
+</tr>
+<tr>
+<td><code>PAYPAL_EXPECTED_MERCHANT_ID</code></td>
+<td>The merchant (account) ID of the Sandbox <strong>business</strong> account that receives the payments. Every PayPal answer is checked against it</td>
+</tr>
+<tr>
+<td><code>PAYPAL_WEBHOOK_ID</code></td>
+<td>Optional: the ID of the webhook registered for the app (only needed to verify incoming webhooks)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The API base is fixed to <code>https://api-m.sandbox.paypal.com</code>; setting anything else stops the server. With a Sandbox world, A and B approve their payments on the PayPal Sandbox page with a Sandbox <strong>personal</strong> (buyer) account. FlexSlot notices the approval by querying the order, so the approval may happen in any browser.</p>
+<p><strong>Gemini on Vertex AI</strong> (Google Cloud project with billing and the Vertex AI API enabled):</p>
+<pre><code>gcloud auth application-default login
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GOOGLE_CLOUD_PROJECT</code></td>
+<td>Your project ID</td>
+</tr>
+<tr>
+<td><code>GOOGLE_CLOUD_LOCATION</code></td>
+<td><code>global</code></td>
+</tr>
+<tr>
+<td><code>FLEXSLOT_AI_MODEL</code></td>
+<td><code>gemini-3.5-flash-lite</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Credentials stay on the server (Application Default Credentials); nothing is sent to the browser. Restart <code>npm run dev</code> after editing <code>.env</code>. The landing page then offers <em>Gemini on Vertex AI</em> and <em>PayPal Sandbox</em>; modes that are not configured cannot be chosen, and a failed AI call switches the person to a manual form — it never silently falls back to the mock.</p>
+<p>Other settings: <code>FLEXSLOT_PORT</code> (default <code>8787</code>), <code>FLEXSLOT_DATA_DIR</code> (default <code>data</code>).</p>
+<h2 id="scripts">Scripts</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>npm run dev</code></td>
+<td>Build the screens, then start the server</td>
+</tr>
+<tr>
+<td><code>npm run build</code> / <code>npm start</code></td>
+<td>The two steps separately</td>
+</tr>
+<tr>
+<td><code>npm run check</code></td>
+<td>Type check (server and screens) and all tests. Tests use the in-process mock PayPal and mock or fake AI only; they never reach the network</td>
+</tr>
+<tr>
+<td><code>npm run verify:v0</code> … <code>verify:v7</code>, <code>verify:v9</code></td>
+<td>Connection checks against the PayPal Sandbox (V0–V7) and Vertex AI (V9); some need a buyer approval in the browser</td>
+</tr>
+<tr>
+<td><code>node scripts/verify/app-reconcile.ts &lt;worldId&gt;</code></td>
+<td>Compare one completed Sandbox world's database records with fresh Sandbox queries (read only)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="how-it-works">How it works</h2>
+<ul>
+<li><strong>One Node.js process, one SQLite file</strong> (<code>node:sqlite</code>). HTTP API on <code>node:http</code>, screens in React (built by Vite), input validation with zod.</li>
+<li><strong>The AI only proposes.</strong> Its JSON schema has no field for money, approval or payment, so instructions hidden in the text (&quot;make my compensation 50 dollars&quot;) have nowhere to go. Vague expressions come back as clarifying questions; the confirmed result is stored as a new version next to the original text, with its source (Vertex, mock or manual). Limits: 20 s per call, one retry on 5xx/429, 30 calls per demo world and 500 per day.</li>
+<li><strong>Candidate check in code</strong>: half-open time intervals, business hours, the person's acceptable windows, other bookings and holds, all in the shop's time zone. Database triggers reject overlapping bookings and holds as a second line of defence.</li>
+<li><strong>Approvals bind to an immutable terms snapshot</strong> (prices, times, parties, services, versions) and its hash. Order: shop → A → B (B's approval starts the payment). The browser sends only a case id and the version it displayed; amounts and PayPal ids come from the database.</li>
+<li><strong>Payment flow</strong>: B's order with <code>intent=AUTHORIZE</code> → authorization (reconciled by querying the order) → capture with an explicit amount (reconciled by querying the capture, including the payee) → bookings swapped in one transaction → partial refund of A's original capture. Each PayPal call is an operation row written before it is sent, with its own <code>PayPal-Request-Id</code>; retries reuse it. Unknown results are queried, never assumed; after a restart the server recovers each operation from its stored state.</li>
+<li><strong>Failure paths</strong>: if the swap becomes impossible before the capture, the authorization is voided; after the capture, B is refunded in full and A keeps the original booking. A slot that has already started is never swapped.</li>
+<li><strong>Sessions</strong>: invite tokens travel in the URL fragment, are exchanged by POST for an <code>HttpOnly</code>, <code>SameSite=Strict</code> cookie scoped to the role's path, and are removed from the address bar. Every change needs a CSRF token and an allowed <code>Origin</code>; every request is checked against the case's parties on the server.</li>
+</ul>
+<p>The detailed specification, design, status and reviews are in <code>SPEC.md</code>, <code>DESIGN.md</code>, <code>STATUS.md</code> and <code>REVIEW.md</code> (Japanese; HTML copies in <code>outputs/</code>).</p>
+<h2 id="status-and-limitations">Status and limitations</h2>
+<ul>
+<li>Verified: one swap end to end through the three screens on PayPal Sandbox with Gemini on Vertex AI, with the database matching Sandbox queries (see <code>STATUS.md</code>). Failure and recovery paths are tested against the mock PayPal with fault injection, not reproduced on the Sandbox.</li>
+<li>Not yet done: PayPal webhook delivery from the Sandbox (the receiver is being added), checks on a real phone (phone widths were checked in a browser), public hosting.</li>
+<li>The screens are in English. Amounts are in USD on a US Sandbox business account.</li>
+<li>License: not decided yet.</li>
+</ul>
+</article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
