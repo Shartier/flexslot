@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="e606c22dca06c8abdad026c7366f376df7b947d1f12c7d24887363cd3b824a59"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="0197b069c39163a2b60b67df04a126d464f958a05f2d24fb8dd5a58e23dca17a"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1553,8 +1553,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>V8（Sandboxからの実配送と、PayPalの署名検証APIでのSUCCESS）。サーバーは<code>127.0.0.1</code>だけで待ち受けるため、外部から届くHTTPSの経路が必要。受信先・公開する範囲（<code>/webhooks/paypal</code>だけ）・時間帯・停止方法を示して本人確認を受けてから行う。</li>
 <li>Sandboxの開発者画面でのWebhookの登録と、<code>PAYPAL_WEBHOOK_ID</code>の設定（本人が行う）。</li>
 </ul>
-<h2 id="v8claude-code2026-11-05">V8の実施計画（本人確認待ち、Claude Code、2026-11-05作成）</h2>
-<p>目的：Sandboxの実際の取引で発生したWebhookが、PayPalからFlexSlotへ実際に届き、署名検証APIでSUCCESSになり、1回だけ処理されることを確かめる（DESIGN 12のV8、12.1、AC07）。まだ何も公開していない。cloudflaredも未導入（2026-11-05に確認）。</p>
+<h2 id="v8claude-code2026-11-052026-11-06">V8の実施計画と結果（Claude Code、計画2026-11-05、実施2026-11-06）</h2>
+<p>目的：Sandboxの実際の取引で発生したWebhookが、PayPalからFlexSlotへ実際に届き、署名検証APIでSUCCESSになり、1回だけ処理されることを確かめる（DESIGN 12のV8、12.1、AC07）。本人の承認を受けて2026-11-06に実施した（下の「V8の実施結果」）。</p>
 <h3 id="section-17">公開する範囲（承認を求める内容）</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -1663,6 +1663,60 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>Quick TunnelのURLは起動のたびに変わるため、窓ごとに登録し直す。Quick Tunnelは試験用で、稼働の保証はない。</li>
 <li>日程の目安はSPEC 12の11月7日。</li>
 </ul>
+<h3 id="v82026-11-06">V8の実施結果（2026-11-06、日本時間）</h3>
+<p>本人の承認（cloudflaredの導入と、範囲を限ったトンネル）を受けて行った。対象コード：<code>impl/app</code>の<code>42915da</code>（Webhookの受信箱は<code>impl-webhook-1</code>）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cloudflared</td>
+<td>wingetのMSI（2026.10.3）は管理者確認で止まったため中止し（システムには何も入っていない）、本人の選択で単体版を使った。<code>cloudflared-windows-amd64.exe</code> 2026.10.3（2026-10-21公開、約55.3MB、CloudflareのGitHubリリース）を<code>%LOCALAPPDATA%\FlexSlotTools\cloudflared-2026.10.3\</code>に置き、SHA256がGitHubの公開値と一致、Authenticodeの署名がCloudflare, Inc.で有効であることを確かめた。最新の2026.10.7は公開から1週間のため使わなかった</td>
+</tr>
+<tr>
+<td>公開の時間帯</td>
+<td>07:04:56〜07:25:04（約20分、UTC 22:04:56〜22:25:04）。URL <code>https://debug-lead-groundwater-uri.trycloudflare.com</code>（Quick Tunnel）→ 中継<code>127.0.0.1:8790</code> → FlexSlot<code>127.0.0.1:8787</code></td>
+</tr>
+<tr>
+<td>外からの確認（開始直後）</td>
+<td><code>GET /</code>、<code>GET /api/config</code>、<code>GET /w/{ワールド}/owner/</code>、<code>GET /assets/…</code>、<code>POST /api/worlds</code>、<code>GET /webhooks/paypal</code>、<code>POST /webhooks/paypal?x=1</code>はすべて404。<code>POST /webhooks/paypal</code>だけ200（送った確認用の通知は保存され、署名がないためINVALID）</td>
+</tr>
+<tr>
+<td>登録</td>
+<td>本人がSandboxのRESTアプリにWebhookを登録し、IDを<code>.env</code>に記入（値は見ていない。長さ17文字であることだけ確かめた）。サーバーを再起動して読み込んだ</td>
+</tr>
+<tr>
+<td>取引</td>
+<td>新しいワールド<code>w58dfc435d0a1</code>（Vertex＋Sandbox、基準日11-06）。AとBの条件はVertexで構造化（Aは11-11 10:00–12:00、Bは11-08 14:00–15:00・カット、質問なし）。本人がAとBの注文を承認し、案件はCOMPLETED。<code>app-reconcile.ts w58dfc435d0a1</code>は全項目PASS（終了コード0）</td>
+</tr>
+<tr>
+<td>届いた通知（<code>v8-webhook.ts report</code>、終了コード0）</td>
+<td>PayPalからの通知6件：Aの<code>PAYMENT.CAPTURE.COMPLETED</code>、Aの<code>CHECKOUT.ORDER.APPROVED</code>（Aの売上確定の後に届いた）、Bの<code>CHECKOUT.ORDER.APPROVED</code>、<code>PAYMENT.AUTHORIZATION.CREATED</code>、Bの<code>PAYMENT.CAPTURE.COMPLETED</code>、Aの元captureの<code>PAYMENT.CAPTURE.REFUNDED</code>。6件ともPayPalの署名検証APIでSUCCESS（VERIFIED、1回目で確定）、それぞれ1回だけ登録・処理された。届いた時点で、対応する操作は照会ですでに確定していたため、起こした操作は0件（状態は照会の結果だけで動いた）。Bの承認は、Bの<code>CHECKOUT.ORDER.APPROVED</code>の受信の約2秒後に検知された（この通知が契機か5秒ごとの照会かは、ログでは区別できない）</td>
+</tr>
+<tr>
+<td>改ざんしたコピー（<code>v8-webhook.ts tamper</code>、終了コード0）</td>
+<td>届いた正規の<code>PAYMENT.CAPTURE.REFUNDED</code>の本文を書き換え、同じヘッダーでローカルのサーバーへ送った。保存され（200）、PayPalの署名検証APIがFAILUREを返してINVALID。正規のイベントの登録・処理は変わらなかった</td>
+</tr>
+<tr>
+<td>再配送</td>
+<td>本人が開発者画面でAの<code>PAYMENT.CAPTURE.COMPLETED</code>を「Resend」した。再配送は届いてVERIFIEDになったが、登録済みのイベントの重複として扱われ、二度目の処理はなかった（処理したイベントは6件のまま）</td>
+</tr>
+<tr>
+<td>終了</td>
+<td>07:25:04にトンネルと中継を止めた。その後、公開URLは530（Cloudflareから接続先なし）、cloudflaredのプロセスなし、8790番の待ち受けなし</td>
+</tr>
+<tr>
+<td>本人に残すこと</td>
+<td>開発者画面でWebhookを削除し、<code>.env</code>の<code>PAYPAL_WEBHOOK_ID</code>を空に戻す</td>
+</tr>
+</tbody>
+</table></div>
+<p>合格の証拠（DESIGN 12.1）：PayPalから実際に届いた配送が、PayPalの署名検証APIでSUCCESSになり、<code>webhook_deliveries</code>と<code>webhook_events</code>の行が同じ取引のイベントと一致した。改ざんしたコピーはINVALIDで正規の処理を妨げず、再配送は二重に処理されなかった。開発者画面の配送履歴との突き合わせは、本人が画面で見た範囲（Resendの操作を含む）に留まり、Claudeは開発者画面を見ていない。</p>
+<p>限界：同じevent_idの不正な配信が正規より先に届く順序は、実配送では作れない（計画どおり、模擬の試験の範囲）。届いた通知が処理を前倒しした例は、今回の実配送ではなかった（前倒しは模擬の試験で確認）。Quick Tunnelは試験用で、公開デモの経路ではない。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1922,6 +1976,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>終了コード0、23ファイル・322件成功。変異4種をすべて検出</td>
 </tr>
 <tr>
+<td>11-06 Claude＋本人</td>
+<td>V8（実配送）</td>
+<td>限定したQuick Tunnel、Sandboxで一件、<code>v8-webhook.ts report</code>・<code>tamper</code>、<code>app-reconcile.ts</code></td>
+<td>すべて終了コード0。実際の通知6件がVERIFIED・各1回処理、改ざんはINVALID、再配送は重複として扱われた</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
 <td>Playwrightの画面試験・実機・初見の人の操作・Sandboxでの障害の再現</td>
@@ -1973,8 +2033,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>U06</td>
 <td>Webhookの実配送と署名検証</td>
-<td>必須の接続検証（V8）。公開デモの採否とは別に、本人確認後の限定的なHTTPS受信経路で行う。承認がなければ未確認のまま残す</td>
-<td>V8（11月7日目標、本人確認後）</td>
+<td>解消（2026-11-06）。本人の承認のもと、<code>/webhooks/paypal</code>だけに絞ったQuick Tunnelで約20分受け付け、実際の通知6件が署名検証でSUCCESS、各1回だけ処理、改ざんしたコピーはINVALID、再配送は二重に処理されなかった（「V8の実施計画と結果」）。不正な配信が先に届く順序は模擬の試験だけ</td>
+<td>公開デモを用意する場合は、その経路で再確認</td>
 </tr>
 <tr>
 <td>U07</td>
@@ -2022,7 +2082,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を修正した（タグ<code>impl-executor-1-fix1</code>）。Codexの再確認（REVIEWの最後の節）を待つ。</li>
 <li>修正版を<code>impl/app</code>へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ<code>impl-app-1</code>）。第2レビュー（REVIEWの最後の節）を待つ。</li>
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
-<li>次は、第2レビューの指摘への対応、V8（計画は「V8の実施計画」の節、本人確認待ち）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。</li>
+<li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。次は、第2レビューの指摘への対応、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
 <h2 id="section-24">今後の検証記録の書式</h2>

@@ -493,9 +493,9 @@ Codexのレビュー本文は、Codexの資料`outputs/codex-prep/IMPL_EXECUTOR_
 - V8（Sandboxからの実配送と、PayPalの署名検証APIでのSUCCESS）。サーバーは`127.0.0.1`だけで待ち受けるため、外部から届くHTTPSの経路が必要。受信先・公開する範囲（`/webhooks/paypal`だけ）・時間帯・停止方法を示して本人確認を受けてから行う。
 - Sandboxの開発者画面でのWebhookの登録と、`PAYPAL_WEBHOOK_ID`の設定（本人が行う）。
 
-## V8の実施計画（本人確認待ち、Claude Code、2026-11-05作成）
+## V8の実施計画と結果（Claude Code、計画2026-11-05、実施2026-11-06）
 
-目的：Sandboxの実際の取引で発生したWebhookが、PayPalからFlexSlotへ実際に届き、署名検証APIでSUCCESSになり、1回だけ処理されることを確かめる（DESIGN 12のV8、12.1、AC07）。まだ何も公開していない。cloudflaredも未導入（2026-11-05に確認）。
+目的：Sandboxの実際の取引で発生したWebhookが、PayPalからFlexSlotへ実際に届き、署名検証APIでSUCCESSになり、1回だけ処理されることを確かめる（DESIGN 12のV8、12.1、AC07）。本人の承認を受けて2026-11-06に実施した（下の「V8の実施結果」）。
 
 ### 公開する範囲（承認を求める内容）
 
@@ -536,6 +536,28 @@ Codexのレビュー本文は、Codexの資料`outputs/codex-prep/IMPL_EXECUTOR_
 - Sandboxの配送は遅れることがある。届かなければ開発者画面の「Resend」を使い、その旨を記録する。
 - Quick TunnelのURLは起動のたびに変わるため、窓ごとに登録し直す。Quick Tunnelは試験用で、稼働の保証はない。
 - 日程の目安はSPEC 12の11月7日。
+
+
+### V8の実施結果（2026-11-06、日本時間）
+
+本人の承認（cloudflaredの導入と、範囲を限ったトンネル）を受けて行った。対象コード：`impl/app`の`42915da`（Webhookの受信箱は`impl-webhook-1`）。
+
+| 項目 | 結果 |
+| --- | --- |
+| cloudflared | wingetのMSI（2026.10.3）は管理者確認で止まったため中止し（システムには何も入っていない）、本人の選択で単体版を使った。`cloudflared-windows-amd64.exe` 2026.10.3（2026-10-21公開、約55.3MB、CloudflareのGitHubリリース）を`%LOCALAPPDATA%\FlexSlotTools\cloudflared-2026.10.3\`に置き、SHA256がGitHubの公開値と一致、Authenticodeの署名がCloudflare, Inc.で有効であることを確かめた。最新の2026.10.7は公開から1週間のため使わなかった |
+| 公開の時間帯 | 07:04:56〜07:25:04（約20分、UTC 22:04:56〜22:25:04）。URL `https://debug-lead-groundwater-uri.trycloudflare.com`（Quick Tunnel）→ 中継`127.0.0.1:8790` → FlexSlot`127.0.0.1:8787` |
+| 外からの確認（開始直後） | `GET /`、`GET /api/config`、`GET /w/{ワールド}/owner/`、`GET /assets/…`、`POST /api/worlds`、`GET /webhooks/paypal`、`POST /webhooks/paypal?x=1`はすべて404。`POST /webhooks/paypal`だけ200（送った確認用の通知は保存され、署名がないためINVALID） |
+| 登録 | 本人がSandboxのRESTアプリにWebhookを登録し、IDを`.env`に記入（値は見ていない。長さ17文字であることだけ確かめた）。サーバーを再起動して読み込んだ |
+| 取引 | 新しいワールド`w58dfc435d0a1`（Vertex＋Sandbox、基準日11-06）。AとBの条件はVertexで構造化（Aは11-11 10:00–12:00、Bは11-08 14:00–15:00・カット、質問なし）。本人がAとBの注文を承認し、案件はCOMPLETED。`app-reconcile.ts w58dfc435d0a1`は全項目PASS（終了コード0） |
+| 届いた通知（`v8-webhook.ts report`、終了コード0） | PayPalからの通知6件：Aの`PAYMENT.CAPTURE.COMPLETED`、Aの`CHECKOUT.ORDER.APPROVED`（Aの売上確定の後に届いた）、Bの`CHECKOUT.ORDER.APPROVED`、`PAYMENT.AUTHORIZATION.CREATED`、Bの`PAYMENT.CAPTURE.COMPLETED`、Aの元captureの`PAYMENT.CAPTURE.REFUNDED`。6件ともPayPalの署名検証APIでSUCCESS（VERIFIED、1回目で確定）、それぞれ1回だけ登録・処理された。届いた時点で、対応する操作は照会ですでに確定していたため、起こした操作は0件（状態は照会の結果だけで動いた）。Bの承認は、Bの`CHECKOUT.ORDER.APPROVED`の受信の約2秒後に検知された（この通知が契機か5秒ごとの照会かは、ログでは区別できない） |
+| 改ざんしたコピー（`v8-webhook.ts tamper`、終了コード0） | 届いた正規の`PAYMENT.CAPTURE.REFUNDED`の本文を書き換え、同じヘッダーでローカルのサーバーへ送った。保存され（200）、PayPalの署名検証APIがFAILUREを返してINVALID。正規のイベントの登録・処理は変わらなかった |
+| 再配送 | 本人が開発者画面でAの`PAYMENT.CAPTURE.COMPLETED`を「Resend」した。再配送は届いてVERIFIEDになったが、登録済みのイベントの重複として扱われ、二度目の処理はなかった（処理したイベントは6件のまま） |
+| 終了 | 07:25:04にトンネルと中継を止めた。その後、公開URLは530（Cloudflareから接続先なし）、cloudflaredのプロセスなし、8790番の待ち受けなし |
+| 本人に残すこと | 開発者画面でWebhookを削除し、`.env`の`PAYPAL_WEBHOOK_ID`を空に戻す |
+
+合格の証拠（DESIGN 12.1）：PayPalから実際に届いた配送が、PayPalの署名検証APIでSUCCESSになり、`webhook_deliveries`と`webhook_events`の行が同じ取引のイベントと一致した。改ざんしたコピーはINVALIDで正規の処理を妨げず、再配送は二重に処理されなかった。開発者画面の配送履歴との突き合わせは、本人が画面で見た範囲（Resendの操作を含む）に留まり、Claudeは開発者画面を見ていない。
+
+限界：同じevent_idの不正な配信が正規より先に届く順序は、実配送では作れない（計画どおり、模擬の試験の範囲）。届いた通知が処理を前倒しした例は、今回の実配送ではなかった（前倒しは模擬の試験で確認）。Quick Tunnelは試験用で、公開デモの経路ではない。
 
 ## Claude Codeの確認（2026-11-03、第1区切り）
 
@@ -601,6 +623,7 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | 11-05 Claude＋本人 | 実接続（画面から一件） | Sandbox＋Vertexのワールドで三画面を操作（PayPalの承認は本人）、`node scripts/verify/app-reconcile.ts` | 案件COMPLETED、DBとSandboxが19項目で一致、終了コード0 |
 | 11-05 Claude | README・別環境での起動 | 別フォルダへ`git clone`、`npm ci`、`npm run check`、`npm run build`、`.env`なしで起動、HTTPで一件 | すべて終了コード0、312件成功、模擬だけが選べ、一件がCOMPLETED。詳細は「英語のREADMEとWebhookの受信箱」 |
 | 11-05 Claude | Webhookの受信箱（模擬） | `npm run check`、変異の確認 | 終了コード0、23ファイル・322件成功。変異4種をすべて検出 |
+| 11-06 Claude＋本人 | V8（実配送） | 限定したQuick Tunnel、Sandboxで一件、`v8-webhook.ts report`・`tamper`、`app-reconcile.ts` | すべて終了コード0。実際の通知6件がVERIFIED・各1回処理、改ざんはINVALID、再配送は重複として扱われた |
 | ─ | アプリテスト | Playwrightの画面試験・実機・初見の人の操作・Sandboxでの障害の再現 | 未実行 |
 
 ## 未確認事項
@@ -612,7 +635,7 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | U03 | 与信・注文の照会から、売上確定IDを取得できるか | 解消（2026-11-03）。注文の照会では取得できる。与信の照会のlinksでは取得できない（F2） | 実行器の回復処理で使う |
 | U04 | 返金の状態の種類と、元captureの照会で返金済みの額が分かるか | 一部解消（2026-11-03）。返金の応答に返金済みの合計がある。captureの照会は状態だけで、額は分からない。観測した返金の状態はCOMPLETEDだけ（F3）。残額はFlexSlotの記録から求める管理値とする（Codexの条件付き採用、DESIGN D18） | 実行器で実装 |
 | U05 | `PayPal-Request-Id`の保持期間 | RESTリクエストの資料に「最大45日」の記述あり。各APIでの保証は未確認。短時間（約30分以内）の再送では同じ資源が返ったが、Orders APIは状態の変化後に現在の状態を返す（F4）。数分以内の再送だけを前提にし、長期間後の再送には頼らない。短時間の再送試験から長期間の安全性を結論しない | 長期間の保持は未確認のまま |
-| U06 | Webhookの実配送と署名検証 | 必須の接続検証（V8）。公開デモの採否とは別に、本人確認後の限定的なHTTPS受信経路で行う。承認がなければ未確認のまま残す | V8（11月7日目標、本人確認後） |
+| U06 | Webhookの実配送と署名検証 | 解消（2026-11-06）。本人の承認のもと、`/webhooks/paypal`だけに絞ったQuick Tunnelで約20分受け付け、実際の通知6件が署名検証でSUCCESS、各1回だけ処理、改ざんしたコピーはINVALID、再配送は二重に処理されなかった（「V8の実施計画と結果」）。不正な配信が先に届く順序は模擬の試験だけ | 公開デモを用意する場合は、その経路で再確認 |
 | U07 | Google Cloudのプロジェクト、課金、Vertex AI APIの有効化、リージョン、利用できるGeminiのモデル | 解消（2026-11-03）。本人がgcloudとADCを準備した。プロジェクト`kazoku-baton-20261015`・リージョン`global`・`gemini-3.5-flash-lite`でV9が合格（F6） | 公開時はサービスアカウントで再確認 |
 | U08 | `node:sqlite`の安定性（Node 24） | 骨組みの試験（Node v24.22.1、SQLite 3.53.4、Vitest 5.0.5）で、トリガー・部分一意インデックス・STRICTテーブル・WAL・`isTransaction`が警告なく動作した。負荷と長時間の運用は未確認。問題があれば`better-sqlite3`に差し替える | 実行器の実装時、公開前 |
 | U09 | 公開デモの置き場所と審査員のアクセス方法（Sandboxの買い手アカウントの共有方法を含む） | 未確定。第一候補はCompute Engine | 提出準備時、本人確認後 |
@@ -634,7 +657,7 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 2. DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ`impl-executor-1`）。Codexのレビューの指摘IE1-01〜03を修正した（タグ`impl-executor-1-fix1`）。Codexの再確認（REVIEWの最後の節）を待つ。
 3. 修正版を`impl/app`へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ`impl-app-1`）。第2レビュー（REVIEWの最後の節）を待つ。
 4. 英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。
-5. 次は、第2レビューの指摘への対応、V8（計画は「V8の実施計画」の節、本人確認待ち）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。
+5. V8を2026-11-06に実施した（「V8の実施計画と結果」）。次は、第2レビューの指摘への対応、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。
 
 11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。
 

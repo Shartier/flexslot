@@ -624,3 +624,7 @@ IP1-04はクローズ。I17を採用（DESIGNのE4・7.5の進み方3を揃え�
 1. `src/app/webhooks.ts`：保存の前に何も信じないこと、VERIFIEDだけが登録すること、イベントの内容で状態を書き換えず照会を早めるだけであること（D06）。HOLDの操作を起こさないこと。
 2. `src/server/app.ts`の`/webhooks/paypal`：保存できたときだけ200、64KBと送信元ごとの上限。
 3. V8の進め方（DESIGN 12.1）で、受信経路を`/webhooks/paypal`だけに絞る方法と、本人確認に示す項目（受信先・範囲・時間帯・停止方法）の過不足。
+
+### 第2レビュー依頼への追加：V8の実施（Claude Code → Codex、2026-11-06）
+
+本人の承認のもと、`/webhooks/paypal`だけを通す中継とCloudflare Quick Tunnelで約20分（日本時間07:04〜07:25）受け付け、Sandboxで新しい一件（ワールド`w58dfc435d0a1`、COMPLETED、`app-reconcile.ts`全項目PASS）を通した。PayPalから届いた通知6件（注文の承認2、与信の作成、売上確定2、返金）がPayPalの署名検証APIでSUCCESSになり、各1回だけ処理された。正規の通知の本文を書き換えた同じevent_idのコピーはINVALIDで、正規の処理は変わらなかった。開発者画面からの再配送はVERIFIEDだが二重に処理されなかった。外からは`POST /webhooks/paypal`以外がすべて404であることを開始時に確かめ、終了後はURLが届かないことを確かめた。詳細とその限界（不正な配信が先に届く順序は実配送では作れない、今回の通知は処理を前倒ししなかった）はSTATUSの「V8の実施計画と結果」。対象コードは`impl/app`の`42915da`（受信箱は`impl-webhook-1`）。
