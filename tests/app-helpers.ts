@@ -70,6 +70,7 @@ export function harness(
     async ticks(n = 30) {
       for (let i = 0; i < n; i++) {
         await app.idle();
+        await runtime.webhookTick();
         await runtime.tick();
         clock.advance(11_000);
       }

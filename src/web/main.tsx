@@ -7,6 +7,7 @@ import { AScreen, BScreen } from './customer.tsx';
 import { OwnerScreen } from './owner.tsx';
 import type { AState, BState, OwnerState } from './types.ts';
 import { Notice } from './ui.tsx';
+import { paypalReturnText } from './paypal-return.ts';
 import './styles.css';
 
 function Landing() {
@@ -124,15 +125,13 @@ function PayPalReturn({ cancelled }: { cancelled: boolean }) {
       ch.close();
     }
   }, []);
+  // IA1-02: no claim about the payment here; the FlexSlot screen shows what FlexSlot confirmed with PayPal.
+  const t = paypalReturnText(cancelled);
   return (
     <main>
       <section className="card">
-        <h1>{cancelled ? 'Payment cancelled on PayPal' : 'Back from PayPal'}</h1>
-        <p>
-          {cancelled
-            ? 'Nothing was charged. Go back to your FlexSlot tab.'
-            : 'Thank you. FlexSlot now confirms the approval with PayPal itself. You can close this tab and return to your FlexSlot screen.'}
-        </p>
+        <h1>{t.title}</h1>
+        <p>{t.body}</p>
       </section>
     </main>
   );

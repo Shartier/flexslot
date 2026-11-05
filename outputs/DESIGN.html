@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="8d23456f095444faf27ab3a043d8f1ab6bb5b72b0aa8f35cffcbdb4b153032e2"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="d79753722f33b9e2522c582961969491d52f659b1efaf6f22f6242cd8f20a047"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,11 +8,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html" aria-current="page">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
 <main><div class="meta">正本：DESIGN.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-1">FlexSlot — 技術設計（第1レビュー対象）</h1>
-<p>版：design-v0.7 / 作成日：2026-11-03、更新：2026-11-05（日本時間）/ 作成：Claude Code / 状態：14章の1〜5（骨組み、PayPalアダプター、実行器とその修正版、AIアダプター、三画面とセッション）まで実装済み。画面からSandboxで一件の振替を最後まで通した（STATUS参照）。第2レビュー待ち。</p>
+<p>版：design-v0.8 / 作成日：2026-11-03、更新：2026-11-05（日本時間）/ 作成：Claude Code / 状態：14章の1〜5（骨組み、PayPalアダプター、実行器とその修正版、AIアダプター、三画面とセッション）まで実装済み。画面からSandboxで一件の振替を最後まで通した（STATUS参照）。第2レビュー待ち。</p>
 <p>SPEC.md（spec-v0.1）の「設計案」を検証し、実装できる粒度まで具体化した文書。合意済みの範囲は変えない。SPECの条件を弱めた箇所はない。追加・具体化した箇所は「1. SPECとの差分」に列挙する。</p>
 <p>design-v0.2の変更：Codexの第1レビュー指摘DR1-01〜05と小修正を反映した。対応箇所の一覧は15章。</p>
 <p>design-v0.3の変更：DR1-02の残件に対応し、支払いの保存単位を「債務・試行・API操作」の3階層に分けた（D17、3章、6.2、6.3、7章、7.5）。</p>
 <p>design-v0.4の変更：Sandboxでの実接続（V1〜V7）の結果と、Codexの中間確認（<code>impl-paypal-1</code>、指摘IP1-01〜03と回答）を反映した。返金できる残額の管理値（D18）、再送・照会の応答での資源の同定と次の操作の判定の分離（D19）、売上確定後の照会による受取先の照合（D20）、候補探索の起点（D21）、I07・I08の回復条件、作品内AIのモデルとtemperatureの扱い。対応箇所は15章。</p>
+<p>design-v0.8の変更：Codexの第2レビュー（<code>impl-app-1</code>）と追加確認（<code>impl-webhook-1</code>・V8）の指摘IA1-01・IA1-02・IW1-01を反映した。Bの依頼の再判定を、Aの支払い・移動条件の入力が変わったときに定期処理でも行う（D28）。PayPalの戻りページは支払いの状態を断定しない（D32）。Webhookの検証を決済の定期処理から分け、検証済みのイベントはその都度使う（D31）。対応箇所は15.5。</p>
 <p>design-v0.7の変更：14章の4（AIアダプター）と5（三画面とセッション）の実装で具体化した点を反映した（D25〜D30、5章、9章、10章、14章、15.4）。7.4のWebhookの受信箱を実装し、具体化した点を7.4に追記した（D31、模擬での試験まで。実配送のV8は未実施）。</p>
 <p>design-v0.6の変更：Codexの実行器レビュー（<code>impl-executor-1</code>、2026-11-05）を反映した。与信も注文の照会で照合してから進む（I17の採用、6.2のE4・7.5の進み方3）。結果不明の送信を未承認の照会だけで終わらせない（D24、IE1-01）。承認の対象に、B依頼の版・施術・施術時間・A/Bの当事者・Aの移動条件の版を加え、E7はこの固定値で予約する（D22、IE1-02）。三つの枠のどれかが始まった後は振り替えない（D23、IE1-03）。対応箇所は15.3。</p>
 <p>design-v0.5の変更：Codexの再確認（<code>impl-paypal-1-fix1</code>、2026-11-04）の指摘IP1-04と6.1の小修正を反映した。売上確定のPOSTの成功の後の「照合待ち」を操作の行に永続的に記録し（<code>reconcile_status</code>）、6.2のE6、7.1、7.2、7.5の保存・再開の手順をD20に揃えた。Aの元決済の注文作成で、送信前と応答後に保存する値を分けた（6.1）。対応箇所は15.2。</p>
@@ -213,8 +214,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>D28</td>
 <td>追加</td>
-<td>Bの承認の検知（E3）</td>
-<td>ブラウザからの合図（PayPalの戻りページ、「承認しました」ボタン）に加え、サーバーが承認待ちの注文を5秒ごとに照会し、APPROVEDなら同じ合図を実行器に渡す（Bは支払い期限内、Aの元決済は操作の作成から3時間）。照会は与信・売上確定を行わない</td>
+<td>Bの承認の検知（E3）と候補の再判定</td>
+<td>ブラウザからの合図（PayPalの戻りページ、「承認しました」ボタン）に加え、サーバーが承認待ちの注文を5秒ごとに照会し、APPROVEDなら同じ合図を実行器に渡す（Bは支払い期限内、Aの元決済は操作の作成から3時間）。照会は与信・売上確定を行わない。Bの依頼の判定には、そのときのA側の入力（確認済みのAの元決済と、最新の確定済みの移動条件の版）を記録し、決済の定期処理が毎回これと現在の入力を比べ、変わっていて案件がまだなければ判定し直す（IA1-01。どの経路で支払いが確定しても拾い、変わらなければ何もしない）</td>
 <td>本人が別のブラウザで承認しても進む。お金を動かす判断は実行器だけが行う</td>
 </tr>
 <tr>
@@ -228,8 +229,15 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>D31</td>
 <td>具体化</td>
 <td>Webhookの受信（7.4）</td>
-<td><code>POST /webhooks/paypal</code>。保存するヘッダーはPayPalの署名関係の5つだけ。本文64KBまで、送信元ごとに1分120件まで。検証APIの一時失敗は10秒から倍の間隔（最大10分）で再試行し、再起動後も続ける。<code>PAYPAL_WEBHOOK_ID</code>がなければ保存だけして検証・利用しない。検証済みのイベントは、そのIDと関連ID（注文・与信・capture）を持つ未確定・照合待ちの操作の次の照会を「今」にし、<code>CHECKOUT.ORDER.APPROVED</code>なら承認の照会（D28）を今行う。店主の保留（HOLD）の操作は起こさない</td>
+<td><code>POST /webhooks/paypal</code>。保存するヘッダーはPayPalの署名関係の5つだけ。本文64KBまで、送信元ごとに1分120件まで。検証APIの一時失敗は10秒から倍の間隔（最大10分）で再試行し、再起動後も続ける。検証は決済の定期処理とは別のループで行い、検証済みのイベントは一件ごとにすぐ使う（IW1-01。検証が遅れても決済・承認の監視・回復は止まらない）。中継を通す経路では送信元がすべて同じループバックになるため、1分120件は中継全体で共有する上限になる。<code>PAYPAL_WEBHOOK_ID</code>がなければ保存だけして検証・利用しない。検証済みのイベントは、そのIDと関連ID（注文・与信・capture）を持つ未確定・照合待ちの操作の次の照会を「今」にし、<code>CHECKOUT.ORDER.APPROVED</code>なら承認の照会（D28）を今行う。店主の保留（HOLD）の操作は起こさない</td>
 <td>D06（照会のきっかけにだけ使う）を具体化。状態を書き換えるのはREST照会の結果だけ</td>
+</tr>
+<tr>
+<td>D32</td>
+<td>追加</td>
+<td>PayPalの戻りページ（E3）</td>
+<td><code>/paypal/return</code>と<code>/paypal/cancel</code>は支払いの状態を何も断定せず、FlexSlotの画面で状態を確かめるよう案内するだけ。サーバーの状態も変えない（IA1-02）</td>
+<td>ブラウザの戻りURLを決済の証拠にしない（SPEC 8）</td>
 </tr>
 <tr>
 <td>D30</td>
@@ -1378,4 +1386,36 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </table></div>
 <p>画面の言語は、提出と審査を考えて英語にした（文言は数ファイルに集めてあり、変更は容易）。</p>
 <p>Webhookの受信箱（7.4、D31）を実装し、模擬で試験した。実配送（V8）は本人確認後の受信経路が必要なため未実施。</p>
+<h3 id="design-v0.8codex2impl-app-1impl-webhook-1">15.5 design-v0.8（Codexの第2レビュー<code>impl-app-1</code>と追加確認<code>impl-webhook-1</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>根拠</th>
+<th>対応した箇所</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Codex指摘IA1-01</td>
+<td>D28</td>
+<td>Aの支払いがキュー・起動時の回復・承認の照会のどれで確定しても、決済の定期処理がA側の入力の変化を見てBの依頼を判定し直す。入力が同じなら判定しない。拒否済み・期限切れの案は再提案しない（I36）</td>
+</tr>
+<tr>
+<td>Codex指摘IA1-02</td>
+<td>D32</td>
+<td>PayPalの戻りページは状態を断定しない</td>
+</tr>
+<tr>
+<td>Codex指摘IW1-01</td>
+<td>D31</td>
+<td>Webhookの検証を決済のループから分け、検証済みのイベントは一件ずつすぐ使う</td>
+</tr>
+<tr>
+<td>Codexの注意（中継の上限）</td>
+<td>D31</td>
+<td>中継経由では送信元ごとの上限が中継全体の共有の上限になる</td>
+</tr>
+</tbody>
+</table></div>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

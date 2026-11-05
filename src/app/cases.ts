@@ -47,9 +47,11 @@ export function proposeInTx(db: Db, now: number, worldId: string, bRequestId: st
   if (!req) throw new Error('unknown request');
   const bReq = JSON.parse(req.structured_json) as { serviceId: string; windows: LocalWindow[]; stylistId: string | null };
   const evaluationId = randomUUID();
+  // IA1-01: the A-side inputs this verdict was computed from, so a later change of them triggers a new check.
+  const inputs = candidateInputs(db, worldId);
   const record = (feasible: boolean, caseId: string | null, reasons: string[], detail: unknown): Proposal => {
     db.prepare('INSERT INTO candidate_evaluations (id, world_id, b_request_id, evaluated_at, feasible, case_id, result_json) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-      evaluationId, worldId, bRequestId, now, feasible ? 1 : 0, caseId, JSON.stringify({ reasons, detail }),
+      evaluationId, worldId, bRequestId, now, feasible ? 1 : 0, caseId, JSON.stringify({ reasons, detail, inputs }),
     );
     audit(db, now, { worldId, caseId, actor: 'system', action: feasible ? 'CANDIDATE_FOUND' : 'CANDIDATE_NONE', detail: { bRequestId, reasons } });
     return { evaluationId, feasible, caseId, reasons };
@@ -159,8 +161,35 @@ export function propose(db: Db, now: number, worldId: string, bRequestId: string
 }
 
 /**
- * After A's conditions or A's payment change: re-check B's latest request if it never had a case and nothing is
- * in progress (a rejected or expired proposal is not offered again automatically).
+ * IA1-01: what the candidate check reads on A's side and can change after B's request was checked: the verified
+ * original payments and the latest confirmed move conditions of the shop's bookings. A deterministic string.
+ */
+export function candidateInputs(db: Db, worldId: string): string {
+  const shop = shopOf(db, worldId);
+  const paid = (
+    db
+      .prepare(
+        `SELECT p.booking_id || '=' || p.capture_id AS x FROM payments p JOIN bookings b ON b.id = p.booking_id
+         WHERE b.shop_id = ? AND p.kind = 'A_ORIGINAL' AND p.verified_at IS NOT NULL ORDER BY x`,
+      )
+      .all(shop.id) as Array<{ x: string }>
+  ).map((r) => r.x);
+  const prefs = (
+    db
+      .prepare(
+        `SELECT f.booking_id || '@' || max(f.version) AS x FROM flex_preferences f JOIN bookings b ON b.id = f.booking_id
+         WHERE b.shop_id = ? AND f.confirmed_at IS NOT NULL GROUP BY f.booking_id ORDER BY x`,
+      )
+      .all(shop.id) as Array<{ x: string }>
+  ).map((r) => r.x);
+  return `paid:${paid.join(',')};prefs:${prefs.join(',')}`;
+}
+
+/**
+ * Re-check B's latest request when A's side changed since its last check (A's payment confirmed by any path: the
+ * screen, the approval watcher, the queue or startup recovery; or new move conditions). Only a request that never
+ * had a case and only while nothing is in progress (I36: a rejected or expired proposal is not offered again).
+ * Idempotent: once checked with the current inputs it does nothing, so the queue can call it on every tick.
  */
 export function reevaluateInTx(db: Db, now: number, worldId: string, offerTtlMs = OFFER_TTL_MS): Proposal | null {
   const ids = idsFor(worldId);
@@ -168,7 +197,29 @@ export function reevaluateInTx(db: Db, now: number, worldId: string, offerTtlMs 
   if (!req) return null;
   if (activeCaseId(db, worldId)) return null;
   if (db.prepare("SELECT 1 FROM swap_cases WHERE world_id = ? AND (b_request_id = ? OR status = 'COMPLETED')").get(worldId, req.id)) return null;
+  const last = db.prepare('SELECT result_json FROM candidate_evaluations WHERE b_request_id = ? ORDER BY rowid DESC LIMIT 1').get(req.id) as
+    | { result_json: string }
+    | undefined;
+  const lastInputs = last ? (JSON.parse(last.result_json) as { inputs?: string }).inputs : undefined;
+  if (lastInputs !== undefined && lastInputs === candidateInputs(db, worldId)) return null;
   return proposeInTx(db, now, worldId, req.id, offerTtlMs);
+}
+
+/** IA1-01: the queue's pass over the worlds whose B request has no case yet (cheap when nothing changed). */
+export function reevaluateWorlds(db: Db, now: number, offerTtlMs = OFFER_TTL_MS): string[] {
+  const worlds = db
+    .prepare(
+      `SELECT DISTINCT r.world_id AS id FROM b_requests r JOIN worlds w ON w.id = r.world_id
+       WHERE r.confirmed_at IS NOT NULL AND w.expires_at > ?
+         AND NOT EXISTS (SELECT 1 FROM swap_cases c WHERE c.world_id = r.world_id AND c.status = 'COMPLETED')`,
+    )
+    .all(now) as Array<{ id: string }>;
+  const proposed: string[] = [];
+  for (const { id } of worlds) {
+    const p = immediate(db, () => reevaluateInTx(db, now, id, offerTtlMs));
+    if (p?.feasible && p.caseId) proposed.push(p.caseId);
+  }
+  return proposed;
 }
 
 function describeEvaluation(e: SwapEvaluation, tz: string): Record<string, unknown> {

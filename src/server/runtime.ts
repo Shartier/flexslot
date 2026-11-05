@@ -1,13 +1,15 @@
-// Background work of the single process (DESIGN 2, 7.5, 8): startup recovery, then a timer that runs the send
-// queue of each payment mode, ends expired proposals, and watches PayPal orders waiting for the buyer's approval.
-// The watcher only queries (GET order) and, when PayPal says APPROVED, gives the executor the same signal as the
-// browser's return page (E3). The executor decides everything else; no money moves on the watcher's own account.
+// Background work of the single process (DESIGN 2, 7.4, 7.5, 8): startup recovery, then two independent loops.
+// - Payment loop (tick): the send queue of each payment mode, expired proposals, the approval watcher, and the
+//   candidate re-check after A's side changed (IA1-01). The watcher only queries (GET order) and, when PayPal says
+//   APPROVED, gives the executor the same signal as the browser's return page (E3); no money moves on its account.
+// - Webhook loop (webhookTick): signature verification and use of received webhooks. It runs on its own timer
+//   and flag, so a slow or failing verification API never holds up the payment loop (IW1-01).
 
 import type { Clock } from '../clock.ts';
 import { immediate, type Db } from '../db/database.ts';
 import type { Executor } from '../executor/executor.ts';
 import type { PayPalPort } from '../paypal/port.ts';
-import { expireOffers, reevaluateInTx } from '../app/cases.ts';
+import { expireOffers, reevaluateInTx, reevaluateWorlds } from '../app/cases.ts';
 import type { PaymentMode } from '../app/world.ts';
 import type { WebhookInbox } from '../app/webhooks.ts';
 
@@ -31,7 +33,9 @@ export class Runtime {
   readonly #d: RuntimeDeps;
   readonly #lastWatch = new Map<string, number>();
   #timer: NodeJS.Timeout | undefined;
+  #webhookTimer: NodeJS.Timeout | undefined;
   #running = false;
+  #webhookRunning = false;
 
   constructor(d: RuntimeDeps) {
     this.#d = d;
@@ -54,20 +58,11 @@ export class Runtime {
     }
   }
 
-  /** One tick. Never overlaps itself. */
+  /** One tick of the payment loop. Never overlaps itself; never waits for the webhook loop (IW1-01). */
   async tick(): Promise<void> {
     if (this.#running) return;
     this.#running = true;
     try {
-      // Webhooks first: verified events wake the operations they name before the queue looks at them (DESIGN 7.4).
-      if (this.#d.webhooks) {
-        try {
-          await this.#d.webhooks.verifyDue();
-          this.#d.webhooks.processPending();
-        } catch (e) {
-          this.#log({ event: 'webhook.error', error: e instanceof Error ? `${e.name}: ${e.message}` : 'unknown' });
-        }
-      }
       const expired = expireOffers(this.#d.db, this.#d.clock.now());
       if (expired.length) this.#log({ event: 'offers.expired', count: expired.length });
       for (const ex of Object.values(this.#d.executors)) {
@@ -82,19 +77,45 @@ export class Runtime {
       } catch (e) {
         this.#log({ event: 'watch.error', error: e instanceof Error ? `${e.name}: ${e.message}` : 'unknown' });
       }
+      // IA1-01: an A payment confirmed by the queue or by recovery also leads to B's request being checked again.
+      try {
+        const proposed = reevaluateWorlds(this.#d.db, this.#d.clock.now(), this.#d.offerTtlMs);
+        if (proposed.length) this.#log({ event: 'candidates.reevaluated', proposed: proposed.length });
+      } catch (e) {
+        this.#log({ event: 'reevaluate.error', error: e instanceof Error ? `${e.name}: ${e.message}` : 'unknown' });
+      }
     } finally {
       this.#running = false;
+    }
+  }
+
+  /**
+   * One pass of the webhook loop (DESIGN 7.4): verify due deliveries and use each verified event right away.
+   * Never overlaps itself; the payment loop does not wait for it (IW1-01).
+   */
+  async webhookTick(): Promise<void> {
+    if (!this.#d.webhooks || this.#webhookRunning) return;
+    this.#webhookRunning = true;
+    try {
+      await this.#d.webhooks.verifyDue();
+    } catch (e) {
+      this.#log({ event: 'webhook.error', error: e instanceof Error ? `${e.name}: ${e.message}` : 'unknown' });
+    } finally {
+      this.#webhookRunning = false;
     }
   }
 
   start(intervalMs = TICK_MS): void {
     this.stop();
     this.#timer = setInterval(() => void this.tick(), intervalMs);
+    if (this.#d.webhooks) this.#webhookTimer = setInterval(() => void this.webhookTick(), intervalMs);
   }
 
   stop(): void {
     if (this.#timer) clearInterval(this.#timer);
+    if (this.#webhookTimer) clearInterval(this.#webhookTimer);
     this.#timer = undefined;
+    this.#webhookTimer = undefined;
   }
 
   #due(key: string, now: number): boolean {

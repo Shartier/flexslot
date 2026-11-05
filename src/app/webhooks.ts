@@ -73,8 +73,12 @@ export class WebhookInbox {
     this.#d = d;
   }
 
-  /** Step 2-3 for the deliveries that are due. Returns how many were verified now. */
+  /**
+   * Step 2-4 for the deliveries that are due: each verified event is used right after its own verification, so a
+   * slow verification later in the batch never delays it (IW1-01). Returns how many were verified now.
+   */
   async verifyDue(limit = 20): Promise<number> {
+    this.processPending(); // events verified before a restart
     const { db, clock } = this.#d;
     const now = clock.now();
     const due = db
@@ -84,7 +88,12 @@ export class WebhookInbox {
       )
       .all(now, limit) as unknown as DeliveryRow[];
     let verified = 0;
-    for (const d of due) if ((await this.#verifyOne(d)) === 'VERIFIED') verified++;
+    for (const d of due) {
+      if ((await this.#verifyOne(d)) === 'VERIFIED') {
+        verified++;
+        this.processPending();
+      }
+    }
     return verified;
   }
 

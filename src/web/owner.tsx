@@ -87,7 +87,9 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
 
         {(state.stopped.length > 0 || state.needsAttentionObligations.length > 0) && (
           <Section title="Stopped: your action is needed">
-            <p className="small">FlexSlot stopped these automatically and does not retry them by itself. Nothing new is charged or refunded until you act. (Releasing a stop is not available in this demo yet.)</p>
+            <p className="small">
+              FlexSlot stopped these automatically; the payment queue leaves them alone. The only exception is a server restart: its recovery checks each of them once more with PayPal, with the same request, and may finish or release a payment that PayPal has already decided. No new payment or refund is started for them. (Releasing a stop by hand is not available in this demo yet.)
+            </p>
             <ul className="history">
               {state.stopped.map((e, i) => (
                 <li key={i}>

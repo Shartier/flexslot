@@ -1,16 +1,16 @@
 # FlexSlot — 状況と次の作業
 
-更新日：2026-11-05（日本時間）/ 文書版：status-v0.11。
+更新日：2026-11-06（日本時間）/ 文書版：status-v0.12。
 
 ## 現在地
 
-DESIGN 14章の1〜5を実装し、三画面からPayPal Sandbox＋Gemini on Vertex AIで一件の振替を最後まで通した段階（タグ`impl-app-1`、第2レビュー待ち）。実行器はCodexのレビューの指摘IE1-01〜03を修正した版（`impl-executor-1-fix1`、Codexの再確認待ち）を取り込んでいる。状況を「設計の再確認」と「実装・実接続」に分けて記す。
+DESIGN 14章の1〜5を実装し、三画面からPayPal Sandbox＋Gemini on Vertex AIで一件の振替を最後まで通し、Webhookの実配送（V8）も確かめた段階。実行器の修正版`impl-executor-1-fix1`はCodexの再確認で合格（IE1-01〜03クローズ）。第2レビューはCodexの指摘IA1-01・IA1-02・IW1-01（いずれもP2）を修正し、タグ`impl-app-1-fix1`で再確認待ち（「第2レビューへの対応」の節）。状況を「設計の再確認」と「実装・実接続」に分けて記す。
 
 | 区分 | 状況 |
 | --- | --- |
 | 設計の再確認（Codex） | `design-review-1-fix2`でDR1-02の残件を含めて第1レビューを完了し、design-v0.3を基準に実装開始を可とした（REVIEWの「第1レビュー完了・実装開始可」）。2026-11-04の再確認で、design-v0.4を実行器の基準として採用可とし、指摘IP1-04（D20の照合待ちを7.5へ反映）を出した。design-v0.5でIP1-04の文書を直した。2026-11-05の実行器レビューでIP1-04をクローズし、I17を採用し、指摘IE1-01〜03（P1）を出した。design-v0.6で反映した（D22〜D24、15.3）。アプリの動作・実接続の合格判定ではない |
 | 実装 | 14章の1（骨組み）はタグ`impl-skeleton-1`。14章の2（PayPalアダプター、障害注入付きの模擬PayPal、Vertex AIの最小接続、接続検証スクリプトV0〜V7・V9）はタグ`impl-paypal-1`と修正版`impl-paypal-1-fix1`（ブランチ`impl/paypal`）。修正版はCodexの再確認で、IP1-01〜03がクローズした。14章の3（実行器・送信待ちキュー・回復処理と障害注入の試験）はブランチ`impl/executor`、タグ`impl-executor-1`。Codexのレビューの指摘IE1-01〜03の修正は、`impl-executor-1`から分けたブランチ`impl/executor-fix1`、タグ`impl-executor-1-fix1`で、Codexの再確認待ち（「実行器レビューへの対応」の節）。14章の4（AIアダプター）はタグ`impl-ai-1`、14章の5（三画面・セッション・タイマー）とSandboxでの一件はタグ`impl-app-1`（ブランチ`impl/app`、修正版をマージ済み）。Webhookは未着手 |
-| 実接続 | PayPal SandboxでV1〜V7を、Vertex AIでV9を実行した（結果は「PayPalアダプターと接続検証」の節）。新しい注文を使ったV2〜V7の通し実行（`run-20261104-f1c97c9d`）は、Codexの再確認で合格扱いになった。2026-11-05、三画面からSandbox＋Vertexで一件の振替を最後まで通し、DBとSandboxの照会結果の一致を19項目で確かめた（「AIアダプター・三画面・セッション」の節）。Sandboxで通したのは正常系の一件だけで、障害・回復はSandboxで再現していない。Webhookの実配送（V8）は未実施。公開・応募も未実施 |
+| 実接続 | PayPal SandboxでV1〜V7を、Vertex AIでV9を実行した（結果は「PayPalアダプターと接続検証」の節）。新しい注文を使ったV2〜V7の通し実行（`run-20261104-f1c97c9d`）は、Codexの再確認で合格扱いになった。2026-11-05、三画面からSandbox＋Vertexで一件の振替を最後まで通し、DBとSandboxの照会結果の一致を17項目で確かめた（「AIアダプター・三画面・セッション」の節）。Sandboxで通したのは正常系の一件だけで、障害・回復はSandboxで再現していない。Webhookの実配送（V8）は未実施。公開・応募も未実施 |
 
 ## Codexの再確認の結果（`impl-paypal-1-fix1`、2026-11-04）
 
@@ -386,7 +386,7 @@ Codexのレビュー本文は、Codexの資料`outputs/codex-prep/IMPL_EXECUTOR_
 | --- | --- | --- |
 | `npm run check`（`impl/app`、修正版のマージ後） | 0 | 型チェック（サーバーと画面）成功、22ファイル・312件成功 |
 | `npx vite build` | 0 | `dist/web`に生成（インラインのスクリプト・スタイルなし） |
-| `node scripts/verify/app-reconcile.ts w47299ed01018` | 0 | Sandboxの一件について19項目すべて一致（下の表） |
+| `node scripts/verify/app-reconcile.ts w47299ed01018` | 0 | Sandboxの一件について17項目すべて一致（下の表） |
 | `pwsh -NoProfile -File tools/render-docs.ps1`と`-Check` | 0 | コミット直前に実行。結果は報告メッセージに記載 |
 
 ### 試験で確認したこと（模擬PayPal・模擬AIまたは偽のVertex。外部へは接続していない）
@@ -506,7 +506,7 @@ Codexのレビュー本文は、Codexの資料`outputs/codex-prep/IMPL_EXECUTOR_
 | 時間帯 | 本人が指定する30〜60分の1回。開始・終了の時刻を記録して報告する |
 | 外へ出る情報 | 中継の応答（200・404・413・429とJSONの短い本文）だけ。DB・ログ・画面は出ない |
 | 第三者 | 通信はCloudflareを経由する（TLSはCloudflareで終わる）。中身はSandboxの架空の取引データ |
-| URLを知った第三者の送信 | 保存はされるが、署名検証でINVALIDになり使われない。1分120件・64KBまで |
+| URLを知った第三者の送信 | 保存はされるが、署名検証でINVALIDになり使われない。1分120件・64KBまで（中継を通すと送信元はすべて同じループバックになるため、120件は外部の送信者ごとではなく中継全体で共有する上限。Codexの注意、2026-11-06） |
 | 停止方法 | cloudflaredと中継のプロセスを止める。PayPalの開発者画面でWebhookを削除する。`.env`の`PAYPAL_WEBHOOK_ID`を空に戻す |
 | 導入するもの | cloudflared（wingetの`Cloudflare.cloudflared` 2026.10.7、発行元Cloudflare、Apache-2.0）。ダウンロードと導入にも本人の許可が要る（本人が導入してもよい） |
 
@@ -558,6 +558,55 @@ Codexのレビュー本文は、Codexの資料`outputs/codex-prep/IMPL_EXECUTOR_
 合格の証拠（DESIGN 12.1）：PayPalから実際に届いた配送が、PayPalの署名検証APIでSUCCESSになり、`webhook_deliveries`と`webhook_events`の行が同じ取引のイベントと一致した。改ざんしたコピーはINVALIDで正規の処理を妨げず、再配送は二重に処理されなかった。開発者画面の配送履歴との突き合わせは、本人が画面で見た範囲（Resendの操作を含む）に留まり、Claudeは開発者画面を見ていない。
 
 限界：同じevent_idの不正な配信が正規より先に届く順序は、実配送では作れない（計画どおり、模擬の試験の範囲）。届いた通知が処理を前倒しした例は、今回の実配送ではなかった（前倒しは模擬の試験で確認）。Quick Tunnelは試験用で、公開デモの経路ではない。
+
+## 第2レビューへの対応（`impl-app-1-fix1`、Claude Code、2026-11-06）
+
+Codexの文書（Codexの未追跡ファイル。Claudeは変更・コミットしていない）：`outputs/codex-prep/IMPL_EXECUTOR_1_FIX1_RECHECK.md`（実行器の修正版の再確認）、`IMPL_APP_1_REVIEW.md`（第2レビュー）、`IMPL_WEBHOOK_1_REVIEW.md`（Webhook・README・V8の追加確認）。再現スクリプトは`work/codex-review-app1/probes.mjs`と`work/codex-review-webhook1/probes.mjs`。
+
+### Codexの判定の記録
+
+| 対象 | 判定 |
+| --- | --- |
+| `impl-executor-1-fix1` | 合格。IE1-01〜03クローズ、IP1-04のクローズも維持。I30〜I33は採用（I30の区切りは外部の失効時間ではない、I32は実店舗の余裕時間の検証ではない、I33は終了した案件を復活させない、の条件つき）。再提出は不要 |
+| `impl-app-1`（第2レビュー） | 正常系一件の実績は認める。合格はIA1-01・IA1-02（P2）の修正確認まで保留。I34（`node:http`）・I36〜I39は採用、I35は方針採用でIA1-01の修正が必要、I40は模擬の規則として採用。照合は17項目（Codexも19から訂正） |
+| `impl-webhook-1`とV8 | V8は実配送・署名検証・重複排除の接続確認として合格。WebhookにはIW1-01（P2）の修正が必要。中継経由の120件/分は中継全体で共有の上限 |
+| 小修正 | 店主の「Stopped」の説明に、起動時の回復の例外を反映する（P3）。STATUS・REVIEWの照合件数を17に揃える |
+
+### 修正の内容
+
+| 指摘 | 修正 | 場所 |
+| --- | --- | --- |
+| IA1-01 / P2：Aの支払いが回復した後にBを再判定しない | Bの依頼の判定ごとに、A側の入力（確認済みのAの元決済と、各予約の最新の確定済みの移動条件の版）を判定結果に記録する。決済の定期処理（`Runtime.tick`）が毎回、案件のないBの最新の依頼について、記録した入力と現在の入力を比べ、違えば判定し直す。同じなら何もしない（判定の行も増えない）。画面からの支払い確定・Aの条件の確定・承認の照会での確定は、これまでどおりその場でも判定する。拒否・期限切れの後の同じ依頼は再提案しない（I36） | `src/app/cases.ts`の`candidateInputs`・`reevaluateInTx`・`reevaluateWorlds`、`src/server/runtime.ts` |
+| IA1-02 / P2：キャンセル戻り画面が未請求を断定 | `/paypal/cancel`は「You left PayPal checkout. Return to your FlexSlot screen to check the payment status…」、`/paypal/return`も状態を断定しない文に変更。どちらもサーバーの状態は変えない（変更前から変えていない）。期限切れの拒否の文言も「FlexSlotは与信していない」に限った | `src/web/paypal-return.ts`（新規）、`src/web/main.tsx`、`src/web/api.ts` |
+| IW1-01 / P2：署名検証の待ちが決済の監視・回復を止める | `Runtime`を二つのループに分けた。決済のループ（`tick`：キュー、提案の期限、承認の照会、候補の再判定）とWebhookのループ（`webhookTick`：検証と利用）は、それぞれ自分のタイマーと重複実行の防止を持ち、互いを待たない。検証済みのイベントは一件ごとにすぐ使う（バッチの終了を待たない）。署名成功の前にイベントを使わない、HOLDの操作を起こさない、の条件は変えていない | `src/server/runtime.ts`、`src/app/webhooks.ts` |
+| 小修正（P3） | 店主の「Stopped」の説明を「キューは触れない。例外はサーバーの再起動で、回復が同じ要求で一度PayPalに照会し、PayPalが既に決めた支払いを完了・取消することがある。新しい支払い・返金は始めない」に変更。HOLD解除の機能は追加していない | `src/web/owner.tsx` |
+| 照合件数 | STATUS・REVIEWの「19項目」（Claudeの記載）を17項目に訂正した。全項目PASSという結果は変わらない | STATUS.md、REVIEW.md |
+
+### 実行したコマンドと結果
+
+| コマンド | 終了コード | 結果 |
+| --- | --- | --- |
+| `npm run check` | 0 | 型チェック（サーバーと画面）成功、25ファイル・334件成功（326件と追加の8件） |
+| 変異の確認（一時的に修正を1つずつ戻して`tests/app-review2-fixes.test.ts`を実行し、毎回元に戻した） | 1（意図した失敗） | 5種すべて検出：決済のループで再判定しない（2件失敗）、入力の比較なしに毎回再判定する（1件）、キャンセル画面が未請求を断定する（1件）、決済のループが検証を待つ（1件）、検証済みのイベントをバッチの後にだけ使う（1件） |
+| `pwsh -NoProfile -File tools/render-docs.ps1`と`-Check` | 0 | コミット直前に実行。結果は報告メッセージに記載 |
+
+### 試験（`tests/app-review2-fixes.test.ts`、模擬だけ）
+
+| 観点 | 確認内容 |
+| --- | --- |
+| IA1-01（キュー） | Bの依頼とAの条件の後、Aの注文の売上確定の応答を失う（画面の呼び出しでは未確定）。キューが回復してAが支払い済みになると、同じ処理で案件が1件だけでき、その後の処理で案件も判定の行も増えない |
+| IA1-01（再起動） | 同じ状態から61秒後に新しい`Runtime`で起動時の回復と1回の処理を行うと、案件が1件だけでき、次の処理でも増えない |
+| I36の維持 | 拒否した案は再判定で再提案されない。拒否の後にBが新しく確定した依頼は、従来どおり判定される |
+| 再判定の抑止 | 判定できないままの依頼は、処理のたびに判定し直さない。Aの条件が変わったときだけ一度判定し直す |
+| IA1-02 | 戻りページの文は、どちらも請求・返金・支払い済み・未請求を述べず、FlexSlotの画面へ案内する |
+| IW1-01 | Codexの再現と同じ条件（Bの支払い期限の10分後にBが承認、無関係の通知20件、検証APIが応答しない）で、検証が止まったままでも決済のループが一回で振替を完了（与信のPOSTは1回）。止まっているWebhookのループは重ねて走らない。解放後に20件とも検証される。2件目の検証が止まっていても1件目のイベントはすぐ使われる。対照例（検証の滞留なし）も完了 |
+
+既存の試験の変更：`tests/app-helpers.ts`の`ticks()`と`tests/webhooks.test.ts`は、Webhookのループと決済のループを順に呼ぶようにした（以前は一つの`tick`で両方を行っていた）。試験の意図は変えていない。
+
+### 未実施の範囲
+
+- Sandboxでの障害回復の確認（capture・refundの応答喪失、E7前後の停止、E-V・E-Rの画面からの実行）。Codexの優先順の次の項目。
+- HOLD解除、初見の人の操作、実機のスマートフォン、別PCでの起動。
 
 ## Claude Codeの確認（2026-11-03、第1区切り）
 
@@ -620,9 +669,10 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | 11-05 Claude | 実行器（模擬） | `npm run check`、変異の確認、`render-docs.ps1 -Check` | 終了コード0、16ファイル・257件成功。変異7種をすべて検出。詳細は「実行器・送信待ちキュー・回復処理」 |
 | 11-05 Claude | 実行器の修正（模擬） | `npm run check`、変異の確認、`render-docs.ps1 -Check` | 終了コード0、17ファイル・271件成功。変異8種をすべて検出。詳細は「実行器レビューへの対応」 |
 | 11-05 Claude | AI・画面・セッション（模擬） | `npm run check`、`npx vite build` | 終了コード0、22ファイル・312件成功。詳細は「AIアダプター・三画面・セッション」 |
-| 11-05 Claude＋本人 | 実接続（画面から一件） | Sandbox＋Vertexのワールドで三画面を操作（PayPalの承認は本人）、`node scripts/verify/app-reconcile.ts` | 案件COMPLETED、DBとSandboxが19項目で一致、終了コード0 |
+| 11-05 Claude＋本人 | 実接続（画面から一件） | Sandbox＋Vertexのワールドで三画面を操作（PayPalの承認は本人）、`node scripts/verify/app-reconcile.ts` | 案件COMPLETED、DBとSandboxが17項目で一致、終了コード0 |
 | 11-05 Claude | README・別環境での起動 | 別フォルダへ`git clone`、`npm ci`、`npm run check`、`npm run build`、`.env`なしで起動、HTTPで一件 | すべて終了コード0、312件成功、模擬だけが選べ、一件がCOMPLETED。詳細は「英語のREADMEとWebhookの受信箱」 |
 | 11-05 Claude | Webhookの受信箱（模擬） | `npm run check`、変異の確認 | 終了コード0、23ファイル・322件成功。変異4種をすべて検出 |
+| 11-06 Claude | 第2レビューの指摘の修正（模擬） | `npm run check`、変異の確認 | 終了コード0、25ファイル・334件成功。変異5種をすべて検出 |
 | 11-06 Claude＋本人 | V8（実配送） | 限定したQuick Tunnel、Sandboxで一件、`v8-webhook.ts report`・`tamper`、`app-reconcile.ts` | すべて終了コード0。実際の通知6件がVERIFIED・各1回処理、改ざんはINVALID、再配送は重複として扱われた |
 | ─ | アプリテスト | Playwrightの画面試験・実機・初見の人の操作・Sandboxでの障害の再現 | 未実行 |
 

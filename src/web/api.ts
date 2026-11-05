@@ -86,7 +86,7 @@ export function explain(e: unknown): string {
     SWAP_DONE: 'The swap in this demo world is finished.',
     QUESTIONS_UNANSWERED: 'Please answer the questions, or change the times in the form yourself, before confirming.',
     FORM_INVALID: 'Please check the times: they must be inside business hours and in the coming weeks.',
-    PAYMENT_EXPIRED: 'The payment window expired. Nothing was charged.',
+    PAYMENT_EXPIRED: 'The payment window has expired, so FlexSlot did not authorize this payment. The status is shown on this screen.',
     MODE_MISMATCH: 'This action is not available in this payment mode.',
     PAYMENT_MODE_UNAVAILABLE: 'The payment service for this demo world is not available on this server.',
     ALREADY_PAID: 'This booking is already paid.',
