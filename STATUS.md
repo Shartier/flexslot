@@ -493,6 +493,50 @@ Codexのレビュー本文は、Codexの資料`outputs/codex-prep/IMPL_EXECUTOR_
 - V8（Sandboxからの実配送と、PayPalの署名検証APIでのSUCCESS）。サーバーは`127.0.0.1`だけで待ち受けるため、外部から届くHTTPSの経路が必要。受信先・公開する範囲（`/webhooks/paypal`だけ）・時間帯・停止方法を示して本人確認を受けてから行う。
 - Sandboxの開発者画面でのWebhookの登録と、`PAYPAL_WEBHOOK_ID`の設定（本人が行う）。
 
+## V8の実施計画（本人確認待ち、Claude Code、2026-11-05作成）
+
+目的：Sandboxの実際の取引で発生したWebhookが、PayPalからFlexSlotへ実際に届き、署名検証APIでSUCCESSになり、1回だけ処理されることを確かめる（DESIGN 12のV8、12.1、AC07）。まだ何も公開していない。cloudflaredも未導入（2026-11-05に確認）。
+
+### 公開する範囲（承認を求める内容）
+
+| 項目 | 内容 |
+| --- | --- |
+| 受信経路 | Cloudflare Quick Tunnel（アカウント不要）。起動のたびに変わるランダムなURL `https://<ランダム>.trycloudflare.com` |
+| 外から届く先 | このPCで動かす中継（`127.0.0.1:8790`）だけ。中継は`POST /webhooks/paypal`（本文64KBまで）だけを`127.0.0.1:8787`のFlexSlotへ渡し、それ以外の経路・メソッドはすべて404。三画面・API・静的ファイルは外から見えない |
+| 時間帯 | 本人が指定する30〜60分の1回。開始・終了の時刻を記録して報告する |
+| 外へ出る情報 | 中継の応答（200・404・413・429とJSONの短い本文）だけ。DB・ログ・画面は出ない |
+| 第三者 | 通信はCloudflareを経由する（TLSはCloudflareで終わる）。中身はSandboxの架空の取引データ |
+| URLを知った第三者の送信 | 保存はされるが、署名検証でINVALIDになり使われない。1分120件・64KBまで |
+| 停止方法 | cloudflaredと中継のプロセスを止める。PayPalの開発者画面でWebhookを削除する。`.env`の`PAYPAL_WEBHOOK_ID`を空に戻す |
+| 導入するもの | cloudflared（wingetの`Cloudflare.cloudflared` 2026.10.7、発行元Cloudflare、Apache-2.0）。ダウンロードと導入にも本人の許可が要る（本人が導入してもよい） |
+
+代わりの案：ngrok（アカウントが要る）、公開デモ用のVM（DESIGN 11章。費用・維持の承認が別に要る）。V8だけなら、上の案が最も範囲が小さい。
+
+### 手順
+
+| 段階 | 担当 | 内容 |
+| --- | --- | --- |
+| 0. 準備（公開なし） | Claude | 中継`scripts/verify/v8-relay.ts`と記録用の`scripts/verify/v8-webhook.ts`（配送・検証・イベント・起こした操作を匿名化して表示）を作り、模擬で試験してコミットする |
+| 1. 導入 | 本人の許可の後 | cloudflaredを導入する |
+| 2. 窓の開始 | Claude | サーバー、中継、`cloudflared tunnel --url http://127.0.0.1:8790`を起動し、URLを本人へ渡す。外から`GET /`と`GET /w/...`が404、`POST /webhooks/paypal`だけが届くことを確かめる |
+| 3. 登録 | 本人 | PayPal Developer（Sandbox）の対象のRESTアプリ → Webhooks → Add Webhookで、URL`https://<…>.trycloudflare.com/webhooks/paypal`、イベント`CHECKOUT.ORDER.APPROVED`、`PAYMENT.AUTHORIZATION.CREATED`、`PAYMENT.AUTHORIZATION.VOIDED`、`PAYMENT.CAPTURE.COMPLETED`、`PAYMENT.CAPTURE.PENDING`、`PAYMENT.CAPTURE.DENIED`、`PAYMENT.CAPTURE.REFUNDED`を登録する。表示されたWebhook IDを`.env`の`PAYPAL_WEBHOOK_ID`に記入する（値はチャットに貼らない）。Claudeがサーバーを再起動して読み込む |
+| 4. 取引 | Claude＋本人 | 画面からSandbox＋Vertexで新しい一件を通す（buyerの承認2回は本人）。注文の承認・与信・売上確定・返金のイベントが発生する |
+| 5. 配送の確認 | Claude | 各イベントが`webhook_deliveries`でVERIFIED、`webhook_events`に1回ずつ登録・処理済みであること、署名検証APIがSUCCESSを返したこと。`app-reconcile.ts`でDBとSandboxの一致も確かめる |
+| 6. 改ざんと再配送 | Claude＋本人 | 届いた正規の配信1件の本文を書き換えた、同じevent_idのコピーをローカルから送り、INVALIDで正規の処理を妨げないことを確かめる。続けて本人が開発者画面でそのイベントを「Resend」し、正規の再配送がVERIFIEDでも二重に処理されないことを確かめる |
+| 7. 窓の終了 | Claude＋本人 | トンネルと中継を止める（Claude）。Webhookを削除し、`PAYPAL_WEBHOOK_ID`を空に戻す（本人）。外からURLが届かないことを確かめ、STATUSに記録する |
+
+### 合格の証拠と、合格にしないもの
+
+- 合格の証拠：開発者画面の配送履歴（本人の確認）と、`webhook_deliveries`・`webhook_events`の行（VERIFIED・処理済み）が同じ取引で一致すること。改ざんしたコピーがINVALIDで、正規の処理を妨げないこと。再配送が二重に処理されないこと（DESIGN 12.1）。
+- 合格にしないもの：RESTの照会だけでの成功、Webhook Simulatorだけのイベント、模擬の署名検証。
+
+### 限界（あらかじめ記録する）
+
+- 「同じevent_idの不正な配信が先に届く」順序は、実際の配送のevent_idを前もって知れないため、実配送では作れない。改ざんしたコピーは正規の配信の後に送る。不正な配信が先に届く順序は、模擬の試験（`tests/webhooks.test.ts`）とDBのトリガーで確かめた範囲に留まる。
+- Sandboxの配送は遅れることがある。届かなければ開発者画面の「Resend」を使い、その旨を記録する。
+- Quick TunnelのURLは起動のたびに変わるため、窓ごとに登録し直す。Quick Tunnelは試験用で、稼働の保証はない。
+- 日程の目安はSPEC 12の11月7日。
+
 ## Claude Codeの確認（2026-11-03、第1区切り）
 
 | 項目 | 確認結果 |
@@ -590,7 +634,7 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 2. DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ`impl-executor-1`）。Codexのレビューの指摘IE1-01〜03を修正した（タグ`impl-executor-1-fix1`）。Codexの再確認（REVIEWの最後の節）を待つ。
 3. 修正版を`impl/app`へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ`impl-app-1`）。第2レビュー（REVIEWの最後の節）を待つ。
 4. 英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。
-5. 次は、第2レビューの指摘への対応、V8（受信経路の本人確認後）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。
+5. 次は、第2レビューの指摘への対応、V8（計画は「V8の実施計画」の節、本人確認待ち）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。
 
 11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="511106a4c1300b3c8be14d17a31e0e5c51688447101e420af6b9b3a1f292866a"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="e606c22dca06c8abdad026c7366f376df7b947d1f12c7d24887363cd3b824a59"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1553,6 +1553,116 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>V8（Sandboxからの実配送と、PayPalの署名検証APIでのSUCCESS）。サーバーは<code>127.0.0.1</code>だけで待ち受けるため、外部から届くHTTPSの経路が必要。受信先・公開する範囲（<code>/webhooks/paypal</code>だけ）・時間帯・停止方法を示して本人確認を受けてから行う。</li>
 <li>Sandboxの開発者画面でのWebhookの登録と、<code>PAYPAL_WEBHOOK_ID</code>の設定（本人が行う）。</li>
 </ul>
+<h2 id="v8claude-code2026-11-05">V8の実施計画（本人確認待ち、Claude Code、2026-11-05作成）</h2>
+<p>目的：Sandboxの実際の取引で発生したWebhookが、PayPalからFlexSlotへ実際に届き、署名検証APIでSUCCESSになり、1回だけ処理されることを確かめる（DESIGN 12のV8、12.1、AC07）。まだ何も公開していない。cloudflaredも未導入（2026-11-05に確認）。</p>
+<h3 id="section-17">公開する範囲（承認を求める内容）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>受信経路</td>
+<td>Cloudflare Quick Tunnel（アカウント不要）。起動のたびに変わるランダムなURL <code>https://&lt;ランダム&gt;.trycloudflare.com</code></td>
+</tr>
+<tr>
+<td>外から届く先</td>
+<td>このPCで動かす中継（<code>127.0.0.1:8790</code>）だけ。中継は<code>POST /webhooks/paypal</code>（本文64KBまで）だけを<code>127.0.0.1:8787</code>のFlexSlotへ渡し、それ以外の経路・メソッドはすべて404。三画面・API・静的ファイルは外から見えない</td>
+</tr>
+<tr>
+<td>時間帯</td>
+<td>本人が指定する30〜60分の1回。開始・終了の時刻を記録して報告する</td>
+</tr>
+<tr>
+<td>外へ出る情報</td>
+<td>中継の応答（200・404・413・429とJSONの短い本文）だけ。DB・ログ・画面は出ない</td>
+</tr>
+<tr>
+<td>第三者</td>
+<td>通信はCloudflareを経由する（TLSはCloudflareで終わる）。中身はSandboxの架空の取引データ</td>
+</tr>
+<tr>
+<td>URLを知った第三者の送信</td>
+<td>保存はされるが、署名検証でINVALIDになり使われない。1分120件・64KBまで</td>
+</tr>
+<tr>
+<td>停止方法</td>
+<td>cloudflaredと中継のプロセスを止める。PayPalの開発者画面でWebhookを削除する。<code>.env</code>の<code>PAYPAL_WEBHOOK_ID</code>を空に戻す</td>
+</tr>
+<tr>
+<td>導入するもの</td>
+<td>cloudflared（wingetの<code>Cloudflare.cloudflared</code> 2026.10.7、発行元Cloudflare、Apache-2.0）。ダウンロードと導入にも本人の許可が要る（本人が導入してもよい）</td>
+</tr>
+</tbody>
+</table></div>
+<p>代わりの案：ngrok（アカウントが要る）、公開デモ用のVM（DESIGN 11章。費用・維持の承認が別に要る）。V8だけなら、上の案が最も範囲が小さい。</p>
+<h3 id="section-18">手順</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>段階</th>
+<th>担当</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0. 準備（公開なし）</td>
+<td>Claude</td>
+<td>中継<code>scripts/verify/v8-relay.ts</code>と記録用の<code>scripts/verify/v8-webhook.ts</code>（配送・検証・イベント・起こした操作を匿名化して表示）を作り、模擬で試験してコミットする</td>
+</tr>
+<tr>
+<td>1. 導入</td>
+<td>本人の許可の後</td>
+<td>cloudflaredを導入する</td>
+</tr>
+<tr>
+<td>2. 窓の開始</td>
+<td>Claude</td>
+<td>サーバー、中継、<code>cloudflared tunnel --url http://127.0.0.1:8790</code>を起動し、URLを本人へ渡す。外から<code>GET /</code>と<code>GET /w/...</code>が404、<code>POST /webhooks/paypal</code>だけが届くことを確かめる</td>
+</tr>
+<tr>
+<td>3. 登録</td>
+<td>本人</td>
+<td>PayPal Developer（Sandbox）の対象のRESTアプリ → Webhooks → Add Webhookで、URL<code>https://&lt;…&gt;.trycloudflare.com/webhooks/paypal</code>、イベント<code>CHECKOUT.ORDER.APPROVED</code>、<code>PAYMENT.AUTHORIZATION.CREATED</code>、<code>PAYMENT.AUTHORIZATION.VOIDED</code>、<code>PAYMENT.CAPTURE.COMPLETED</code>、<code>PAYMENT.CAPTURE.PENDING</code>、<code>PAYMENT.CAPTURE.DENIED</code>、<code>PAYMENT.CAPTURE.REFUNDED</code>を登録する。表示されたWebhook IDを<code>.env</code>の<code>PAYPAL_WEBHOOK_ID</code>に記入する（値はチャットに貼らない）。Claudeがサーバーを再起動して読み込む</td>
+</tr>
+<tr>
+<td>4. 取引</td>
+<td>Claude＋本人</td>
+<td>画面からSandbox＋Vertexで新しい一件を通す（buyerの承認2回は本人）。注文の承認・与信・売上確定・返金のイベントが発生する</td>
+</tr>
+<tr>
+<td>5. 配送の確認</td>
+<td>Claude</td>
+<td>各イベントが<code>webhook_deliveries</code>でVERIFIED、<code>webhook_events</code>に1回ずつ登録・処理済みであること、署名検証APIがSUCCESSを返したこと。<code>app-reconcile.ts</code>でDBとSandboxの一致も確かめる</td>
+</tr>
+<tr>
+<td>6. 改ざんと再配送</td>
+<td>Claude＋本人</td>
+<td>届いた正規の配信1件の本文を書き換えた、同じevent_idのコピーをローカルから送り、INVALIDで正規の処理を妨げないことを確かめる。続けて本人が開発者画面でそのイベントを「Resend」し、正規の再配送がVERIFIEDでも二重に処理されないことを確かめる</td>
+</tr>
+<tr>
+<td>7. 窓の終了</td>
+<td>Claude＋本人</td>
+<td>トンネルと中継を止める（Claude）。Webhookを削除し、<code>PAYPAL_WEBHOOK_ID</code>を空に戻す（本人）。外からURLが届かないことを確かめ、STATUSに記録する</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-19">合格の証拠と、合格にしないもの</h3>
+<ul>
+<li>合格の証拠：開発者画面の配送履歴（本人の確認）と、<code>webhook_deliveries</code>・<code>webhook_events</code>の行（VERIFIED・処理済み）が同じ取引で一致すること。改ざんしたコピーがINVALIDで、正規の処理を妨げないこと。再配送が二重に処理されないこと（DESIGN 12.1）。</li>
+<li>合格にしないもの：RESTの照会だけでの成功、Webhook Simulatorだけのイベント、模擬の署名検証。</li>
+</ul>
+<h3 id="section-20">限界（あらかじめ記録する）</h3>
+<ul>
+<li>「同じevent_idの不正な配信が先に届く」順序は、実際の配送のevent_idを前もって知れないため、実配送では作れない。改ざんしたコピーは正規の配信の後に送る。不正な配信が先に届く順序は、模擬の試験（<code>tests/webhooks.test.ts</code>）とDBのトリガーで確かめた範囲に留まる。</li>
+<li>Sandboxの配送は遅れることがある。届かなければ開発者画面の「Resend」を使い、その旨を記録する。</li>
+<li>Quick TunnelのURLは起動のたびに変わるため、窓ごとに登録し直す。Quick Tunnelは試験用で、稼働の保証はない。</li>
+<li>日程の目安はSPEC 12の11月7日。</li>
+</ul>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1662,7 +1772,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <p>以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。</p>
 <p>Gitのuser.name/user.emailは未登録だったため、初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定した。ユーザーのローカル/グローバルGit設定は変更していない。</p>
 <p>参照：<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a>、<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal決済</a>、<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth">Google Cloud認証</a>。</p>
-<h2 id="section-17">実行した確認とテスト</h2>
+<h2 id="section-21">実行した確認とテスト</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1819,7 +1929,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<h2 id="section-18">未確認事項</h2>
+<h2 id="section-22">未確認事項</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1906,15 +2016,15 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかと、匿名化した照合結果だけを確認する。</li>
 <li><strong>今後も本人が行うこと</strong>：Sandboxの買い手アカウントでの承認（ログインとパスワードの入力）。V8の受信経路の公開の承認。</li>
 </ol>
-<h2 id="section-19">次に行う作業</h2>
+<h2 id="section-23">次に行う作業</h2>
 <ol>
 <li>Codexによる修正版の再確認は2026-11-04に完了した（「Codexの再確認の結果」の節）。</li>
 <li>DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を修正した（タグ<code>impl-executor-1-fix1</code>）。Codexの再確認（REVIEWの最後の節）を待つ。</li>
 <li>修正版を<code>impl/app</code>へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ<code>impl-app-1</code>）。第2レビュー（REVIEWの最後の節）を待つ。</li>
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
-<li>次は、第2レビューの指摘への対応、V8（受信経路の本人確認後）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。</li>
+<li>次は、第2レビューの指摘への対応、V8（計画は「V8の実施計画」の節、本人確認待ち）、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
-<h2 id="section-20">今後の検証記録の書式</h2>
+<h2 id="section-24">今後の検証記録の書式</h2>
 <p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
