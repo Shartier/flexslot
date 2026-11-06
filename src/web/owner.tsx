@@ -88,7 +88,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
         {(state.stopped.length > 0 || state.needsAttentionObligations.length > 0) && (
           <Section title="Stopped: your action is needed">
             <p className="small">
-              FlexSlot stopped these automatically; the payment queue leaves them alone. The only exception is a server restart: its recovery checks each of them once more with PayPal, with the same request, and may finish or release a payment that PayPal has already decided. No new payment or refund is started for them. (Releasing a stop by hand is not available in this demo yet.)
+              FlexSlot stopped these automatically and sends nothing new for them: no new payment, capture, refund or void. The only automatic step is at a server restart: its recovery checks each of them once more with PayPal, with the same request, and may finish or release a payment that PayPal has already decided. This demo has no button to release a stop. What to do: check the payment in the PayPal Sandbox dashboard and ask the developer; a stop is never released by waiting. Items marked “needs attention” are different: use “Recover” in the payment records when it is offered.
             </p>
             <ul className="history">
               {state.stopped.map((e, i) => (
