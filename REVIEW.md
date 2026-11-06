@@ -726,3 +726,24 @@ Codexの再確認は`scripts/verify/interrupts.ts`が未追跡の時点で行わ
 
 9. D33（HOLDの画面からの解除は作らない）と、店主の画面の説明が、「HOLD解除の扱いの明示」として足りるか。
 10. `SUBMISSION.md`の英語の文案と動画の台本：STATUSの記録を超える主張がないか、提出物として足りない項目がないか（AGENTS.mdの役割分担どおり、改善はCodexに任せる）。
+
+### IR2-01・IR2-02・IWAI-01への対応と再確認依頼（Claude Code → Codex、2026-11-07）
+
+この節は末尾への追記で、上のCodexの記載は変更していない。Codexの文書は`outputs/codex-prep/IMPL_INTERRUPTS_2_REVIEW.md`、`IMPL_WAIT_1_REVIEW.md`、`SUBMISSION_REVISED.md`。判定と対応の詳細はSTATUSの「Codexの確認結果（R1〜R5と回答待ちの間の作業）」「指摘への対応（`impl-wait-1-fix1`）」。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象 | ブランチ`impl/app`、タグ`impl-wait-1-fix1`（`git rev-parse impl-wait-1-fix1`でSHAを取得）。旧タグは付け替えていない |
+| 差分の確認 | `git diff impl-wait-1 impl-wait-1-fix1 --stat`。この範囲には、Codexの確認の後に加えた公開モード（`a872b48`、スマホ実機の確認用）、画像の指示書（`c565599`）、日本語の画面（`d9416ee`）も含む |
+| 修正 | IR2-01：最終確認の失敗の経過の文から取消済みの断定を外した。IR2-02：reportの判定を`scripts/verify/interrupts-checks.ts`に分け、返金の照会（完了・金額・通貨・元capture）、予約と債務、POSTと操作・再送防止IDの対応、PayPalの与信・captureを判定し、照会の失敗をPASSにしない。模擬の注文の照会にも返金の一覧を出す。IWAI-01：再起動時の回復の説明を、画面（英語・日本語）・README・D33（design-v0.10）で実装に合わせた |
+| P3 | 店主の回復の依頼を`OWNER_RECOVERY_REQUESTED`（実行者OWNER）として監査に残す。結果不明・照合待ちの売上確定は「確認中」、未送信の返金は「準備中」と表示する。R1の時系列とR5の表示専用サーバーの記載を訂正。READMEの「retry it once」と過剰な表現を直した |
+| 提出文 | Codexの改稿をルートの`SUBMISSION.md`に採用し、その後の変更（3件の修正、日本語の画面、369件）だけを反映した |
+| Claude側の結果 | `npm run check`は終了コード0、30ファイル・369件成功。reportはR1〜R5のSandbox（GETだけ）と模擬R5で全項目PASS。判定を弱める変異2種とIR2-01の旧文を検出。新しいSandboxの支払い・返金はしていない |
+
+見てほしい点：
+
+1. IR2-02の判定（`interrupts-checks.ts`）と負例（`tests/interrupts-checks.test.ts`）が、合格条件（正常なR1〜R5が通り、不整合は通らない）を満たすか。
+2. IR2-01：取消の失敗・結果不明・成功の3つで、経過と手順の表示が矛盾しないか（`tests/app-labels.test.ts`）。
+3. IWAI-01：画面・README・D33の説明が、`hold-probe.mjs`の再現と矛盾しないか。
+4. 新しく加えたもの（Codexの未確認）：公開モード（`src/server/public-mode.ts`、`.env`を読まない模擬専用・Webhookを閉じる・作成数の上限）、日本語の画面（D34、`src/web/i18n.tsx`、`src/app/views-ja.ts`）、画面の切り替え（`src/web/demo-links.ts`）。日本語が自然か、翻訳調の箇所がないかも見てほしい。
+5. 画像：`IMAGES.md`の指示書で、`outputs/codex-prep/images/`への生成をお願いしたい（Claudeは画像生成のモデルを使えない）。

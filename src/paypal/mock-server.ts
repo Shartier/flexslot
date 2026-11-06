@@ -585,6 +585,9 @@ export class MockPayPalServer {
     const payments: Record<string, unknown> = {};
     if (o.authorizationIds.length) payments.authorizations = o.authorizationIds.map((id) => this.#renderAuth(this.#auths.get(id)!));
     if (o.captureIds.length) payments.captures = o.captureIds.map((id) => this.#renderCapture(this.#captures.get(id)!));
+    // Like the Sandbox (observed 2026-11-07), the order lists the refunds of its captures.
+    const refundIds = o.captureIds.flatMap((id) => this.#captures.get(id)!.refundIds);
+    if (refundIds.length) payments.refunds = refundIds.map((id) => this.#renderRefund(this.#refunds.get(id)!));
     return {
       id: o.id,
       status: o.status,

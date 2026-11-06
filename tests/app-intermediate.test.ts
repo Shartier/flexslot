@@ -93,7 +93,7 @@ describe('screens at the R1 stop points (capture answer lost, stops around E7, r
     expect((await w.b.post('cases/mock-approve', { caseId })).status).toBe(200);
     await h.app.idle();
     let v = await screens(w);
-    expect(v.b).toMatchObject({ status: 'PAYMENT_UNKNOWN', label: 'Checking the payment result', bPayment: 'Capturing the payment', bookings: 'Not changed' });
+    expect(v.b).toMatchObject({ status: 'PAYMENT_UNKNOWN', label: 'Checking the payment result', bPayment: 'Checking the payment result with PayPal', bookings: 'Not changed' });
     expect(v.owner.label).toBe('Checking the payment result');
     expect(v.a.label).toBe('Checking the payment result');
     notCompleted(v, origin);
@@ -113,7 +113,7 @@ describe('screens at the R1 stop points (capture answer lost, stops around E7, r
     expect(st.s.fired).toEqual(['before-e7', 'after-e7']);
     v = await screens(w);
     expect(v.b).toMatchObject({ status: 'BOOKING_COMMITTED', label: 'Booking changed · compensation refund pending', bookings: 'Changed: the existing booking moved and the new booking is confirmed' });
-    expect(v.a.label).toBe('Booking changed · compensation refund pending');
+    expect(v.a).toMatchObject({ label: 'Booking changed · compensation refund pending', aRefund: 'Preparing the refund' });
     expect(v.aBookingTime).toBe(`${t.moveDay} 10:00–11:00`);
     notCompleted(v, origin);
 
@@ -148,7 +148,7 @@ describe('screens at the R2 stop points (stopped before reconciliation, refund r
     await h.app.idle();
     expect(st.s.fired).toEqual(['after-result-saved']);
     let v = await screens(w);
-    expect(v.b).toMatchObject({ status: 'RECONCILING', label: 'Checking the payment result', bPayment: 'Capturing the payment', bookings: 'Not changed' });
+    expect(v.b).toMatchObject({ status: 'RECONCILING', label: 'Checking the payment result', bPayment: 'Checking the payment result with PayPal', bookings: 'Not changed' });
     notCompleted(v, origin);
 
     // 2. Restart: reconciled by a query, E7, then the refund is refused (422, not processed).
@@ -164,6 +164,10 @@ describe('screens at the R2 stop points (stopped before reconciliation, refund r
     const o = await w.owner.state();
     const ob = o.cases[0].obligations.find((x: { kind: string }) => x.kind === 'A_COMPENSATION_REFUND');
     expect((await w.owner.post('obligations/retry', { obligationId: ob.id })).status).toBe(200);
+    // Codex P3: the owner's request is in the audit log as the owner's, besides the executor's OBLIGATION_RETRY.
+    expect(
+      h.db.prepare("SELECT actor, json_extract(detail_json, '$.accepted') AS accepted FROM audit_log WHERE action = 'OWNER_RECOVERY_REQUESTED'").all().map((r) => ({ ...r })),
+    ).toEqual([{ actor: 'OWNER', accepted: 1 }]);
     await h.ticks(5);
     v = await screens(w);
     for (const r of [v.b, v.a, v.owner]) expect(r).toMatchObject({ status: 'COMPLETED', label: 'Swap completed', aRefund: 'Refunded' });

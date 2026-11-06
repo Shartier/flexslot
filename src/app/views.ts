@@ -142,6 +142,8 @@ const STEP_EN: typeof STEP_JA = {
   authorizing: 'Authorizing the payment',
   waitingBuyer: 'Waiting for approval on PayPal',
   capturing: 'Capturing the payment',
+  checkingPayment: 'Checking the payment result with PayPal',
+  preparingRefund: 'Preparing the refund',
   authorized: 'Authorized (not charged yet)',
   capturedChecking: 'Payment captured, checking it',
   pending: 'PayPal reports it as pending; checking again',
@@ -167,9 +169,14 @@ function moneyStep(o: ReturnType<typeof obligations>[number] | undefined, lang: 
       if (op?.op_kind === 'ORDER_AUTHORIZE' && op.status !== 'NOT_ACCEPTED' && op.status !== 'FAILED') return { state: 'WORKING', text: t.authorizing };
       return { state: 'WAITING_BUYER', text: t.waitingBuyer };
     }
+    // A capture whose answer is unknown or not reconciled yet is being checked, not sent again.
+    if (att.status === 'AUTHORIZED' && op?.op_kind === 'AUTH_CAPTURE' && (op.status === 'UNKNOWN' || (op.status === 'SUCCEEDED' && op.reconcile_status === 'AWAITING')))
+      return { state: 'WORKING', text: t.checkingPayment };
     if (att.status === 'AUTHORIZED') return { state: 'WORKING', text: op?.op_kind === 'AUTH_CAPTURE' ? t.capturing : t.authorized };
     if (att.status === 'CAPTURED') return { state: 'WORKING', text: t.capturedChecking };
   }
+  // A refund that is recorded but not sent yet (PREPARED) is being prepared, not in progress at PayPal.
+  if (o.kind !== 'B_AUTH_VOID' && (!op || op.status === 'PREPARED')) return { state: 'WORKING', text: t.preparingRefund };
   if (op?.status === 'PENDING') return { state: 'WORKING', text: t.pending };
   if (op?.status === 'UNKNOWN' || op?.status === 'SENDING') return { state: 'WORKING', text: t.checking };
   if (op?.status === 'SUCCEEDED' && op.reconcile_status === 'AWAITING') return { state: 'WORKING', text: t.checking };
@@ -194,7 +201,8 @@ const CUSTOMER_EVENTS: Record<string, string> = {
   OFFER_EXPIRED: 'The proposal expired',
   PAYMENT_STARTED: 'Payment started',
   PAYMENT_EXPIRED: 'The payment window expired (nothing was charged)',
-  PRE_CAPTURE_CHECK_FAILED: 'The final check before charging failed, so the payment is cancelled',
+  // IR2-01: recorded before the release is requested; it must not claim the release (see the release step).
+  PRE_CAPTURE_CHECK_FAILED: 'The final check failed. FlexSlot will not capture this payment; see the authorization release status',
   BOOKING_COMMITTED: 'Bookings changed',
 };
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="b59172fa5ebc3ac74e32dc815ad19eae13ade1af615e302f5ae8658206ccc7f0"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="5a28a2abcd2e3aa58b805bd73b285859b79278f9760eb82aac82af5f9a2906a5"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,9 +8,9 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
-<p>更新日：2026-11-07（日本時間）/ 文書版：status-v0.13。</p>
+<p>更新日：2026-11-07（日本時間）/ 文書版：status-v0.14。</p>
 <h2 id="section">現在地</h2>
-<p>DESIGN 14章の1〜5を実装し、三画面からPayPal Sandbox＋Gemini on Vertex AIで一件の振替を最後まで通し、Webhookの実配送（V8）も確かめた段階。実行器の修正版<code>impl-executor-1-fix1</code>はCodexの再確認で合格（IE1-01〜03クローズ）。第2レビューはCodexの指摘IA1-01・IA1-02・IW1-01（いずれもP2）を修正し、タグ<code>impl-app-1-fix1</code>がCodexの再確認で合格した（2026-11-07、「Codexの再確認の結果（<code>impl-app-1-fix1</code>）」の節）。その結果を待たずに、Sandboxでお金が動いた後の中断と回復（R1〜R4）を確かめ、すべて期待どおりに終わった（「Sandboxでの中断・障害回復の確認」の節）。状況を「設計の再確認」と「実装・実接続」に分けて記す。</p>
+<p>DESIGN 14章の1〜5を実装し、三画面からPayPal Sandbox＋Gemini on Vertex AIで一件の振替を最後まで通し、Webhookの実配送（V8）も確かめた段階。実行器の修正版<code>impl-executor-1-fix1</code>はCodexの再確認で合格（IE1-01〜03クローズ）。第2レビューはCodexの指摘IA1-01・IA1-02・IW1-01（いずれもP2）を修正し、タグ<code>impl-app-1-fix1</code>がCodexの再確認で合格した（2026-11-07、「Codexの再確認の結果（<code>impl-app-1-fix1</code>）」の節）。その結果を待たずに、Sandboxでお金が動いた後の中断と回復（R1〜R4）を確かめ、すべて期待どおりに終わった（「Sandboxでの中断・障害回復の確認」の節）。その後、R5（停止中の画面）、スマホ実機の確認、日本語の画面を加え、Codexの指摘IR2-01・IR2-02・IWAI-01（P2）を<code>impl-wait-1-fix1</code>で修正した（Codexの再確認待ち）。状況を「設計の再確認」と「実装・実接続」に分けて記す。</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1995,7 +1995,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>R1</td>
 <td><code>wf7a3518d56d1</code></td>
-<td>Bの売上確定の応答を喪失 → E7の前で停止 → 再起動で売上確定を照会で同定（POSTは1回） → E7の後で停止 → 再起動 → Aの補償返金の応答を喪失 → 同じ再送防止IDで再送し、PayPalは元の返金を返した（200）</td>
+<td>Bの売上確定の応答を喪失 → 同じプロセスの中で照会により売上確定を同定（POSTは1回、照合の完了は00:16:53.139） → 直後にE7の前で停止（00:16:53.158） → 再起動（00:17:54.167） → E7の後で停止 → 再起動 → Aの補償返金の応答を喪失 → 同じ再送防止IDで再送し、PayPalは元の返金を返した（200）</td>
 <td>COMPLETED</td>
 <td>売上確定の操作は1つ（<code>sends=1</code>、照合済み）。補償返金は1つの操作で<code>sends=2</code>（同じID）、成功。Bの予約1件、補償の付与1件、Aの予約は移動</td>
 <td>Bの与信はCAPTURED、captureはCOMPLETED（各1件）。Aの元captureはPARTIALLY_REFUNDED、返金はCOMPLETED 10.00 USDの1件（返金済みの合計10.00）</td>
@@ -2149,7 +2149,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>画面の見方</td>
-<td>停止のたびに<code>view-server.ts</code>（<code>127.0.0.1:8788</code>、<code>data/interrupts</code>）を起動し、内蔵ブラウザ（PC幅）で三画面を開いて閉じた。このサーバーには定期処理・起動時の回復・実行器・PayPalの接続がなく、画面のサインインとCSRFの更新以外のPOSTを拒否する（模擬で、支払いのPOSTが409 <code>VIEW_ONLY</code>になることを確認）。停止1〜3では、画面を見た後・再開の直前に、案件の状態（停止3では返金の操作が未送信のまま）が停止時と同じであることを確かめた。停止4の後は確かめていないが、返金の再送は再開したプロセスの記録にある1回だけ</td>
+<td>停止のたびに<code>view-server.ts</code>（<code>127.0.0.1:8788</code>、<code>data/interrupts</code>）を起動し、内蔵ブラウザ（PC幅）で三画面を開いて閉じた。このサーバーには定期処理・起動時の回復・実行器・PayPalの接続がなく、画面のサインインとCSRFの更新以外のPOSTを拒否する（模擬で、支払いのPOSTが409 <code>VIEW_ONLY</code>になることを確認）。停止1〜3では、画面を見た後・再開の直前に、案件の状態（停止3では返金の操作が未送信のまま）が停止時と同じであることを確かめた。停止4の後は確かめていないが、返金の再送は再開したプロセスの記録にある1回だけ。（Codexの指摘で表現を訂正：DB全体が読み取り専用なのではない。画面のサインインでセッションと<code>SESSION_STARTED</code>の監査行は書く。予約・案件・金銭の操作などの業務状態を進めない表示専用のサーバーで、通常のサーバーや検証の実行器を同じDBで同時に動かさないことが前提）</td>
 </tr>
 <tr>
 <td>記録</td>
@@ -2296,7 +2296,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tbody>
 <tr>
 <td>HOLD解除の扱いの明示（Codexの第3レビューまでの残件）</td>
-<td>DESIGN design-v0.9のD33：このバージョンでは画面からHOLDを解除する機能を作らない。店主の画面の「Stopped」の説明を、新しい送信をしないこと、再起動時の同じ要求での照会だけが自動で動くこと、解除のボタンがないこと、PayPalの管理画面で確かめ開発者に連絡すること、待っても解除されないこと、「needs attention」は「Recover」で別、に変えた。READMEの「Status and limitations」にも記載し、R1〜R5の結果（注入した障害の区別つき）を加えた</td>
+<td>DESIGN design-v0.9のD33：このバージョンでは画面からHOLDを解除する機能を作らない。店主の画面の「Stopped」の説明を、新しい送信をしないこと、再起動時の同じ要求での照会だけが自動で動くこと、解除のボタンがないこと、PayPalの管理画面で確かめ開発者に連絡すること、待っても解除されないこと、「needs attention」は「Recover」で別、に変えた。READMEの「Status and limitations」にも記載し、R1〜R5の結果（注入した障害の区別つき）を加えた。（IWAI-01で訂正：この説明は実装と異なっていた。再起動時の回復は照会だけでなく、同じ操作を同じIDで再送し、その結果に応じた取消・返金へ進むことがある。<code>impl-wait-1-fix1</code>で画面・README・D33を直した）</td>
 <td><code>ae1b56c</code>。<code>npm run check</code>は27ファイル・338件成功（文言の試験はない）</td>
 </tr>
 <tr>
@@ -2317,6 +2317,192 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>本人の判断・作業が要るもの（未実施）：実機のスマートフォンでの操作（サーバーは127.0.0.1だけで待ち受けるため、同じLANへの公開か一時的なトンネルが要り、外部公開として本人の承認が要る）、初見の人による三画面の操作（AC01）、別PCでの起動、OSSライセンスの選択、公開リポジトリ・動画・Devpostの公開。</p>
+<h2 id="section-28">スマホ実機での確認（模擬モードの一時公開、本人、2026-11-07）</h2>
+<p>本人の承認を受け、模擬モードだけのサーバーを一時的にHTTPSトンネルで公開し、本人のスマートフォンで三画面を操作してもらった。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>方法</td>
+<td><code>a872b48</code>の公開モード（<code>FLEXSLOT_PUBLIC_ORIGIN</code>）：<code>.env</code>を読まず、PayPal SandboxとVertex AIを設定しない模擬専用。Webhookの受け口は閉じ（404）、新しいデモの作成は10件まで。サーバーは127.0.0.1だけで待ち受け、V8と同じcloudflared単体版（2026.10.3）のQuick Tunnelで中継した。データは<code>data/phone-check</code>（Git対象外）</td>
+</tr>
+<tr>
+<td>公開の時間</td>
+<td>01:35〜01:46（日本時間、約11分）。開始直後に外から、ページが開く・模擬だけ選べる・Webhookが404・Sandboxのワールドは作れないことを確かめた。終了後、公開URLは530、cloudflaredのプロセスなし、8791番の待ち受けなし</td>
+</tr>
+<tr>
+<td>記録（サーバーのログとDB）</td>
+<td>デモのワールドが6件作られ、店主・A・Bの画面へのサインインがあった。Aは日本語で移動の条件を書き、「自分でフォームに入力」を選んだ。案件は1件もできず、振替は最後まで進まなかった</td>
+</tr>
+<tr>
+<td>本人の所見</td>
+<td>「日本語の単語が英語からの訳のような印象」：画面は英語だけだったため、スマートフォンのブラウザが自動翻訳した日本語を見ていた（本人に確認）。あわせて、画面をリッチにしたい（画像はCodex側のGPT Imageで作る）</td>
+</tr>
+<tr>
+<td>分かったこと</td>
+<td>1台のスマートフォンで3つの招待リンクを行き来するのが難しく、リンクを見失って作り直していた</td>
+</tr>
+<tr>
+<td>対応</td>
+<td>自然な日本語の画面と言語の切り替え、この端末で作ったデモの3画面の切り替え（次の節）。画像の指示書<code>IMAGES.md</code>（Codexの生成待ち）</td>
+</tr>
+<tr>
+<td>限界</td>
+<td>実機で一件を最後まで通した確認にはなっていない（AC13の実機は未完了）。新しい画面で、もう一度実機での確認が要る</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="d9416eeclaude-code2026-11-07">日本語の画面と画面の切り替え（<code>d9416ee</code>、Claude Code、2026-11-07）</h2>
+<p>DESIGN D34（design-v0.10）。英語を既定とし、ブラウザの言語が日本語なら日本語で表示する。各画面の上で切り替えられ、その端末に記憶する（localStorage、失敗しても表示は動く）。<code>&lt;html lang&gt;</code>を合わせるので、日本語のブラウザが機械翻訳を始めない。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>画面の文言</td>
+<td><code>src/web/i18n.tsx</code>に英語と日本語の辞書。美容室の予約サービスとして自然な日本語で書き、英語の直訳にしない（例：「振替のご提案」「仮売上」「お支払いの結果を確認中」）</td>
+</tr>
+<tr>
+<td>サーバーの文言</td>
+<td><code>state?lang=ja</code>で状態・手順・経過・理由・利益の試算・店や施術の名前・日付（<code>11月9日(月) 14:00〜15:00</code>）・金額（<code>60.00ドル</code>）を日本語にする（<code>src/app/views-ja.ts</code>）。既定は英語のまま</td>
+</tr>
+<tr>
+<td>例文</td>
+<td>日本語の例文（<code>11月12日なら、10時〜12時の間にカットが終われば移動できます。</code>など）は模擬のルールでも英語の例文と同じ条件に読める</td>
+</tr>
+<tr>
+<td>表示の分岐</td>
+<td>画面が英語の文言で表示を決めていた箇所（予約の変更の有無）を、フラグ<code>bookingsChanged</code>に変えた</td>
+</tr>
+<tr>
+<td>画面の切り替え</td>
+<td>トップページで作ったデモのリンクを、その端末に記憶する。各画面の上に「店主・A・B」の切り替えを出し、同じタブで移れる。トップページにも前回のデモのリンクを出す。リンクは同じ配信元の役割画面のものだけを受け付ける</td>
+</tr>
+<tr>
+<td>試験</td>
+<td><code>tests/app-ja.test.ts</code>（3件）：日本語の例文で一件を最後まで通し、三画面の文言・日付・金額が日本語であること、英語の既定が変わらないこと、成立しない理由も日本語であること</td>
+</tr>
+<tr>
+<td>未確認</td>
+<td>日本語の三画面をブラウザで通して目で確かめることは、まだ行っていない（内蔵ブラウザで、日本語のブラウザではトップページが日本語で開き<code>lang=ja</code>になることだけ確かめた）。Codexのレビュー前</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="codexr1r52026-11-07">Codexの確認結果（R1〜R5と回答待ちの間の作業、2026-11-07）</h2>
+<p>Codexの文書（Codexの未追跡ファイル。Claudeは変更・コミットしていない）：<code>outputs/codex-prep/IMPL_INTERRUPTS_2_REVIEW.md</code>（R1〜R4、<code>impl-interrupts-2</code>）、<code>IMPL_WAIT_1_REVIEW.md</code>（R5と<code>impl-wait-1</code>）、<code>SUBMISSION_REVISED.md</code>（提出文の改稿）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>Codexの判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1〜R4の実行結果</td>
+<td>実施した4つのシナリオのSandboxの証拠として採用。CodexはDBを読み取り専用で開き、SandboxへGET 30回で独立に照合し、4件とも一致（金額・通貨・受取先・対象ID・返金の元capture・予約の時間・債務と操作の関係）</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>手順と結果を採用。表示専用のサーバーは妥当（模擬の4状態×三者で業務データ不変、変更の要求60件を拒否、外向きの通信の試行0）。ただし「DB全体が読み取り専用」ではなく「業務状態を進めない表示専用」と記録する（上のR5の節を訂正した）。R5の記録とSandboxの照会（GET 6回）で29項目一致</td>
+</tr>
+<tr>
+<td>途中状態の表示（確認事項5）</td>
+<td>模擬の試験で足りる。R5は追加の実証として採用</td>
+</tr>
+<tr>
+<td>IR2-01 / P2</td>
+<td>最終確認の失敗の経過「payment is cancelled」が、取消の要求の前に記録され、取消の失敗・結果不明でも「取消済み」と読める</td>
+</tr>
+<tr>
+<td>IR2-02 / P2</td>
+<td><code>interrupts.ts report</code>のPASSが、返金の照会結果・予約・債務・操作と再送防止IDの対応の不整合を検出しない（Codexの模擬の負例で5項目すべてPASSのままだった）</td>
+</tr>
+<tr>
+<td>IWAI-01 / P2</td>
+<td>D33・店主の画面・READMEの「再起動も照会だけ」は実装と異なる。模擬で、与信がHOLD → 遅れた注文の承認 → 起動時の回復で、同じIDの与信の再送と新しい取消のPOSTに進み、REJECTEDになった（Codexの<code>work/codex-review-wait1/hold-probe.mjs</code>）。HOLDの解除ボタンを作らない方針は採用</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>店主の回復の依頼を監査に残す。結果不明・照合待ちの支払いの表示を「確認中」にする。未送信の返金を「準備中」と分ける。R1の時系列の訂正。READMEの「retry it once」を、確定した失敗の後にRecoverが出たときの同額の再試行と書く。模擬の注文の応答にも返金の一覧を出す</td>
+</tr>
+<tr>
+<td>確認事項10（提出文）</td>
+<td>改稿を用意（顧客間の直接送金、すべてのAPIにRequest-ID、スキーマだけで指示を排除、全試験がネットワーク不使用、と読める表現を直した）。採用時はルートのSUBMISSIONとREADMEに反映する</td>
+</tr>
+<tr>
+<td>維持</td>
+<td><code>impl-app-1-fix1</code>の第2レビュー合格。追加分の確認完了は、IR2-01・IR2-02・IWAI-01の再確認まで保留</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="impl-wait-1-fix1claude-code2026-11-07">指摘への対応（<code>impl-wait-1-fix1</code>、Claude Code、2026-11-07）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>指摘</th>
+<th>修正</th>
+<th>確かめ方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IR2-01</td>
+<td>経過の文を「最終確認に通らなかったので、この支払いは売上確定しない。取消の状況は下の表示を見る」に変えた（英語・日本語）。取消済み・仮売上の取消は、取消を照合した後の状態の表示だけに出る</td>
+<td><code>tests/app-labels.test.ts</code>に2件：取消が拒否された（422）とき、取消の応答を失ったとき、三画面（英語・日本語）の状態・経過・取消の手順のどれにも「released／cancelled／取り消しました／取り消し済み」が出ず、取消の手順は完了でない。応答喪失の後、照合されると「authorization released」になる。旧文に戻すと3件が失敗</td>
+</tr>
+<tr>
+<td>IR2-02</td>
+<td>判定を<code>scripts/verify/interrupts-checks.ts</code>の純粋な関数<code>evaluate</code>に分け、reportはDBとPayPalの照会から事実を集めてこれを表示する。判定：POSTは同じ種類・同じ再送防止IDの記録済みの操作に属し、記録の送信回数を超えない／売上確定は1つまで／案件の状態／債務の状態・金額・対象／予約の時間と状態（A・B）・補償の付与／PayPalのBの与信とcaptureが記録のIDで金額と状態が期待どおり／Aの元captureの状態／成功した返金ごとに返金の照会がCOMPLETED・金額と通貨・元captureが債務と一致／A・Bの注文の返金の一覧が記録とちょうど一致。照会の失敗はPASSにしない（照会できなかった項目はFAIL）</td>
+<td><code>tests/interrupts-checks.test.ts</code>（23件）：3つの終わり方の整合した事実は全PASS、Codexの負例（返金のGETがNOT_FOUND・PENDING、1.00 EUR・別のcapture、Bの予約がCANCELLED、返金のPOSTが注文作成の再送防止IDを使う）を含む19種の不整合はそれぞれ該当の項目がFAIL。判定を一つずつ弱めると（返金の状態の確認を外す、POSTの種類の確認を外す）試験が失敗。既存のR1〜R5のSandboxへの照会（GETだけ、06:37〜06:38）で全項目PASS（R4は13項目、ほかは14項目）、模擬のR5も14項目PASS</td>
+</tr>
+<tr>
+<td>模擬の返金の一覧（P3）</td>
+<td>模擬PayPalの注文の照会に、Sandboxと同じく返金の一覧を出すようにした。reportの模擬での一覧検査の省略をやめた</td>
+<td>模擬のR5のreportで一覧の検査もPASS</td>
+</tr>
+<tr>
+<td>IWAI-01</td>
+<td>店主の画面の「停止中」（英語・日本語）、README、D33を、通常のキューは再送しない・再起動時の回復は照会のほか同じIDの再送と、その結果に応じた取消・返金へ進むことがある・解除のボタンはない・確定した失敗の「Recover」とは別、に揃えた。英語の画面の文はCodexの文案どおり。既存の回復処理は変えていない</td>
+<td>文言の変更。回復の動作はCodexの<code>hold-probe.mjs</code>の再現と矛盾しない</td>
+</tr>
+<tr>
+<td>P3：表示の文言</td>
+<td>結果不明・照合待ちの売上確定は「Checking the payment result with PayPal／PayPalにお支払いの結果を確認中」。未送信の返金は「Preparing the refund／返金を準備中」。送信中・結果不明は「Checking the result with PayPal」、PayPal側の保留はPENDINGの表示、完了だけ「Refunded」</td>
+<td><code>tests/app-intermediate.test.ts</code>の期待を更新し、E7の直後（返金は未送信）に「Preparing the refund」を確かめる</td>
+</tr>
+<tr>
+<td>P3：店主の回復の依頼</td>
+<td><code>obligations/retry</code>で、認証済みの店主の依頼と受理の結果を<code>OWNER_RECOVERY_REQUESTED</code>（実行者OWNER、案件・債務・試行に関連付け）として監査に残す。実行器の<code>OBLIGATION_RETRY</code>はそのまま</td>
+<td><code>tests/app-intermediate.test.ts</code>のR2の停止点の試験で、店主の依頼が実行者OWNERで記録されることを確かめる</td>
+</tr>
+<tr>
+<td>P3：R1の時系列</td>
+<td>上のR1の行を訂正した（売上確定の照会・同定は最初のプロセスの中で終わり、その後E7の前で停止した）</td>
+<td>保存時刻（Codexの照合）</td>
+</tr>
+<tr>
+<td>P3：README</td>
+<td>「retry it once」を、確定した失敗の後にRecoverが出たときに同額で再試行できる、に変えた。Codexが過剰と指摘した表現（すべてのPayPal呼び出し、スキーマだけで指示を排除、試験がネットワークを使わない）を直した。日本語の画面も記載した</td>
+<td>文書</td>
+</tr>
+<tr>
+<td>確認事項10</td>
+<td>Codexの改稿をルートの<code>SUBMISSION.md</code>に採用し、その後の変更（3件の修正、日本語の画面、試験の件数）だけを反映した</td>
+<td>文書</td>
+</tr>
+</tbody>
+</table></div>
+<p>実行したコマンドと結果：<code>npm run check</code>（30ファイル・369件成功、終了コード0）、<code>npm run build</code>（成功）、<code>node scripts/verify/interrupts.ts report R1</code>〜<code>R5</code>（Sandbox、GETだけ、すべて終了コード0・全項目PASS）、<code>FLEXSLOT_INTERRUPTS_MOCK=1 node scripts/verify/interrupts.ts report R5</code>（終了コード0・全項目PASS）、変異の確認（IR2-02の判定2種、IR2-01の旧文1種、すべて検出）、<code>render-docs.ps1 -Check</code>（9組）。新しいSandboxの支払い・返金はしていない。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -2426,7 +2612,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <p>以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。</p>
 <p>Gitのuser.name/user.emailは未登録だったため、初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定した。ユーザーのローカル/グローバルGit設定は変更していない。</p>
 <p>参照：<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a>、<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal決済</a>、<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth">Google Cloud認証</a>。</p>
-<h2 id="section-28">実行した確認とテスト</h2>
+<h2 id="section-29">実行した確認とテスト</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2612,14 +2798,32 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>すべて終了コード0。詳細は「Codexの回答待ちの間に進めた作業」</td>
 </tr>
 <tr>
+<td>11-07 Claude＋本人</td>
+<td>スマホ実機（模擬の一時公開）</td>
+<td>公開モード（<code>a872b48</code>）とQuick Tunnelで01:35〜01:46、本人のスマートフォンで三画面を操作</td>
+<td>公開と終了は確認。振替は最後まで進まず（機械翻訳とリンクの見失い）。詳細は「スマホ実機での確認」</td>
+</tr>
+<tr>
+<td>11-07 Claude</td>
+<td>日本語の画面</td>
+<td><code>d9416ee</code>、<code>npm run check</code></td>
+<td>終了コード0、29ファイル・344件成功。ブラウザでの通しの目視は未実施</td>
+</tr>
+<tr>
+<td>11-07 Claude</td>
+<td>IR2-01・IR2-02・IWAI-01とP3の修正</td>
+<td><code>npm run check</code>、<code>npm run build</code>、report R1〜R5（Sandbox、GETだけ）と模擬R5、変異の確認</td>
+<td>すべて終了コード0・全項目PASS。30ファイル・369件成功。詳細は「指摘への対応（<code>impl-wait-1-fix1</code>）」</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
-<td>Playwrightの画面試験・実機・初見の人の操作・Sandboxでの返金PENDING・照会のタイムアウト・HOLD</td>
+<td>Playwrightの画面試験・実機での一件・初見の人の操作・Sandboxでの返金PENDING・照会のタイムアウト・HOLD</td>
 <td>未実行</td>
 </tr>
 </tbody>
 </table></div>
-<h2 id="section-29">未確認事項</h2>
+<h2 id="section-30">未確認事項</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2706,16 +2910,17 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかと、匿名化した照合結果だけを確認する。</li>
 <li><strong>今後も本人が行うこと</strong>：Sandboxの買い手アカウントでの承認（ログインとパスワードの入力）。V8の受信経路の公開の承認。</li>
 </ol>
-<h2 id="section-30">次に行う作業</h2>
+<h2 id="section-31">次に行う作業</h2>
 <ol>
 <li>Codexによる修正版の再確認は2026-11-04に完了した（「Codexの再確認の結果」の節）。</li>
 <li>DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を修正した（タグ<code>impl-executor-1-fix1</code>）。Codexの再確認（REVIEWの最後の節）を待つ。</li>
 <li>修正版を<code>impl/app</code>へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ<code>impl-app-1</code>）。第2レビュー（REVIEWの最後の節）を待つ。</li>
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
 <li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（<code>impl-app-1-fix1</code>、Codexの再確認待ち）。</li>
-<li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。次は、R1〜R4の記録へのCodexの確認、HOLD解除の扱いの明示（未実装）、実機での確認と初見の人の操作（SPEC 12の11月8日）。</li>
+<li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。</li>
+<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。次は、日本語の画面の目視と実機での再確認、返金PENDING・照会のタイムアウトの表示と回復（模擬・注入を明示）、初見の人の操作、画像（Codexの生成待ち）の組み込み、提出前の確認。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
-<h2 id="section-31">今後の検証記録の書式</h2>
+<h2 id="section-32">今後の検証記録の書式</h2>
 <p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

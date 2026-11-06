@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="d70eda9d4f2ad674010fcaaad8835686619cee087911dd878aa83083ab1fd2ae"><title>FlexSlot | 提出物の下書き</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="0e174af8881b2555f868e02798171091f7cd9ea092ebf080587586cc761d743f"><title>FlexSlot | 提出物の下書き</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -7,142 +7,162 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html" aria-current="page">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a></nav></header>
-<main><div class="meta">正本：SUBMISSION.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-submission-draft-devpost-text-and-demo-video-script">FlexSlot — submission draft (Devpost text and demo video script)</h1>
-<p>Draft by Claude Code, 2026-11-07 (JST). <strong>Nothing here has been published or submitted.</strong> Publishing the repository, the video and the Devpost entry waits for the owner's confirmation (AGENTS.md). Codex reviews and improves this draft (AGENTS.md: submission materials). Every claim below is limited to what <code>STATUS.md</code> records as checked; open items are listed at the end.</p>
-<h2 id="devpost-project-text-english">1. Devpost project text (English)</h2>
-<h3 id="name-and-tagline">Name and tagline</h3>
-<p><strong>FlexSlot</strong> — compensated booking swaps that turn a &quot;fully booked&quot; answer into a booking, paid and refunded with PayPal.</p>
+<main><div class="meta">正本：SUBMISSION.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-submission-text-and-video-script-draft">FlexSlot — submission text and video script (draft)</h1>
+<p>Draft revised by Codex on 7 November 2026 (JST) from <code>impl-wait-1</code> (<code>9b212d3</code>) and the recorded reviews (<code>outputs/codex-prep/SUBMISSION_REVISED.md</code>), adopted here by Claude Code on the same day with the changes since then: the review fixes IR2-01, IR2-02 and IWAI-01, the Japanese screens and the current test count (Section 3). <strong>Not published or submitted.</strong> Section 1 is proposed Devpost copy; Section 2 is a recording plan; Section 3 is an internal release checklist. Update the final version and evidence before publication.</p>
+<h2 id="proposed-devpost-copy">1. Proposed Devpost copy</h2>
+<h3 id="project-name-and-tagline">Project name and tagline</h3>
+<p><strong>FlexSlot</strong> — Fill a fully booked slot through an agreed booking move, with PayPal payment and compensation by partial refund.</p>
 <h3 id="inspiration">Inspiration</h3>
-<p>A salon slot is fully booked, and a new customer can only come at exactly that time. The shop says no and loses the booking. Meanwhile, some existing customers would happily move to another day for a small, fixed compensation — but nobody asks them, and moving money between two customers safely is hard for a small shop.</p>
+<p>A salon is fully booked at the only time a new customer can visit. An existing customer might be willing to move, but the shop needs a workable alternative, everyone's agreement, and a reliable way to handle the payment and compensation.</p>
+<p>FlexSlot focuses on that one opportunity. The new customer pays the salon. The salon compensates the existing customer by partially refunding their original payment. The project connects scheduling, consent and payment recovery in one small workflow.</p>
 <h3 id="what-it-does">What it does</h3>
+<p>The demo uses one fictional salon, one stylist, two services and one swap between an existing customer, A, and a new customer, B.</p>
+<ol>
+<li>A has paid for a booking and registers acceptable alternative times in advance. Compensation is fixed at USD 10.00 in the demo.</li>
+<li>B describes when they need an appointment. Gemini on Vertex AI turns free text into proposed conditions and asks for clarification when needed. Each customer checks and confirms their conditions.</li>
+<li>Server code checks service duration, opening hours, available slots and the confirmed constraints. The shop sees either a feasible proposal or the reasons it cannot work.</li>
+<li>The shop, A and B approve the specific terms. B then approves payment through PayPal Sandbox.</li>
+<li>FlexSlot authorizes B's payment, rechecks the conditions, captures the payment and confirms both booking changes in one database transaction. It then requests the agreed partial refund against A's original captured payment.</li>
+</ol>
+<p>The owner and the two customers have separate screens, in English or Japanese (a Japanese browser gets Japanese written for a salon booking service, not a machine translation). Booking status, B's payment and A's compensation have separate progress indicators. Mock and connected modes are labelled throughout. All PayPal payments in this project use <strong>Sandbox test money</strong>.</p>
+<h3 id="why-compensation-instead-of-a-general-discount">Why compensation instead of a general discount?</h3>
+<p>A weekday discount can attract someone who has not booked yet. FlexSlot addresses a specific conflict after a slot is already booked: A can move, B cannot, and an eligible alternative slot is available. If a normal discount would produce the same outcome, FlexSlot does not assume it is better.</p>
+<p>The owner sees an estimate, not a promise of profit. The sample is <strong>USD 60.00 additional revenue − 10.00 compensation − 15.00 additional service cost − 2.50 payment-related costs − 12.00 opportunity cost = USD 20.50 estimated additional profit</strong>. These are fictional assumptions; USD 2.50 is not a quoted PayPal fee. The opportunity cost represents the expected value of selling A's alternative slot to someone else. No measured salon results are claimed.</p>
+<p>Compensation does not increase while a customer waits, and each booking can receive it once. These limits reduce some incentives to hold busy slots for compensation; they do not eliminate strategic behaviour or prove demand.</p>
+<h3 id="how-it-is-built">How it is built</h3>
+<p><strong>PayPal is part of the core workflow.</strong> Orders v2 and Payments v2 support approval, authorization, capture, partial refund, authorization void and a recovery refund to B if the booking cannot be committed after capture. A database transaction cannot atomically include PayPal, so each payment operation is recorded before dispatch, with its fixed input and request identifier. Recovery uses stored results, queries and, where appropriate, a retry of the same operation with the same request ID. Related order and capture queries help verify the recipient, amount and resource relationships before dependent steps continue. Verified webhooks prompt queries; their payloads do not directly settle a booking or payment.</p>
+<p><strong>AI interprets free text.</strong> The connected configuration uses <code>gemini-3.5-flash-lite</code> on Vertex AI with server-side Application Default Credentials. Structured output contains scheduling conditions and clarification questions, not payment amounts or approval commands. The person confirms the interpretation; program checks enforce payment terms, authority and availability. The model can still misunderstand a date or service, so a schema does not replace review of its answer. If AI is unavailable, the app explicitly offers manual entry instead of silently switching to mock AI.</p>
+<p><strong>The app</strong> uses TypeScript, Node.js 24, SQLite, React, Vite and zod. Data persists on the server. Separate role sessions, server-side party checks, CSRF protection and version-bound approvals restrict who can act on a proposal. This is a local demonstration, with no connection to a real salon's booking system.</p>
+<h3 id="challenges-and-what-we-verified">Challenges and what we verified</h3>
+<p>The hardest part was recovering from an uncertain payment result without treating a missing response as a failed payment. We separated obligations, attempts and API operations, and tested the boundaries around payment capture, the booking commit and compensation.</p>
 <ul>
-<li>An existing customer (A), who has already paid for the booking, says in advance — in their own words — when they could move instead, for a <strong>fixed compensation (USD 10.00 in the demo)</strong>.</li>
-<li>A new customer (B) writes when they need to come (&quot;I need a cut on Nov 9, and only 14:00–15:00 works for me&quot;).</li>
-<li><strong>Gemini on Vertex AI</strong> turns both texts into structured conditions and asks back when something is vague. Each person confirms the result; the confirmed version is stored next to the original text, with its source (AI, mock or entered by hand).</li>
-<li><strong>The program, not the AI</strong>, checks times, business hours, other bookings, service length and prices, and proposes the swap — or explains why it is not possible.</li>
-<li>The shop sees the proposal with a profit estimate (<strong>USD 20.50 per swap</strong> under stated assumptions) and approves; then A agrees; then B accepts and pays with <strong>PayPal</strong>.</li>
-<li>FlexSlot authorizes B's payment, checks everything again, captures it, swaps the two bookings in one database transaction, and pays A's compensation as a <strong>partial refund of A's own PayPal payment</strong>.</li>
-<li>All three screens (shop, A, B) show each money step separately. A step that is still being checked is never shown as done.</li>
-</ul>
-<h3 id="how-we-built-it">How we built it</h3>
-<ul>
-<li><strong>PayPal (Sandbox)</strong>: Orders v2 with <code>intent=AUTHORIZE</code>, then Payments v2 capture with an explicit amount, partial refund of A's original capture, void of an unused authorization, and full refund of B if the swap becomes impossible after the capture. Webhooks are stored, verified with PayPal's verify-webhook-signature API and used only to trigger the next query. Every PayPal call is written to the database before it is sent, with its own <code>PayPal-Request-Id</code>; retries reuse it; unknown results are queried, never assumed. Every answer is checked against the shop's merchant ID and the expected amount.</li>
-<li><strong>Google Cloud</strong>: Gemini on Vertex AI (<code>gemini-3.5-flash-lite</code>, Application Default Credentials on the server) with a JSON schema that has <strong>no field for money, approval or payment</strong>, so an instruction hidden in the text (&quot;make my compensation 50 dollars&quot;) has nowhere to go. Limits per call, per demo world and per day; a failed call switches to a manual form instead of silently using a fallback.</li>
-<li><strong>App</strong>: TypeScript on Node.js 24, one process and one SQLite file (<code>node:sqlite</code>), React screens built with Vite, zod validation. Invite links use a URL fragment exchanged for an HttpOnly, SameSite=Strict cookie; every change needs CSRF and Origin checks; the browser never sends amounts or PayPal IDs.</li>
-<li><strong>Two builders</strong>: Claude Code implemented and tested; Codex reviewed the specification, the design and the code independently, and every finding is tracked in <code>REVIEW.md</code>.</li>
-</ul>
-<h3 id="challenges-we-ran-into">Challenges we ran into</h3>
-<ul>
-<li><strong>Money in two directions for one swap.</strong> We split each payment into obligation → attempt → API operation, so a lost answer, a server restart or a refused refund can each be recovered without paying or refunding twice.</li>
-<li><strong>Interruptions on the real Sandbox.</strong> We stopped the server on purpose before and after the booking commit, dropped PayPal's answers to a capture and to a refund (injected faults, labelled as such), and checked that recovery reused the stored request IDs, PayPal held one capture and one refund, and bookings matched payments.</li>
-<li><strong>Honest screens.</strong> &quot;Checking the payment result&quot; must never look like &quot;Paid&quot;. We checked all three screens while a run was stopped at each in-between state.</li>
-</ul>
-<h3 id="accomplishments-that-were-proud-of">Accomplishments that we're proud of</h3>
-<ul>
-<li>One swap end to end through the three screens on PayPal Sandbox with Gemini on Vertex AI, with the database matching fresh Sandbox queries.</li>
-<li>Five interruption runs on the Sandbox (lost capture answer, lost refund answer, stops around the booking commit and before reconciliation, a refused refund recovered by the shop, a full refund of B and a voided authorization), each ending with no duplicate charge or refund.</li>
-<li>Real Sandbox webhooks verified by PayPal's API, deduplicated, with a tampered copy rejected.</li>
-<li>338 automated tests against an in-process PayPal mock with fault injection; they never reach the network.</li>
+<li>One complete booking move was operated through the three screens using PayPal Sandbox and Vertex AI; database records matched subsequent Sandbox queries.</li>
+<li>Five Sandbox scenarios, R1–R5, exercised interruption and recovery. Response loss and refund rejection were injected, and booking conflicts were introduced deliberately; these were not PayPal outages. Process stops were actual exits. The observed final bookings and expected payment resources matched, without duplicate captures or refunds in those runs.</li>
+<li>R5 paused at four intermediate states. The three screens did not show the swap or compensation as completed at those pauses. A separate viewing server kept the payment workflow paused.</li>
+<li>Real Sandbox webhook deliveries were signature-verified and deduplicated, and a tampered copy was rejected.</li>
+<li>The recorded automated check has <strong>369 tests</strong>, using mock or fake external services and local HTTP relay tests. It is separate from the real Sandbox and Vertex checks.</li>
+<li>Phone-width and desktop-width browser emulation, and startup from a clean clone in another folder on the same PC, were checked. These are not physical-phone or different-PC tests.</li>
 </ul>
 <h3 id="what-we-learned">What we learned</h3>
-<ul>
-<li>Writing every payment call down before sending it — with its request ID — is what makes recovery simple.</li>
-<li>An AI is most useful here as a careful reader of free text, while everything that moves money stays in plain code.</li>
-</ul>
-<h3 id="whats-next">What's next</h3>
-<ul>
-<li>Connecting to an existing booking system instead of the demo salon (the candidate check would then also react to outside changes).</li>
-<li>More than one stylist, chains of swaps, and a release step for payments the system stopped on purpose.</li>
-<li>Talking to salons about the compensation amount (not done yet; demand is not proven).</li>
-</ul>
+<p>Payment recovery depends on knowing which operation was intended, which result is confirmed and which result is still unknown. That distinction matters as much in customer-facing wording as it does in the database.</p>
+<p>AI is useful for translating a customer's everyday language into conditions they can review. Approval, availability and money still need explicit rules and durable records.</p>
+<p>Claude Code supported implementation and testing; Codex provided independent reviews and helped prepare submission materials. The creator defined the scope, performed account setup and approved Sandbox payments. These tools are development assistance, separate from the Vertex AI integration inside the app.</p>
+<h3 id="what-is-next">What is next</h3>
+<p>The immediate work is to finish the remaining review fixes, test with a first-time user and a physical phone, and prepare reproducible judging access. Salon interviews have not been conducted, and demand is not validated. A future version could add this workflow to an existing booking system; that integration is outside this demo.</p>
 <h3 id="built-with">Built with</h3>
-<p>TypeScript, Node.js, React, Vite, SQLite, zod, PayPal Orders v2, PayPal Payments v2, PayPal Webhooks, Google Cloud Vertex AI, Gemini.</p>
-<h2 id="demo-video-script-target-240250-hard-limit-under-300">2. Demo video script (target 2:40–2:50, hard limit under 3:00)</h2>
-<p>Recording notes: record a <strong>Sandbox + Vertex</strong> world (labels &quot;Gemini on Vertex AI&quot; and &quot;PayPal Sandbox (test money)&quot; visible). Never show <code>.env</code>, a terminal with secrets, the PayPal buyer password, or an invite link with <code>#t=</code> (the screens remove it from the address bar after sign-in). Say &quot;test money&quot; when PayPal appears. Use three browser windows side by side or switch tabs.</p>
+<p>TypeScript, Node.js, SQLite, React, Vite, zod, PayPal Orders v2, PayPal Payments v2, PayPal Webhooks, Google Cloud Vertex AI, Gemini.</p>
+<h2 id="video-plan-target-247">2. Video plan — target 2:47</h2>
+<p>Use the real app with <strong>Gemini on Vertex AI</strong> and <strong>PayPal Sandbox (test money)</strong> labels visible for the main flow. Record the buyer's approval as the owner operates it. Keep passwords, secrets, account identifiers and invite tokens outside the recording. Show A's initial payment as already completed; do not imply the compensation is paid by B directly to A. The narration below is approximately 301 words, leaving room for pauses and visible actions within the planned 167 seconds.</p>
+<p>Prepare the demo dates using the app's current sample text. Do not hard-code expired November dates into the recording. Waiting time may be shortened in editing if indicated, while preserving the actual order and results. Do not make a pending step appear completed with an edited overlay.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>Time</th>
-<th>On screen</th>
-<th>Narration (English)</th>
+<th>Actual screen or footage to show</th>
+<th>English narration</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>0:00–0:15</td>
-<td>Owner screen: the booking table with A at 14:00</td>
-<td>&quot;This salon slot is fully booked. A new customer can only come at exactly this time. Normally the shop says no.&quot;</td>
+<td>0:00–0:14</td>
+<td>Owner booking table: A occupies the slot B needs</td>
+<td>This salon is fully booked at the only time a new customer can visit. An existing customer could move. FlexSlot helps the shop turn that conflict into an agreed booking change.</td>
 </tr>
 <tr>
-<td>0:15–0:40</td>
-<td>A's screen: A has paid; types the move text; <em>Structure with Gemini on Vertex AI</em>; result; <em>Confirm</em></td>
-<td>&quot;An existing customer, who already paid, tells FlexSlot in their own words when they could move — for a fixed ten-dollar compensation. Gemini structures the text; the customer confirms it.&quot;</td>
+<td>0:14–0:37</td>
+<td>A: original payment complete; enter move conditions; structure with Vertex; review and confirm</td>
+<td>The existing customer has already paid. They register when they could move, for a fixed ten-dollar compensation. Gemini on Vertex AI turns their words into proposed conditions. The customer checks the dates and confirms them. Ambiguous conditions require clarification.</td>
 </tr>
 <tr>
-<td>0:40–1:00</td>
-<td>B's screen: types the request; structured result (or a clarifying question); <em>Confirm</em>; the proposal appears</td>
-<td>&quot;The new customer writes when they need to come. The AI only reads the text — the program checks business hours, other bookings and service length, and proposes the swap.&quot;</td>
+<td>0:37–0:57</td>
+<td>B: request; structure and confirm; show the eligible proposal</td>
+<td>The new customer describes the time they need. Server code checks both people's conditions, service duration, opening hours and available slots. AI does not approve the swap or choose payment amounts. The result is a specific proposal the parties can review.</td>
 </tr>
 <tr>
-<td>1:00–1:20</td>
-<td>Owner screen: proposal, fixed compensation, profit estimate USD 20.50; <em>Approve</em>. A: <em>Agree to move</em></td>
-<td>&quot;The shop sees the exact terms and an estimated profit, and approves. Then the existing customer agrees. Every approval is tied to the same version of the terms.&quot;</td>
+<td>0:57–1:21</td>
+<td>Owner: profit assumptions and terms; approve. A: agree to move</td>
+<td>The shop reviews the terms and approves. The existing customer then agrees to move. Here, sixty dollars in additional revenue becomes twenty dollars and fifty cents in estimated profit after compensation, service costs, assumed fees and opportunity cost. This is a fictional calculation.</td>
 </tr>
 <tr>
-<td>1:20–1:50</td>
-<td>B: <em>Accept and pay</em> → PayPal Sandbox approval page (test money) → back to FlexSlot; the three screens update: authorized → captured → bookings changed → compensation refunded</td>
-<td>&quot;The new customer pays with PayPal — Sandbox test money here. FlexSlot authorizes, checks everything again, captures, swaps both bookings in one step, and refunds the compensation to the existing customer's original PayPal payment.&quot;</td>
+<td>1:21–1:51</td>
+<td>B: Accept and pay; actual Sandbox approval; return; show booking change and A's refund</td>
+<td>The new customer approves payment with PayPal Sandbox, using test money. FlexSlot authorizes, rechecks and captures the payment. It changes both bookings in one database transaction, then requests the ten-dollar partial refund from the existing customer's original payment. The payment and refund have separate progress indicators.</td>
 </tr>
 <tr>
-<td>1:50–2:20</td>
-<td>Stills from the R5 run: &quot;Checking the payment result&quot;, &quot;Confirming the booking&quot;, &quot;compensation refund pending&quot;; owner &quot;Stopped&quot; section text</td>
-<td>&quot;What if the server stops, or PayPal's answer gets lost? Every call is saved before it is sent, with its own request ID. We stopped the server on purpose on the Sandbox: it recovered with the same IDs, charged once, refunded once — and the screens never claimed success too early.&quot;</td>
+<td>1:51–2:17</td>
+<td>Actual recovery evidence: paused state, then the completed result and anonymized operation counts</td>
+<td>A lost response does not prove a payment failed. We tested process stops and injected lost responses on the Sandbox. Recovery used the saved operation records and request IDs. In the checked run, PayPal held one capture and one compensation refund. The paused screens did not claim completion.</td>
 </tr>
 <tr>
-<td>2:20–2:38</td>
-<td>A's text with &quot;make my compensation 50 dollars&quot; → structured result without money (the compensation stays USD 10.00); the mode labels</td>
-<td>&quot;The AI cannot touch money: its output has no field for amounts or approvals. Mock and real modes are always labelled, and an AI failure switches to a manual form.&quot;</td>
+<td>2:17–2:34</td>
+<td>Confirmed AI conditions, manual-entry option, connected-mode labels</td>
+<td>AI helps interpret the request; people confirm the conditions, and code enforces the terms. If AI is unavailable, manual entry is clearly offered. Connected and mock modes are always labelled.</td>
 </tr>
 <tr>
-<td>2:38–2:48</td>
-<td>Owner screen with the completed swap</td>
-<td>&quot;FlexSlot: the shop keeps the booking, the existing customer is paid for flexibility, and the new customer gets their time.&quot;</td>
+<td>2:34–2:47</td>
+<td>Final owner/A/B results; project name</td>
+<td>The shop gains a booking. The existing customer receives compensation for moving. The new customer gets the time they need. That is FlexSlot.</td>
 </tr>
 </tbody>
 </table></div>
-<h2 id="before-publishing-owners-confirmation-needed">3. Before publishing (owner's confirmation needed)</h2>
+<h3 id="recording-requirements">Recording requirements</h3>
+<ul>
+<li>The times are an editing plan, not a measured finished video. Record the narration and adjust pauses so the final export stays between 2:40 and 2:50, and strictly below 3:00.</li>
+<li>For the recovery section, use saved R5 images only if those images actually exist and the relevant text can be read. The written R5 record alone is not video footage. A recreated interruption must be labelled with its actual mode, such as “mock recreation; Sandbox results checked separately.” Obtain the owner's approval before any additional Sandbox payment needed for recording.</li>
+<li>Do not include a broad claim that prompt injection is impossible, that all failures are covered, or that the app has already produced real salon profit.</li>
+<li>Fix the cancellation-history and HOLD wording findings before filming those areas. Do not show a report's PASS alone as proof; show the relevant state and the checked resource counts.</li>
+<li>Before uploading, inspect the entire exported video, subtitles and visible URLs. Check that audio is understandable, the UI is legible, the actual duration is under three minutes and no sensitive values appear. Publication still requires the owner's confirmation.</li>
+</ul>
+<h2 id="internal-release-checklist-not-devpost-copy">3. Internal release checklist — not Devpost copy</h2>
+<h3 id="evidence-and-remaining-work">Evidence and remaining work</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>Item</th>
-<th>Status</th>
+<th>Current evidence or next action</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>OSS license</td>
-<td>Not decided (README says so). Needs the owner's choice before the repository is public</td>
+<td>Review basis</td>
+<td><code>impl-app-1-fix1</code> passed the second review. R1–R5 evidence is accepted for those scenarios. IR2-01, IR2-02 and IWAI-01 are fixed in <code>impl-wait-1-fix1</code> and wait for Codex's re-check. The Japanese screens (<code>d9416ee</code>) are not reviewed yet</td>
 </tr>
 <tr>
-<td>Public repository</td>
-<td>Not created. Before publishing: check the whole Git history for secrets, keep <code>.env</code> and <code>data/</code> out, decide whether <code>work/</code> notes stay private</td>
+<td>Final copy</td>
+<td>Update the reviewed tag, test count and limitations after fixes. Do not describe an earlier API run as a new run of the final code</td>
 </tr>
 <tr>
-<td>Demo access</td>
-<td>Hosting not decided (STATUS U09). The rules allow full run instructions instead of hosting (SPEC 12); the README has them</td>
+<td>Physical phone and first-time user</td>
+<td>Still to be checked. Browser width emulation is useful but does not close these acceptance items</td>
+</tr>
+<tr>
+<td>Recovery coverage</td>
+<td>Pending refunds and query timeouts need the agreed focused check of status and recovery. State when a scenario uses a mock or injected fault; do not repeat Sandbox payments just to obtain a naturally pending result</td>
+</tr>
+<tr>
+<td>Clean startup</td>
+<td>Another folder on the same PC has been checked. Different-PC startup has not. Keep the exact English commands and prerequisites usable from the final public repository</td>
+</tr>
+<tr>
+<td>Licence and repository</td>
+<td>The source licence is undecided and the public repository has not been prepared for owner approval. Audit tracked files and history without printing secrets, add the chosen licence, then prepare the exact publishable revision</td>
+</tr>
+<tr>
+<td>Judging access</td>
+<td>Choose complete run instructions or a hosted demo. The README provides an account-free mock route and setup for connected modes; label their differences. Confirm how judges can evaluate the connected functionality without receiving the developer's private API keys</td>
 </tr>
 <tr>
 <td>Video</td>
-<td>Script above. Recording, YouTube upload (public) and length check by the owner</td>
+<td>Narration/script only. No finished export, duration verification or public YouTube URL is claimed</td>
 </tr>
 <tr>
-<td>Devpost text</td>
-<td>This draft; Codex review pending</td>
-</tr>
-<tr>
-<td>Claims</td>
-<td>Only what STATUS records. Not done yet: a first-time user going through the screens, a real phone, interviews with salons</td>
+<td>Devpost</td>
+<td>Registration, eligibility confirmation and final entry submission remain unverified. Do not treat this draft as an entry</td>
 </tr>
 </tbody>
 </table></div>
+<h3 id="official-submission-requirements-checked-on-7-november">Official submission requirements checked on 7 November</h3>
+<p>Provide public source with an open-source licence, English submission materials, a functional demo accessible through setup instructions or a hosted URL, and a public YouTube video shorter than three minutes. Maintain free judging access through the end of judging. The submission deadline is <strong>13 November 2026, 05:00 JST</strong>; judging ends <strong>16 December 2026, 01:00 JST</strong>. These times convert the official Pacific dates. Confirm the chosen access method and all public links before submission. <a href="https://paypalaihackathon.devpost.com/rules">Official PayPal AI Hackathon rules</a></p>
+<p>Keep the internal targets of <strong>9 November for feature freeze</strong> and <strong>11 November for submission</strong>. Prioritize the review corrections and usability checks over adding more features. The owner approves the prepared repository, any deployment, the public video and the final entry before those actions occur. No API secrets or ADC files belong in public judging instructions.</p>
+<p>Codex's review and questions 1–10: <code>outputs/codex-prep/IMPL_WAIT_1_REVIEW.md</code> (Codex's local file, not part of the public repository).</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

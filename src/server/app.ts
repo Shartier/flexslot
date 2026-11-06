@@ -370,11 +370,17 @@ export function createApp(d: AppDeps): App {
     if (role === 'OWNER' && sub === 'obligations/retry') {
       const p = parse(S.retry, req.body);
       if (!p.ok) return p.res;
-      const ob = d.db.prepare('SELECT m.id FROM money_obligations m JOIN swap_cases c ON c.id = m.case_id WHERE m.id = ? AND c.world_id = ?').get(p.value.obligationId, worldId);
+      const ob = d.db.prepare('SELECT m.id, m.case_id FROM money_obligations m JOIN swap_cases c ON c.id = m.case_id WHERE m.id = ? AND c.world_id = ?').get(p.value.obligationId, worldId) as
+        | { id: string; case_id: string }
+        | undefined;
       if (!ob) return fail(404, 'NOT_FOUND');
       const x = executorFor(worldId);
       if (!x) return fail(503, 'PAYMENT_MODE_UNAVAILABLE');
       const r = x.ex.retryObligation(p.value.obligationId);
+      // Who asked (Codex P3): the signed-in owner's request and its outcome, next to the executor's OBLIGATION_RETRY.
+      d.db
+        .prepare("INSERT INTO audit_log (world_id, case_id, actor, action, detail_json, created_at) VALUES (?, ?, 'OWNER', 'OWNER_RECOVERY_REQUESTED', ?, ?)")
+        .run(worldId, ob.case_id, JSON.stringify({ obligationId: ob.id, accepted: r.ok, ...(r.ok ? { attemptId: r.attemptId } : { reason: r.reason }) }), now);
       return r.ok ? json(200, r) : fail(409, r.reason);
     }
 

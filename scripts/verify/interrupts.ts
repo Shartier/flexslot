@@ -38,6 +38,8 @@ import { MOCK_CLIENT_ID, MOCK_CLIENT_SECRET, MOCK_MERCHANT_ID, MockPayPalServer,
 import type { PayPalPort } from '../../src/paypal/port.ts';
 import { approvalUrl, MOCK_API_BASE, PayPalRestAdapter, type FetchLike } from '../../src/paypal/rest.ts';
 import { anon, loadDotEnv, NotReady, ROOT, run } from './_lib.ts';
+import { evaluate, OUTCOME, type Facts } from './interrupts-checks.ts';
+import { linkedId } from '../../src/executor/identify.ts';
 
 const MOCK = process.env.FLEXSLOT_INTERRUPTS_MOCK === '1';
 const MODE = MOCK ? 'MOCK' : 'SANDBOX';
@@ -413,78 +415,84 @@ async function report(r: RunId): Promise<void> {
       )
       .all(c.id) as Array<{ ob: string; att: number; op_kind: string; op_seq: number; status: string; ext: string | null; rec: string | null; sends: number; rid: string; res: string | null }>;
     for (const o of ops) rep.say(`op ${o.ob}#${o.att} ${o.op_kind}/${o.op_seq} ${o.status}${o.ext ? `/${o.ext}` : ''}${o.rec ? ` ${o.rec}` : ''} sends=${o.sends} rid#${rid(o.rid)} ${anon('res', o.res ?? undefined)}`);
-    const obligations = db.prepare('SELECT kind, status, amount_minor FROM money_obligations WHERE case_id = ? ORDER BY kind').all(c.id) as Array<{ kind: string; status: string; amount_minor: number }>;
+    const obligations = db.prepare('SELECT kind, status, amount_minor, currency, target_external_id AS target FROM money_obligations WHERE case_id = ? ORDER BY kind').all(c.id) as Array<{
+      kind: string; status: string; amount_minor: number; currency: string; target: string | null;
+    }>;
     rep.note('obligations', obligations.map((o) => `${o.kind}=${o.status}(${o.amount_minor})`).join(' '));
-    const posts = s.log.filter((e) => e.event === 'POST');
-    // Every POST of one operation uses one request id; one operation per kind unless a definitive refusal came first.
-    const byOp = new Map<string, Set<string>>();
-    for (const o of ops) byOp.set(`${o.op_kind}/${o.op_seq}/${o.att}`, new Set([rid(o.rid)]));
-    const aOps = db.prepare('SELECT paypal_request_id AS rid FROM a_payment_operations WHERE booking_id = ?').all(ids.aBookingId) as Array<{ rid: string }>;
-    const known = new Set([...ops.map((o) => rid(o.rid)), ...aOps.map((o) => rid(o.rid))]);
-    const postIds = new Set(posts.map((p) => p.requestId));
-    rep.check('every POST sent in this run carries the request id of one of the recorded operations of this world', [...postIds].every((x) => x !== undefined && known.has(x)));
-    const resent = ops.filter((o) => o.sends > 1);
-    rep.note('operations_sent_more_than_once', resent.map((o) => `${o.op_kind}x${o.sends} (same rid#${rid(o.rid)})`).join(' ') || 'none');
+    const aOps = db.prepare('SELECT op_kind, paypal_request_id AS rid FROM a_payment_operations WHERE booking_id = ?').all(ids.aBookingId) as Array<{ op_kind: string; rid: string }>;
+    const posts = s.log.filter((e) => (e.event === 'POST' || e.event === 'POST_NOT_SENT_INJECTED_422') && e.route && e.requestId);
+    rep.note('operations_sent_more_than_once', ops.filter((o) => o.sends > 1).map((o) => `${o.op_kind}x${o.sends} (same rid#${rid(o.rid)})`).join(' ') || 'none');
     rep.note('posts_by_route', [...new Set(posts.map((p) => p.route))].map((rt) => `${rt}x${posts.filter((p) => p.route === rt).length}`).join(' '));
-    const capOps = ops.filter((o) => o.op_kind === 'AUTH_CAPTURE');
-    rep.check('at most one capture operation (no new capture after an unknown or stopped one)', capOps.length <= 1);
     const grants = (db.prepare('SELECT count(*) AS n FROM compensation_grants WHERE booking_id = ?').get(ids.aBookingId) as { n: number }).n;
-    const aBooking = db.prepare('SELECT start_ms, version FROM bookings WHERE id = ?').get(ids.aBookingId) as { start_ms: number; version: number };
-    const bBooking = db.prepare("SELECT count(*) AS n FROM bookings WHERE id = ? AND status = 'CONFIRMED'").get(`${c.id}:booking:b`) as { n: number };
-    rep.note('a_booking_moved', aBooking.start_ms === c.dest_start_ms);
-    rep.note('b_booking', bBooking.n);
+    const booking = (id: string) => (db.prepare('SELECT start_ms, end_ms, status FROM bookings WHERE id = ?').get(id) as { start_ms: number; end_ms: number; status: string } | undefined) ?? null;
+    const aBooking = booking(ids.aBookingId);
+    const bBooking = booking(`${c.id}:booking:b`);
+    rep.note('a_booking', aBooking ? `${aBooking.status} ${aBooking.start_ms === c.dest_start_ms ? 'at destination' : aBooking.start_ms === c.origin_start_ms ? 'at origin' : 'elsewhere'}` : 'none');
+    rep.note('b_booking', bBooking ? bBooking.status : 'none');
     rep.note('compensation_grants', grants);
 
-    // Sandbox (or mock) queries: what PayPal holds for this case.
-    const bOrderRow = db.prepare("SELECT result_external_id AS id FROM payment_operations o JOIN payment_attempts t ON t.id = o.attempt_id JOIN money_obligations m ON m.id = t.obligation_id WHERE m.case_id = ? AND o.op_kind = 'ORDER_CREATE' AND o.status = 'SUCCEEDED'").get(c.id) as { id: string } | undefined;
-    if (!bOrderRow) throw new NotReady(`${r} has not started yet (no B order)`);
-    const bOrderId = bOrderRow.id;
-    const order = await port.getOrder(bOrderId);
-    if (order.kind !== 'FOUND') throw new Error('B order query failed');
-    const pu = order.resource.purchase_units?.[0];
-    const auths = pu?.payments?.authorizations ?? [];
-    const caps = pu?.payments?.captures ?? [];
-    rep.note('paypal_b_authorizations', auths.map((x) => x.status).join(',') || '-');
-    rep.note('paypal_b_captures', caps.map((x) => x.status).join(',') || '-');
-    rep.check('PayPal holds at most one authorization and at most one capture for B', auths.length <= 1 && caps.length <= 1);
-    const aCap = await port.getCapture(c.a_capture_id);
-    rep.note('paypal_a_capture', aCap.kind === 'FOUND' ? aCap.resource.status : aCap.kind);
-    const refundOps = ops.filter((o) => o.op_kind === 'CAPTURE_REFUND' && o.status === 'SUCCEEDED' && o.res);
-    for (const o of refundOps) {
+    // PayPal (Sandbox or mock) queries; a failed query is recorded as such and never counts as a pass.
+    const money = (a: { value?: string; currency_code?: string } | undefined) => (a?.value && a.currency_code ? { minor: Math.round(Number(a.value) * 100), currency: a.currency_code } : null);
+    const bOrderRow = ops.find((o) => o.op_kind === 'ORDER_CREATE' && o.status === 'SUCCEEDED');
+    if (!bOrderRow?.res) throw new NotReady(`${r} has not started yet (no B order)`);
+    const bOrderQ = await port.getOrder(bOrderRow.res);
+    const bPu = bOrderQ.kind === 'FOUND' ? bOrderQ.resource.purchase_units?.[0] : undefined;
+    const bOrder: Facts['paypal']['bOrder'] =
+      bOrderQ.kind === 'FOUND'
+        ? {
+            ok: true,
+            value: {
+              auths: (bPu?.payments?.authorizations ?? []).map((x) => ({ id: x.id, status: x.status, amount: money(x.amount) })),
+              caps: (bPu?.payments?.captures ?? []).map((x) => ({ id: x.id, status: x.status, amount: money(x.amount) })),
+              refunds: (bPu?.payments?.refunds ?? []).map((x) => ({ id: x.id })),
+            },
+          }
+        : { ok: false, why: bOrderQ.kind };
+    if (bOrder.ok) {
+      rep.note('paypal_b_authorizations', bOrder.value.auths.map((x) => x.status).join(',') || '-');
+      rep.note('paypal_b_captures', bOrder.value.caps.map((x) => x.status).join(',') || '-');
+    }
+    const aCapQ = await port.getCapture(c.a_capture_id);
+    const aCapture: Facts['paypal']['aCapture'] = aCapQ.kind === 'FOUND' ? { ok: true, value: { status: aCapQ.resource.status } } : { ok: false, why: aCapQ.kind };
+    rep.note('paypal_a_capture', aCapture.ok ? aCapture.value.status : aCapture.why);
+    const aOrderRow = db.prepare('SELECT order_id AS id FROM payments WHERE capture_id = ?').get(c.a_capture_id) as { id: string | null } | undefined;
+    const aOrderQ = aOrderRow?.id ? await port.getOrder(aOrderRow.id) : null;
+    const aOrderRefunds: Facts['paypal']['aOrderRefunds'] =
+      aOrderQ?.kind === 'FOUND' ? { ok: true, value: (aOrderQ.resource.purchase_units?.[0]?.payments?.refunds ?? []).map((x) => ({ id: x.id })) } : { ok: false, why: aOrderQ ? aOrderQ.kind : 'A order id not recorded' };
+    const refunds: Facts['paypal']['refunds'] = {};
+    for (const o of ops.filter((x) => x.op_kind === 'CAPTURE_REFUND' && x.status === 'SUCCEEDED' && x.res)) {
       const q = await port.getRefund(o.res!);
+      refunds[o.res!] = q.kind === 'FOUND' ? { ok: true, value: { status: q.resource.status, amount: money(q.resource.amount), parentCapture: linkedId(q.resource.links, 'up', 'captures') ?? null } } : { ok: false, why: q.kind };
       const total = q.kind === 'FOUND' ? q.resource.seller_payable_breakdown?.total_refunded_amount : undefined;
       rep.note(
         `paypal_refund_${o.ob}`,
         q.kind === 'FOUND' ? `${q.resource.status} ${q.resource.amount?.value} ${q.resource.amount?.currency_code}${total ? ` (capture total refunded ${total.value} ${total.currency_code})` : ''}` : q.kind,
       );
     }
-    // No double refund, from PayPal's side: the refunds PayPal lists on A's and B's orders are exactly the
-    // successful refund operations FlexSlot recorded for this case (an unrecorded or repeated refund would show here).
-    const recordedRefunds = new Set(refundOps.map((o) => o.res!));
-    const aOrderRow = db.prepare('SELECT order_id AS id FROM payments WHERE capture_id = ?').get(c.a_capture_id) as { id: string | null } | undefined;
-    const listed: Array<{ who: 'A' | 'B'; id: string; text: string }> = [];
-    for (const who of ['A', 'B'] as const) {
-      const orderId = who === 'A' ? aOrderRow?.id : bOrderId;
-      if (!orderId) throw new Error(`${who} order id not recorded`);
-      const q = who === 'B' ? order : await port.getOrder(orderId);
-      if (q.kind !== 'FOUND') throw new Error(`${who} order query failed`);
-      for (const rf of q.resource.purchase_units?.[0]?.payments?.refunds ?? []) listed.push({ who, id: rf.id, text: `${who}:${rf.status} ${rf.amount?.value} ${rf.amount?.currency_code} ${anon('res', rf.id)}` });
-    }
-    rep.note('paypal_refunds_listed_on_orders', listed.map((x) => x.text).join(' ') || 'none');
-    // The in-process mock does not list refunds on orders (the Sandbox does), so this check is for the Sandbox only.
-    if (MOCK) rep.note('refund_list_check', 'skipped: the mock does not list refunds on orders');
-    else rep.check(
-      'the refunds PayPal lists on the A and B orders are exactly the recorded successful refund operations (none extra, none twice)',
-      listed.length === recordedRefunds.size && new Set(listed.map((x) => x.id)).size === listed.length && listed.every((x) => recordedRefunds.has(x.id)),
-    );
-    const expect: Record<RunId, () => boolean> = {
-      R1: () => c.status === 'COMPLETED' && caps.length === 1 && caps[0]!.status === 'COMPLETED' && grants === 1 && aCap.kind === 'FOUND' && aCap.resource.status === 'PARTIALLY_REFUNDED' && refundOps.length === 1,
-      R2: () => c.status === 'COMPLETED' && caps.length === 1 && grants === 1 && aCap.kind === 'FOUND' && aCap.resource.status === 'PARTIALLY_REFUNDED' && refundOps.length === 1,
-      R3: () => c.status === 'COMPENSATED' && caps.length === 1 && caps[0]!.status === 'REFUNDED' && grants === 0 && bBooking.n === 0 && aCap.kind === 'FOUND' && aCap.resource.status === 'COMPLETED',
-      R4: () => c.status === 'REJECTED' && caps.length === 0 && auths.length === 1 && auths[0]!.status === 'VOIDED' && grants === 0 && bBooking.n === 0,
-      R5: () => c.status === 'COMPLETED' && caps.length === 1 && caps[0]!.status === 'COMPLETED' && grants === 1 && aCap.kind === 'FOUND' && aCap.resource.status === 'PARTIALLY_REFUNDED' && refundOps.length === 1,
+    const listed = [...(aOrderRefunds.ok ? aOrderRefunds.value.map((x) => `A:${anon('res', x.id)}`) : []), ...(bOrder.ok ? bOrder.value.refunds.map((x) => `B:${anon('res', x.id)}`) : [])];
+    rep.note('paypal_refunds_listed_on_orders', listed.join(' ') || 'none');
+
+    const facts: Facts = {
+      outcome: OUTCOME[r],
+      caseStatus: c.status,
+      terms: {
+        aCaptureId: c.a_capture_id,
+        bPrice: { minor: c.b_price_minor, currency: c.currency },
+        aComp: { minor: c.a_comp_minor, currency: c.currency },
+        origin: [c.origin_start_ms, c.origin_end_ms],
+        dest: [c.dest_start_ms, c.dest_end_ms],
+        bSlot: [c.b_start_ms, c.b_end_ms],
+      },
+      obligations: obligations.map((o) => ({ kind: o.kind, status: o.status, amount: { minor: o.amount_minor, currency: o.currency }, target: o.target })),
+      ops: ops.map((o) => ({ obligation: o.ob, kind: o.op_kind, status: o.status, sends: o.sends, rid: rid(o.rid), res: o.res })),
+      aOps: aOps.map((o) => ({ kind: o.op_kind, rid: rid(o.rid) })),
+      posts: posts.map((p) => ({ route: p.route!, rid: p.requestId!, sent: p.event === 'POST' })),
+      aBooking: aBooking ? { start: aBooking.start_ms, end: aBooking.end_ms, status: aBooking.status } : null,
+      bBooking: bBooking ? { start: bBooking.start_ms, end: bBooking.end_ms, status: bBooking.status } : null,
+      grants,
+      paypal: { bOrder, aOrderRefunds, aCapture, refunds },
     };
-    rep.check(`end state as expected for ${r} (${SCENARIO[r]})`, expect[r]());
+    for (const ch of evaluate(facts)) rep.check(ch.name, ch.ok);
     db.close();
   });
 }

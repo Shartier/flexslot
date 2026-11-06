@@ -234,8 +234,9 @@ const en = {
   swapPossible: 'Swap possible',
   noSwapPossible: 'No swap possible',
   stoppedTitle: 'Stopped: your action is needed',
+  // IWAI-01 (Codex): what a restart really does with stopped steps.
   stoppedBody:
-    'FlexSlot stopped these automatically and sends nothing new for them: no new payment, capture, refund or void. The only automatic step is at a server restart: its recovery checks each of them once more with PayPal, with the same request, and may finish or release a payment that PayPal has already decided. This demo has no button to release a stop. What to do: check the payment in the PayPal Sandbox dashboard and ask the developer; a stop is never released by waiting. Items marked “needs attention” are different: use “Recover” in the payment records when it is offered.',
+    'Automatic retries are paused for these steps. Restarting the server can resume recovery: FlexSlot may check PayPal, resend the same operation with the same request ID, and carry out the resulting recovery steps, including an authorization release or refund. This demo has no manual release button for these stops. Check the payment in the PayPal Sandbox dashboard and contact the developer. For a confirmed failure, use “Recover” only when it is offered in the payment records.',
   needsAttentionItem: (k: string) => `${k}: needs attention (use “Recover” in the payment records if offered)`,
   checkingTitle: 'Still checking with PayPal (a difference was seen)',
   checkingBody: 'FlexSlot keeps querying PayPal for these and continues once the records match. Nothing moves meanwhile.',
@@ -492,7 +493,7 @@ const ja: Texts = {
   noSwapPossible: '振替できません',
   stoppedTitle: '停止中：対応が必要です',
   stoppedBody:
-    'FlexSlotが自動で止めた項目です。新しい支払い・請求の確定・返金・取り消しは送りません。自動で動くのはサーバーを再起動したときだけで、同じ要求でPayPalにもう一度確認し、PayPal側ですでに決まっている支払いを完了または取り消すことがあります。このデモには、停止を解除するボタンはありません。PayPal Sandboxの管理画面で支払いを確かめ、開発者に連絡してください。待っていても解除はされません。「対応が必要」の項目はこれとは別で、支払いの記録に「再実行」が表示されていれば使えます。',
+    'これらの手順は、自動の再試行を止めています。サーバーを再起動すると回復の処理が再開し、FlexSlotがPayPalに確認したり、同じ操作を同じ再送防止IDで送り直したり、その結果に応じた回復の手続き（仮売上の取り消しや返金など）を行ったりすることがあります。このデモには、停止を手動で解除するボタンはありません。PayPal Sandboxの管理画面でお支払いを確かめ、開発者に連絡してください。失敗が確定した項目は、支払いの記録に「再実行」が表示されたときだけ使えます。',
   needsAttentionItem: (k) => `${k}：対応が必要（支払いの記録に「再実行」があれば使えます）`,
   checkingTitle: 'PayPalへの確認を続けています（記録に違いがあります）',
   checkingBody: 'FlexSlotはPayPalへの確認を続け、記録が一致したら先に進みます。それまでは何も動きません。',

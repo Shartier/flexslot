@@ -98,7 +98,7 @@ export const EVENTS_JA: Record<string, string> = {
   OFFER_EXPIRED: '提案の期限が切れました',
   PAYMENT_STARTED: 'お支払いを始めました',
   PAYMENT_EXPIRED: 'お支払いの期限が切れました（請求はありません）',
-  PRE_CAPTURE_CHECK_FAILED: '請求の前の最終確認で問題が見つかったため、お支払いを取り消します',
+  PRE_CAPTURE_CHECK_FAILED: '請求前の最終確認に通らなかったため、このお支払いは請求しません。仮売上の取り消しの状況は下の表示をご確認ください',
   BOOKING_COMMITTED: '予約を変更しました',
 };
 
@@ -115,6 +115,8 @@ export const STEP_JA = {
   authorizing: '仮売上の手続き中',
   waitingBuyer: 'PayPalでの承認待ち',
   capturing: '請求を確定中',
+  checkingPayment: 'PayPalにお支払いの結果を確認中',
+  preparingRefund: '返金を準備中',
   authorized: '仮売上済み（まだ請求されていません）',
   capturedChecking: '請求済み・内容を確認中',
   pending: 'PayPalで保留中・再確認します',

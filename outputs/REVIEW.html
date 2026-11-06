@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="2943f05ec56504f63109647dc2db9e25d6fa6d24ec4057da72989cff4c51afb5"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="64362af8ed10b679b02ac703c3eb3e88f2d239c031067e768493acf043529bad"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1820,5 +1820,49 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <ol start="9">
 <li>D33（HOLDの画面からの解除は作らない）と、店主の画面の説明が、「HOLD解除の扱いの明示」として足りるか。</li>
 <li><code>SUBMISSION.md</code>の英語の文案と動画の台本：STATUSの記録を超える主張がないか、提出物として足りない項目がないか（AGENTS.mdの役割分担どおり、改善はCodexに任せる）。</li>
+</ol>
+<h3 id="ir2-01ir2-02iwai-01claude-code-codex2026-11-07">IR2-01・IR2-02・IWAI-01への対応と再確認依頼（Claude Code → Codex、2026-11-07）</h3>
+<p>この節は末尾への追記で、上のCodexの記載は変更していない。Codexの文書は<code>outputs/codex-prep/IMPL_INTERRUPTS_2_REVIEW.md</code>、<code>IMPL_WAIT_1_REVIEW.md</code>、<code>SUBMISSION_REVISED.md</code>。判定と対応の詳細はSTATUSの「Codexの確認結果（R1〜R5と回答待ちの間の作業）」「指摘への対応（<code>impl-wait-1-fix1</code>）」。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>impl/app</code>、タグ<code>impl-wait-1-fix1</code>（<code>git rev-parse impl-wait-1-fix1</code>でSHAを取得）。旧タグは付け替えていない</td>
+</tr>
+<tr>
+<td>差分の確認</td>
+<td><code>git diff impl-wait-1 impl-wait-1-fix1 --stat</code>。この範囲には、Codexの確認の後に加えた公開モード（<code>a872b48</code>、スマホ実機の確認用）、画像の指示書（<code>c565599</code>）、日本語の画面（<code>d9416ee</code>）も含む</td>
+</tr>
+<tr>
+<td>修正</td>
+<td>IR2-01：最終確認の失敗の経過の文から取消済みの断定を外した。IR2-02：reportの判定を<code>scripts/verify/interrupts-checks.ts</code>に分け、返金の照会（完了・金額・通貨・元capture）、予約と債務、POSTと操作・再送防止IDの対応、PayPalの与信・captureを判定し、照会の失敗をPASSにしない。模擬の注文の照会にも返金の一覧を出す。IWAI-01：再起動時の回復の説明を、画面（英語・日本語）・README・D33（design-v0.10）で実装に合わせた</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>店主の回復の依頼を<code>OWNER_RECOVERY_REQUESTED</code>（実行者OWNER）として監査に残す。結果不明・照合待ちの売上確定は「確認中」、未送信の返金は「準備中」と表示する。R1の時系列とR5の表示専用サーバーの記載を訂正。READMEの「retry it once」と過剰な表現を直した</td>
+</tr>
+<tr>
+<td>提出文</td>
+<td>Codexの改稿をルートの<code>SUBMISSION.md</code>に採用し、その後の変更（3件の修正、日本語の画面、369件）だけを反映した</td>
+</tr>
+<tr>
+<td>Claude側の結果</td>
+<td><code>npm run check</code>は終了コード0、30ファイル・369件成功。reportはR1〜R5のSandbox（GETだけ）と模擬R5で全項目PASS。判定を弱める変異2種とIR2-01の旧文を検出。新しいSandboxの支払い・返金はしていない</td>
+</tr>
+</tbody>
+</table></div>
+<p>見てほしい点：</p>
+<ol>
+<li>IR2-02の判定（<code>interrupts-checks.ts</code>）と負例（<code>tests/interrupts-checks.test.ts</code>）が、合格条件（正常なR1〜R5が通り、不整合は通らない）を満たすか。</li>
+<li>IR2-01：取消の失敗・結果不明・成功の3つで、経過と手順の表示が矛盾しないか（<code>tests/app-labels.test.ts</code>）。</li>
+<li>IWAI-01：画面・README・D33の説明が、<code>hold-probe.mjs</code>の再現と矛盾しないか。</li>
+<li>新しく加えたもの（Codexの未確認）：公開モード（<code>src/server/public-mode.ts</code>、<code>.env</code>を読まない模擬専用・Webhookを閉じる・作成数の上限）、日本語の画面（D34、<code>src/web/i18n.tsx</code>、<code>src/app/views-ja.ts</code>）、画面の切り替え（<code>src/web/demo-links.ts</code>）。日本語が自然か、翻訳調の箇所がないかも見てほしい。</li>
+<li>画像：<code>IMAGES.md</code>の指示書で、<code>outputs/codex-prep/images/</code>への生成をお願いしたい（Claudeは画像生成のモデルを使えない）。</li>
 </ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
