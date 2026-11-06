@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="96143c1cbc1ebf2ce48991d89c32048183139df181a36f35a183381762c645ea"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="b59172fa5ebc3ac74e32dc815ad19eae13ade1af615e302f5ae8658206ccc7f0"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
 .table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
 @media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
-<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a></nav></header>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
 <p>更新日：2026-11-07（日本時間）/ 文書版：status-v0.13。</p>
 <h2 id="section">現在地</h2>
@@ -2283,6 +2283,40 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>PENDINGの返金、照会のタイムアウト、HOLDとその解除、Webhookが処理を前倒しする場面は、Sandboxで再現していない。</li>
 <li>画面の確認はPC幅の内蔵ブラウザだけ。停止中の三画面はR5（売上確定・返金の応答喪失、E7の前後）でSandboxでも見たが、R2の照合前の停止と返金の422は、停止中の画面を模擬の試験で確かめた範囲（R2の422の後の店主の画面はSandboxで見た）。実機のスマートフォン、初見の人の操作、別PCでの起動は未実施。</li>
 </ul>
+<h2 id="codexclaude-code2026-11-07">Codexの回答待ちの間に進めた作業（Claude Code、2026-11-07）</h2>
+<p>本人の指示（Codexの回答を待たずに進める）で、Codexの未回答の確認事項（REVIEW末尾の1〜8）に左右されないものを進めた。「Refund in progress」の文言（確認事項8）は、Codexの回答を待って変える。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>作業</th>
+<th>内容</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HOLD解除の扱いの明示（Codexの第3レビューまでの残件）</td>
+<td>DESIGN design-v0.9のD33：このバージョンでは画面からHOLDを解除する機能を作らない。店主の画面の「Stopped」の説明を、新しい送信をしないこと、再起動時の同じ要求での照会だけが自動で動くこと、解除のボタンがないこと、PayPalの管理画面で確かめ開発者に連絡すること、待っても解除されないこと、「needs attention」は「Recover」で別、に変えた。READMEの「Status and limitations」にも記載し、R1〜R5の結果（注入した障害の区別つき）を加えた</td>
+<td><code>ae1b56c</code>。<code>npm run check</code>は27ファイル・338件成功（文言の試験はない）</td>
+</tr>
+<tr>
+<td>PC幅・スマホ幅での三画面（AC13の一部）</td>
+<td>最新のビルドで、内蔵ブラウザのエミュレーション（スマホ375×812、PC 1024幅）。(1) R5のワールドを表示だけのサーバーで（案件のある画面）、(2) 新しい模擬のワールド（<code>data/screens-check</code>、模擬AI・模擬決済）で、Aの支払い→条件→Bの依頼→店主の承認→Aの同意→Bの支払いまでをスマホ幅の画面の操作だけで行い、「Swap completed」になった</td>
+<td>すべての画面・段階で、ページの横スクロールなし（店主の予約一覧の表は枠の中で横にスクロールする）。実機のスマートフォンは未確認</td>
+</tr>
+<tr>
+<td>別環境での起動（AC13の一部）</td>
+<td><code>ae1b56c</code>をスクラッチの別フォルダへ<code>git clone</code>（<code>.env</code>・<code>data</code>なし）。Node v24.22.1・npm 11.19.1</td>
+<td><code>npm ci</code>（6秒）・<code>npm run check</code>（27ファイル・338件）・<code>npm run build</code>はすべて終了コード0。<code>.env</code>なしで起動すると模擬だけが選べ（Sandbox・Vertexは未設定と記録）、HTTPで一件がCOMPLETED（Aは移動、補償はRefunded）。同じPCの別フォルダで、別PCではない</td>
+</tr>
+<tr>
+<td>提出物の下書き</td>
+<td><code>SUBMISSION.md</code>（英語のDevpostの文案、2分40〜50秒の動画の台本、公開前に本人の確認が要る項目）。HTML版も生成（<code>tools/render-docs.ps1</code>の対象に追加）</td>
+<td>下書き。公開・提出はしていない。Codexの確認を依頼</td>
+</tr>
+</tbody>
+</table></div>
+<p>本人の判断・作業が要るもの（未実施）：実機のスマートフォンでの操作（サーバーは127.0.0.1だけで待ち受けるため、同じLANへの公開か一時的なトンネルが要り、外部公開として本人の承認が要る）、初見の人による三画面の操作（AC01）、別PCでの起動、OSSライセンスの選択、公開リポジトリ・動画・Devpostの公開。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -2572,6 +2606,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>すべて終了コード0、全項目PASS。どの停止でも完了と表示されなかった。詳細は「R5：停止中の三画面」</td>
 </tr>
 <tr>
+<td>11-07 Claude</td>
+<td>回答待ちの間の作業</td>
+<td>HOLDの扱いの明示（D33）、スマホ幅・PC幅の三画面（エミュレーション、模擬で一件）、別フォルダへのclone からの起動、<code>SUBMISSION.md</code>の下書き</td>
+<td>すべて終了コード0。詳細は「Codexの回答待ちの間に進めた作業」</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
 <td>Playwrightの画面試験・実機・初見の人の操作・Sandboxでの返金PENDING・照会のタイムアウト・HOLD</td>
@@ -2673,7 +2713,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>修正版を<code>impl/app</code>へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ<code>impl-app-1</code>）。第2レビュー（REVIEWの最後の節）を待つ。</li>
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
 <li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（<code>impl-app-1-fix1</code>、Codexの再確認待ち）。</li>
-<li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。次は、R1〜R4の記録へのCodexの確認、HOLD解除の扱いの明示（未実装）、実機での確認と初見の人の操作（SPEC 12の11月8日）。</li>
+<li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。次は、R1〜R4の記録へのCodexの確認、HOLD解除の扱いの明示（未実装）、実機での確認と初見の人の操作（SPEC 12の11月8日）。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
 <h2 id="section-31">今後の検証記録の書式</h2>

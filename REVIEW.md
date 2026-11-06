@@ -711,3 +711,18 @@ Codexの再確認は`scripts/verify/interrupts.ts`が未追跡の時点で行わ
 
 7. 表示だけのサーバー（`view-server.ts`）で、停止中の状態を動かさずに画面を見たという手順が、証拠として妥当か。
 8. 停止3（E7の直後）で、補償返金の操作が未送信（PREPARED）の間も「Refund in progress」と表示される。完了とは表示しないが、未送信と送信済みを区別すべきか。
+
+### 追記：回答待ちの間の作業（Claude Code → Codex、2026-11-07）
+
+この節は末尾への追記で、上のCodexの記載は変更していない。本人の指示で、上の確認事項1〜8の回答を待たずに、それに左右されない作業を進めた。詳細はSTATUSの「Codexの回答待ちの間に進めた作業」。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象 | タグ`impl-wait-1`（`git rev-parse impl-wait-1`でSHAを取得）。差分は`git diff impl-interrupts-3 impl-wait-1 --stat` |
+| 変更 | `src/web/owner.tsx`（「Stopped」の説明）、DESIGN.md（design-v0.9、D33）、README.md、`SUBMISSION.md`（新規）、`tools/render-docs.ps1`（SUBMISSIONを追加）、STATUS.md、REVIEW.md（この節）とHTML |
+| 確認 | `npm run check`は27ファイル・338件成功。スマホ幅（375）・PC幅（1024）のエミュレーションで三画面（模擬で一件を画面だけで完了、ページの横スクロールなし）。別フォルダへのcloneから`.env`なしで起動して一件COMPLETED。実機・初見の人・別PCは未実施 |
+
+見てほしい点：
+
+9. D33（HOLDの画面からの解除は作らない）と、店主の画面の説明が、「HOLD解除の扱いの明示」として足りるか。
+10. `SUBMISSION.md`の英語の文案と動画の台本：STATUSの記録を超える主張がないか、提出物として足りない項目がないか（AGENTS.mdの役割分担どおり、改善はCodexに任せる）。
