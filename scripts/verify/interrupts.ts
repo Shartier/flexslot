@@ -412,8 +412,29 @@ async function report(r: RunId): Promise<void> {
     const refundOps = ops.filter((o) => o.op_kind === 'CAPTURE_REFUND' && o.status === 'SUCCEEDED' && o.res);
     for (const o of refundOps) {
       const q = await port.getRefund(o.res!);
-      rep.note(`paypal_refund_${o.ob}`, q.kind === 'FOUND' ? `${q.resource.status} ${q.resource.amount?.value} ${q.resource.amount?.currency_code}` : q.kind);
+      const total = q.kind === 'FOUND' ? q.resource.seller_payable_breakdown?.total_refunded_amount : undefined;
+      rep.note(
+        `paypal_refund_${o.ob}`,
+        q.kind === 'FOUND' ? `${q.resource.status} ${q.resource.amount?.value} ${q.resource.amount?.currency_code}${total ? ` (capture total refunded ${total.value} ${total.currency_code})` : ''}` : q.kind,
+      );
     }
+    // No double refund, from PayPal's side: the refunds PayPal lists on A's and B's orders are exactly the
+    // successful refund operations FlexSlot recorded for this case (an unrecorded or repeated refund would show here).
+    const recordedRefunds = new Set(refundOps.map((o) => o.res!));
+    const aOrderRow = db.prepare('SELECT order_id AS id FROM payments WHERE capture_id = ?').get(c.a_capture_id) as { id: string | null } | undefined;
+    const listed: Array<{ who: 'A' | 'B'; id: string; text: string }> = [];
+    for (const who of ['A', 'B'] as const) {
+      const orderId = who === 'A' ? aOrderRow?.id : bOrderId;
+      if (!orderId) throw new Error(`${who} order id not recorded`);
+      const q = who === 'B' ? order : await port.getOrder(orderId);
+      if (q.kind !== 'FOUND') throw new Error(`${who} order query failed`);
+      for (const rf of q.resource.purchase_units?.[0]?.payments?.refunds ?? []) listed.push({ who, id: rf.id, text: `${who}:${rf.status} ${rf.amount?.value} ${rf.amount?.currency_code} ${anon('res', rf.id)}` });
+    }
+    rep.note('paypal_refunds_listed_on_orders', listed.map((x) => x.text).join(' ') || 'none');
+    rep.check(
+      'the refunds PayPal lists on the A and B orders are exactly the recorded successful refund operations (none extra, none twice)',
+      listed.length === recordedRefunds.size && new Set(listed.map((x) => x.id)).size === listed.length && listed.every((x) => recordedRefunds.has(x.id)),
+    );
     const expect: Record<RunId, () => boolean> = {
       R1: () => c.status === 'COMPLETED' && caps.length === 1 && caps[0]!.status === 'COMPLETED' && grants === 1 && aCap.kind === 'FOUND' && aCap.resource.status === 'PARTIALLY_REFUNDED' && refundOps.length === 1,
       R2: () => c.status === 'COMPLETED' && caps.length === 1 && grants === 1 && aCap.kind === 'FOUND' && aCap.resource.status === 'PARTIALLY_REFUNDED' && refundOps.length === 1,

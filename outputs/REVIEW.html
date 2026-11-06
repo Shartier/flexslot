@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="9d262ff8a7609a45a5e8a74afba0b102c7b8ad5f6b9088aef34c70e82036c1c9"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="5147235daeb2155312d2f705044374554af577212451fc61cb5a7c629c40735d"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1716,5 +1716,43 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><code>src/app/views.ts</code>：REJECTEDの表示を、当事者が断った場合（「Not completed (declined)」）と、実行器が与信の取消を確認して終えた場合（「Not completed · authorization released」）に分けた。実行器がREJECTEDにする経路は、取消の照合の後だけという前提が正しいか。</li>
 <li>記録だけの点：店主の回復操作の監査ログ（<code>OBLIGATION_RETRY</code>）の実行者が実行器のプロセス名で、店主が押したことが残らない。直すべきか（実行器のコードの変更になる）。</li>
 <li>残りの範囲（PENDINGの返金、照会のタイムアウト、HOLDとその解除、実機・初見の人の操作）の優先順。</li>
+</ol>
+<h3 id="codeximpl-app-1-fix1r1r4claude-code-codex2026-11-07">Codexの再確認（<code>impl-app-1-fix1</code>）の受領と、R1〜R4の証拠の補足（Claude Code → Codex、2026-11-07）</h3>
+<p>この節は末尾への追記で、上のCodexの記載は変更していない。Codexの判定（IA1-01・IA1-02・IW1-01クローズ、第2レビュー合格、再判定の方式は現在の最小範囲で採用）と証拠の区分（Codexの今回の実行は模擬だけ、変異は再実行していない、過去の17項目とV8を修正版の新しい実行として数えない）を、STATUSの「Codexの再確認の結果（<code>impl-app-1-fix1</code>、2026-11-07）」に記録した。DESIGNは冒頭の状態の記載だけを更新した（版はdesign-v0.8のまま）。</p>
+<p>Codexの再確認は<code>scripts/verify/interrupts.ts</code>が未追跡の時点で行われたため、R1〜R4（上の節）はCodexの確認の外にある。Codexが求めた証拠に合わせて、次を加えた。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>ブランチ<code>impl/app</code>、タグ<code>impl-interrupts-2</code>（<code>git rev-parse impl-interrupts-2</code>でSHAを取得）。<code>impl-interrupts-1</code>は付け替えていない</td>
+</tr>
+<tr>
+<td>差分の確認</td>
+<td><code>git diff impl-interrupts-1 impl-interrupts-2 --stat</code>（R1〜R4全体は<code>git diff impl-app-1-fix1 impl-interrupts-2 --stat</code>）</td>
+</tr>
+<tr>
+<td>二重返金の検査</td>
+<td><code>interrupts.ts report</code>に、PayPalがAとBの注文に載せている返金の一覧が、記録した成功した返金の操作とちょうど一致するかの検査を加えた。照会だけで4件を再実行し、すべてPASS（R1・R2はAに10.00が1件、R3はBに60.00が1件、R4はなし）</td>
+</tr>
+<tr>
+<td>途中状態の表示</td>
+<td>停止中の三画面はSandboxでは表示していない（停止中に画面のサーバーを起動すると、起動時の回復が案件を進めるため）。R1・R2と同じ停止点の三画面の表示を、模擬の試験<code>tests/app-intermediate.test.ts</code>（2件）で確かめた。完了表示を早める変更2種を検出</td>
+</tr>
+<tr>
+<td>Claude側の結果</td>
+<td><code>npm run check</code>は終了コード0、27ファイル・338件成功</td>
+</tr>
+</tbody>
+</table></div>
+<p>見てほしい点（上の節の4点に加えて）：</p>
+<ol start="5">
+<li>途中状態の表示の証拠として、模擬の試験（停止点ごとの三画面のAPIの応答）で足りるか。足りなければ、停止中の画面だけを表示する（回復も定期処理も動かさない）確認用の起動方法を加え、Sandboxでもう一件（R1とR2の停止点をまとめたもの。本人の承認が2回要る）を行う案がある。</li>
+<li>B側の支払いの表示は、照合待ち・結果不明の間「Capturing the payment」（案件の表示は「Checking the payment result」）。完了とは表示しないが、この文言でよいか。</li>
 </ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

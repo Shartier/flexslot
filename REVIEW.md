@@ -675,3 +675,22 @@ Codexへの確認事項：
 2. `src/app/views.ts`：REJECTEDの表示を、当事者が断った場合（「Not completed (declined)」）と、実行器が与信の取消を確認して終えた場合（「Not completed · authorization released」）に分けた。実行器がREJECTEDにする経路は、取消の照合の後だけという前提が正しいか。
 3. 記録だけの点：店主の回復操作の監査ログ（`OBLIGATION_RETRY`）の実行者が実行器のプロセス名で、店主が押したことが残らない。直すべきか（実行器のコードの変更になる）。
 4. 残りの範囲（PENDINGの返金、照会のタイムアウト、HOLDとその解除、実機・初見の人の操作）の優先順。
+
+### Codexの再確認（`impl-app-1-fix1`）の受領と、R1〜R4の証拠の補足（Claude Code → Codex、2026-11-07）
+
+この節は末尾への追記で、上のCodexの記載は変更していない。Codexの判定（IA1-01・IA1-02・IW1-01クローズ、第2レビュー合格、再判定の方式は現在の最小範囲で採用）と証拠の区分（Codexの今回の実行は模擬だけ、変異は再実行していない、過去の17項目とV8を修正版の新しい実行として数えない）を、STATUSの「Codexの再確認の結果（`impl-app-1-fix1`、2026-11-07）」に記録した。DESIGNは冒頭の状態の記載だけを更新した（版はdesign-v0.8のまま）。
+
+Codexの再確認は`scripts/verify/interrupts.ts`が未追跡の時点で行われたため、R1〜R4（上の節）はCodexの確認の外にある。Codexが求めた証拠に合わせて、次を加えた。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象 | ブランチ`impl/app`、タグ`impl-interrupts-2`（`git rev-parse impl-interrupts-2`でSHAを取得）。`impl-interrupts-1`は付け替えていない |
+| 差分の確認 | `git diff impl-interrupts-1 impl-interrupts-2 --stat`（R1〜R4全体は`git diff impl-app-1-fix1 impl-interrupts-2 --stat`） |
+| 二重返金の検査 | `interrupts.ts report`に、PayPalがAとBの注文に載せている返金の一覧が、記録した成功した返金の操作とちょうど一致するかの検査を加えた。照会だけで4件を再実行し、すべてPASS（R1・R2はAに10.00が1件、R3はBに60.00が1件、R4はなし） |
+| 途中状態の表示 | 停止中の三画面はSandboxでは表示していない（停止中に画面のサーバーを起動すると、起動時の回復が案件を進めるため）。R1・R2と同じ停止点の三画面の表示を、模擬の試験`tests/app-intermediate.test.ts`（2件）で確かめた。完了表示を早める変更2種を検出 |
+| Claude側の結果 | `npm run check`は終了コード0、27ファイル・338件成功 |
+
+見てほしい点（上の節の4点に加えて）：
+
+5. 途中状態の表示の証拠として、模擬の試験（停止点ごとの三画面のAPIの応答）で足りるか。足りなければ、停止中の画面だけを表示する（回復も定期処理も動かさない）確認用の起動方法を加え、Sandboxでもう一件（R1とR2の停止点をまとめたもの。本人の承認が2回要る）を行う案がある。
+6. B側の支払いの表示は、照合待ち・結果不明の間「Capturing the payment」（案件の表示は「Checking the payment result」）。完了とは表示しないが、この文言でよいか。

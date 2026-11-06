@@ -8,6 +8,7 @@ import { AiService, type AiLimits } from '../src/ai/service.ts';
 import type { GenerateContentLike } from '../src/ai/vertex.ts';
 import { ManualClock } from '../src/clock.ts';
 import { openDatabase, type Db } from '../src/db/database.ts';
+import type { ExecutorHooks } from '../src/executor/engine.ts';
 import { Executor } from '../src/executor/executor.ts';
 import { MOCK_CLIENT_ID, MOCK_CLIENT_SECRET, MOCK_MERCHANT_ID, MockPayPalServer } from '../src/paypal/mock-server.ts';
 import type { PayPalPort } from '../src/paypal/port.ts';
@@ -40,7 +41,7 @@ export interface Harness {
 }
 
 export function harness(
-  o: { db?: Db; clock?: ManualClock; vertex?: GenerateContentLike | null; limits?: AiLimits; mock?: MockPayPalServer; fakeSandbox?: MockPayPalServer; owner?: string; webhookId?: string | null; webhookRate?: number } = {},
+  o: { db?: Db; clock?: ManualClock; vertex?: GenerateContentLike | null; limits?: AiLimits; mock?: MockPayPalServer; fakeSandbox?: MockPayPalServer; owner?: string; webhookId?: string | null; webhookRate?: number; hooks?: ExecutorHooks } = {},
 ): Harness {
   const clock = o.clock ?? new ManualClock(SAMPLE_NOW_MS);
   const db = o.db ?? openDatabase(':memory:');
@@ -52,8 +53,8 @@ export function harness(
   };
   const owner = o.owner ?? 'exec-app';
   const executors: Partial<Record<PaymentMode, Executor>> = {
-    MOCK: new Executor({ db, paypal: paypal.MOCK!, clock, owner: `${owner}-mock`, returnUrl: `${ORIGIN}/paypal/return`, cancelUrl: `${ORIGIN}/paypal/cancel` }),
-    SANDBOX: new Executor({ db, paypal: paypal.SANDBOX!, clock, owner: `${owner}-sbx`, returnUrl: `${ORIGIN}/paypal/return`, cancelUrl: `${ORIGIN}/paypal/cancel` }),
+    MOCK: new Executor({ db, paypal: paypal.MOCK!, clock, owner: `${owner}-mock`, ...(o.hooks ? { hooks: o.hooks } : {}), returnUrl: `${ORIGIN}/paypal/return`, cancelUrl: `${ORIGIN}/paypal/cancel` }),
+    SANDBOX: new Executor({ db, paypal: paypal.SANDBOX!, clock, owner: `${owner}-sbx`, ...(o.hooks ? { hooks: o.hooks } : {}), returnUrl: `${ORIGIN}/paypal/return`, cancelUrl: `${ORIGIN}/paypal/cancel` }),
   };
   const vertex: AiStructurer | null = o.vertex ? vertexStructurer(o.vertex, 'gemini-test', 50) : null;
   const ai = new AiService({ db, clock, vertex, mock: new MockStructurer(), ...(o.limits ? { limits: o.limits } : {}) });
