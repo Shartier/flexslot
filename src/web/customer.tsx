@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Api } from './api.ts';
 import { useT } from './i18n.tsx';
 import type { AState, Approval, BState, CaseView } from './types.ts';
-import { ApprovalBox, ConditionsSummary, DemoNote, Events, IntakePanel, Notice, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
+import { ApprovalBox, CaseProgress, ConditionsSummary, DemoNote, Events, IntakePanel, Notice, RoleHero, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
 
 const decision = (c: CaseView) => ({ caseId: c.id, version: c.version, termsHash: c.termsHash });
 
@@ -26,6 +26,7 @@ export function AScreen({ api, state, refresh }: { api: Api; state: AState; refr
     <>
       <TopBar header={state.header} roleName={t.roleA} roleSeg="a" />
       <main>
+        <RoleHero roleSeg="a" name={t.roleA} />
         <DemoNote header={state.header} />
         <Section title={t.yourBooking} aside={<StepChip step={pay.state === 'PAID' ? { state: 'DONE', text: pay.text } : pay} />}>
           <p className="big">{t.bookingLine(state.booking.time, state.booking.service, state.booking.stylist, state.booking.price.text)}</p>
@@ -67,6 +68,7 @@ function ACase({ api, c, refresh, refundNote }: { api: Api; c: CaseView; refresh
   const act = useAction(refresh);
   return (
     <Section title={t.swapProposal} aside={<StatusChip c={c} />}>
+      <CaseProgress c={c} />
       <p className="big">{t.moveFromTo(c.origin, c.destination)}</p>
       <ul className="facts">
         <li>{t.sameStylistService(c.stylist, c.aService)}</li>
@@ -112,6 +114,7 @@ export function BScreen({ api, state, refresh }: { api: Api; state: BState; refr
     <>
       <TopBar header={state.header} roleName={t.roleB} roleSeg="b" />
       <main>
+        <RoleHero roleSeg="b" name={t.roleB} />
         <DemoNote header={state.header} />
         <Section title={t.yourRequest}>
           {state.request && <ConditionsSummary c={state.request} label={t.yourConfirmedRequest} />}
@@ -155,6 +158,7 @@ function BCase({ api, c, refresh }: { api: Api; c: CaseView; refresh: () => Prom
 
   return (
     <Section title={t.yourOffer} aside={<StatusChip c={c} />}>
+      <CaseProgress c={c} />
       <p className="big">
         {t.bookingLine(c.bSlot, c.bService ?? t.serviceFallback, c.stylist, '')}
         <strong>{c.bPrice.text}</strong>

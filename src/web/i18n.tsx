@@ -78,6 +78,13 @@ const en = {
   roleA: 'Existing customer (A)',
   roleB: 'New customer (B)',
   switchTo: 'Switch screen:',
+  progressAria: 'Progress of this swap',
+  stages: ['Proposal', 'Approvals', 'Payment', 'Bookings', 'Compensation', 'Done'],
+  roleLead: {
+    owner: 'Bookings, the proposal and every money step in one place.',
+    a: 'Tell us when you could move. If someone needs your time, you may be offered a compensated swap.',
+    b: 'A fully booked time can sometimes still be offered, through a swap with an existing customer.',
+  } as Record<'owner' | 'a' | 'b', string>,
   // session
   needInvite: 'This screen needs your invite link. Please open the link you received (it signs you in and is then removed from the address bar).',
   sessionFailed: 'Could not start the session. Please reload.',
@@ -344,6 +351,13 @@ const ja: Texts = {
   roleA: '予約済みのお客さま（A）',
   roleB: '新しいお客さま（B）',
   switchTo: '画面を切り替え：',
+  progressAria: 'この振替の進み具合',
+  stages: ['提案', '承認', 'お支払い', '予約の変更', '補償の返金', '完了'],
+  roleLead: {
+    owner: '予約、振替の提案、お金の動きを、ここでまとめて確認できます。',
+    a: '移動できる日時を教えてください。その時間に来たい方がいれば、補償つきの振替をご提案することがあります。',
+    b: '満席の時間でも、予約済みのお客さまとの振替でご案内できることがあります。',
+  },
   needInvite: 'この画面を開くには招待リンクが必要です。受け取ったリンクを開いてください（ログインした後、アドレスバーからは消えます）。',
   sessionFailed: 'セッションを開始できませんでした。再読み込みしてください。',
   modesAria: 'このデモのモード',

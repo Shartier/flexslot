@@ -61,6 +61,57 @@ export function TopBar({ header, roleName, roleSeg }: { header: Header; roleName
   );
 }
 
+/** Where the swap stands, as six stages; an ended case shows where it stopped. Derived from the server's status. */
+type StageState = 'done' | 'current' | 'attention' | 'ended' | 'todo';
+const PAYMENT = ['READY', 'PAYMENT_STARTED', 'AUTHORIZING', 'AUTHORIZED', 'CAPTURING', 'PAYMENT_PENDING', 'PAYMENT_UNKNOWN', 'RECONCILING', 'VOID_PENDING'];
+export function stagesOf(c: CaseView): StageState[] {
+  const s = c.status;
+  const at = (i: number, here: StageState): StageState[] => [0, 1, 2, 3, 4, 5].map((k) => (k < i ? 'done' : k === i ? here : 'todo'));
+  if (s === 'COMPLETED') return at(6, 'done');
+  if (s === 'AWAITING_APPROVAL' || s === 'A_ACCEPTED') return at(1, 'current');
+  if (PAYMENT.includes(s)) return at(2, c.steps.authorizationRelease?.state === 'ATTENTION' ? 'attention' : 'current');
+  if (s === 'CAPTURED' || s === 'BOOKING_COMMIT_PENDING') return at(3, 'current');
+  if (s === 'BOOKING_COMMITTED' || s === 'REFUND_PENDING') return at(4, 'current');
+  if (s === 'REFUND_FAILED') return at(4, 'attention');
+  if (s === 'B_REFUND_PENDING') return at(3, 'current');
+  if (s === 'B_REFUND_FAILED') return at(3, 'attention');
+  if (s === 'COMPENSATED') return at(3, 'ended');
+  // REJECTED / EXPIRED: before or during the payment.
+  return at(c.steps.bPayment.state === 'NONE' ? 1 : 2, 'ended');
+}
+
+export function CaseProgress({ c }: { c: CaseView }) {
+  const t = useT();
+  const states = stagesOf(c);
+  return (
+    <ol className="progress" aria-label={t.progressAria}>
+      {t.stages.map((label, i) => (
+        <li key={label} className={`stage ${states[i]}`} aria-current={states[i] === 'current' || states[i] === 'attention' ? 'step' : undefined}>
+          <span className="dot" aria-hidden="true" />
+          <span className="stage-label">{label}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+const ROLE_MARK: Record<RoleSeg, string> = { owner: '店', a: 'A', b: 'B' };
+/** The screen's heading: who you are here and what this screen is for (the role images replace the mark later). */
+export function RoleHero({ roleSeg, name }: { roleSeg: RoleSeg; name: string }) {
+  const t = useT();
+  return (
+    <section className={`role-hero role-${roleSeg}`}>
+      <span className="role-mark" aria-hidden="true">
+        {ROLE_MARK[roleSeg]}
+      </span>
+      <div>
+        <h1>{name}</h1>
+        <p>{t.roleLead[roleSeg]}</p>
+      </div>
+    </section>
+  );
+}
+
 export function DemoNote({ header }: { header: Header }) {
   const t = useT();
   const { lang } = useLang();

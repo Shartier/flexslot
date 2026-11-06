@@ -5,7 +5,7 @@
 import type { Api } from './api.ts';
 import { useT } from './i18n.tsx';
 import type { OwnerCase, OwnerState } from './types.ts';
-import { ApprovalChips, ConditionsSummary, DemoNote, Events, Notice, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
+import { ApprovalChips, CaseProgress, ConditionsSummary, DemoNote, Events, Notice, RoleHero, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
 
 export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerState; refresh: () => Promise<void> }) {
   const t = useT();
@@ -14,6 +14,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
     <>
       <TopBar header={state.header} roleName={t.roleOwner} roleSeg="owner" />
       <main>
+        <RoleHero roleSeg="owner" name={t.roleOwner} />
         <DemoNote header={state.header} />
         {(state.stopped.length > 0 || state.needsAttentionObligations.length > 0) && (
           <Notice kind="error">{t.stoppedNotice(Math.max(state.stopped.length, state.needsAttentionObligations.length))}</Notice>
@@ -159,6 +160,7 @@ function OwnerCaseCard({ api, c, refresh }: { api: Api; c: OwnerCase; refresh: (
   const decision = { caseId: c.id, version: c.version, termsHash: c.termsHash };
   return (
     <Section title={t.proposalVersion(c.version)} aside={<StatusChip c={c} />}>
+      <CaseProgress c={c} />
       <div className="grid2">
         <div>
           <ul className="facts">

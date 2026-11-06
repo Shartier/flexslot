@@ -74,6 +74,17 @@ function Landing() {
       <main>
         <section className="card hero">
           <h1>{t.heroTitle}</h1>
+          <div className="swap-art" aria-hidden="true">
+            <span className="slot">
+              14:00 <span className="who a">A</span>
+            </span>
+            <span className="arrow">⇄</span>
+            <span className="slot">
+              14:00 <span className="who b">B</span>
+            </span>
+            <span className="arrow">+</span>
+            <span className="coin">$</span>
+          </div>
           <p>{t.heroBody}</p>
           <p className="small muted-text">{t.scope}</p>
         </section>
