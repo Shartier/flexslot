@@ -71,35 +71,8 @@ export class Api {
   }
 }
 
-/** Plain-language texts for refusals (customers never see API internals, SPEC 3). */
-export function explain(e: unknown): string {
-  if (!(e instanceof ApiError)) return 'Something went wrong. Please try again.';
-  const t: Record<string, string> = {
-    OWNER_FIRST: 'The shop has to approve first.',
-    TERMS_CHANGED: 'The proposal changed. Please review it again.',
-    OFFER_EXPIRED: 'This proposal has expired.',
-    NOT_AWAITING_APPROVAL: 'This proposal is no longer waiting for approval.',
-    ALREADY_DECIDED: 'You have already decided on this proposal.',
-    NOT_REJECTABLE: 'The payment has started; this demo does not offer cancellation after that.',
-    NOT_STARTABLE: 'The payment cannot start yet (waiting for the other approvals).',
-    CASE_IN_PROGRESS: 'Your conditions are locked while a swap is in progress.',
-    SWAP_DONE: 'The swap in this demo world is finished.',
-    QUESTIONS_UNANSWERED: 'Please answer the questions, or change the times in the form yourself, before confirming.',
-    FORM_INVALID: 'Please check the times: they must be inside business hours and in the coming weeks.',
-    PAYMENT_EXPIRED: 'The payment window has expired, so FlexSlot did not authorize this payment. The status is shown on this screen.',
-    MODE_MISMATCH: 'This action is not available in this payment mode.',
-    PAYMENT_MODE_UNAVAILABLE: 'The payment service for this demo world is not available on this server.',
-    ALREADY_PAID: 'This booking is already paid.',
-    SLOT_TIME_PASSED: 'This time slot has already started, so the swap can no longer be made.',
-    B_REQUEST_CHANGED: 'The request changed after the approvals. A new proposal is needed.',
-    A_PREFERENCE_CHANGED: "The existing customer's conditions changed after the approvals. A new proposal is needed.",
-    B_SERVICE_CHANGED: 'The service changed after the approvals. A new proposal is needed.',
-    A_BOOKING_CHANGED: 'The existing booking changed. A new proposal is needed.',
-    ORDER_CREATE_UNCONFIRMED: 'PayPal did not answer yet. Please try again in a moment.',
-    NO_SESSION: 'Your session has ended. Please open your invite link again.',
-    CSRF: 'Please reload the page.',
-    ORIGIN: 'Please open FlexSlot from its own address (http://localhost:8787).',
-    TEXT_LENGTH: 'Please write between 1 and 2000 characters.',
-  };
-  return t[e.code] ?? 'This action is not possible right now.';
+/** Plain-language texts for refusals (customers never see API internals, SPEC 3), in the screen's language. */
+export function explain(e: unknown, t: { errors: Record<string, string>; errorDefault: string; errorUnknown: string }): string {
+  if (!(e instanceof ApiError)) return t.errorUnknown;
+  return t.errors[e.code] ?? t.errorDefault;
 }

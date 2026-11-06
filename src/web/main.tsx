@@ -4,17 +4,42 @@ import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Api, explain } from './api.ts';
 import { AScreen, BScreen } from './customer.tsx';
+import { loadDemo, saveDemo, type DemoLinks, type RoleSeg } from './demo-links.ts';
+import { LangProvider, useLang, useT } from './i18n.tsx';
 import { OwnerScreen } from './owner.tsx';
 import type { AState, BState, OwnerState } from './types.ts';
-import { Notice } from './ui.tsx';
+import { LangSwitch, Notice } from './ui.tsx';
 import { paypalReturnText } from './paypal-return.ts';
 import './styles.css';
 
+function InviteLinks({ demo }: { demo: DemoLinks }) {
+  const t = useT();
+  const roles: Array<[RoleSeg, string]> = [
+    ['owner', t.roleOwner],
+    ['a', t.roleA],
+    ['b', t.roleB],
+  ];
+  return (
+    <>
+      {roles.map(([k, label]) => (
+        <div className="invite" key={k}>
+          <a className="button" href={demo.links[k]} target="_blank" rel="noopener noreferrer">
+            {t.openAs(label)}
+          </a>
+          <input className="mono" readOnly value={demo.links[k]} onFocus={(e) => e.currentTarget.select()} aria-label={t.linkOf(label)} />
+        </div>
+      ))}
+    </>
+  );
+}
+
 function Landing() {
+  const t = useT();
   const [config, setConfig] = useState<{ ai: { vertex: boolean; vertexModel: string | null }; payment: { sandbox: boolean; mock: boolean } } | null>(null);
   const [aiMode, setAiMode] = useState<'VERTEX' | 'MOCK'>('MOCK');
   const [paymentMode, setPaymentMode] = useState<'SANDBOX' | 'MOCK'>('MOCK');
-  const [world, setWorld] = useState<{ worldId: string; links: Record<'owner' | 'a' | 'b', string> } | null>(null);
+  const [world, setWorld] = useState<DemoLinks | null>(null);
+  const [last] = useState<DemoLinks | null>(loadDemo);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     void fetch('/api/config').then(async (r) => {
@@ -28,87 +53,78 @@ function Landing() {
     setError(null);
     const r = await fetch('/api/worlds', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ aiMode, paymentMode }) });
     if (!r.ok) {
-      setError(`Could not create the demo world (${((await r.json()) as { error?: string }).error ?? r.status}).`);
+      setError(t.createFailed(((await r.json()) as { error?: string }).error ?? String(r.status)));
       return;
     }
-    setWorld((await r.json()) as NonNullable<typeof world>);
+    const w = (await r.json()) as DemoLinks;
+    saveDemo({ worldId: w.worldId, links: w.links });
+    setWorld(w);
   };
   return (
     <>
       <header className="topbar">
         <div className="brand">
           <span className="logo">FlexSlot</span>
-          <span className="role">compensated booking swaps</span>
+          <span className="role">{t.tagline}</span>
+        </div>
+        <div className="modes">
+          <LangSwitch />
         </div>
       </header>
       <main>
-        <section className="card">
-          <h1>A fully booked slot, one swap, everyone better off</h1>
-          <p>
-            A new customer (B) can only come at a time that is already booked. An existing customer (A) said in advance when they could move instead. FlexSlot proposes the swap; the shop
-            and A approve; B pays with PayPal; A&apos;s booking moves and A receives a fixed compensation as a partial refund of their own payment.
-          </p>
-          <p className="small muted-text">
-            One fictional salon, one stylist, two services, one swap. PayPal Sandbox only: test money, never real payments.
-          </p>
+        <section className="card hero">
+          <h1>{t.heroTitle}</h1>
+          <p>{t.heroBody}</p>
+          <p className="small muted-text">{t.scope}</p>
         </section>
         <section className="card">
-          <h2>Create a demo world</h2>
+          <h2>{t.createTitle}</h2>
           {!config ? (
-            <p>Loading…</p>
+            <p>{t.loading}</p>
           ) : (
             <div className="grid2">
               <fieldset>
-                <legend>AI for free text</legend>
+                <legend>{t.aiLegend}</legend>
                 <label className="radio">
                   <input type="radio" name="ai" checked={aiMode === 'VERTEX'} disabled={!config.ai.vertex} onChange={() => setAiMode('VERTEX')} />
-                  Gemini on Vertex AI {config.ai.vertexModel ? `(${config.ai.vertexModel})` : '(not configured on this server)'}
+                  Gemini on Vertex AI {config.ai.vertexModel ? `(${config.ai.vertexModel})` : t.notConfigured}
                 </label>
                 <label className="radio">
                   <input type="radio" name="ai" checked={aiMode === 'MOCK'} onChange={() => setAiMode('MOCK')} />
-                  Mock rules (offline, not a real AI)
+                  {t.mockAiOption}
                 </label>
               </fieldset>
               <fieldset>
-                <legend>Payment</legend>
+                <legend>{t.paymentLegend}</legend>
                 <label className="radio">
                   <input type="radio" name="pay" checked={paymentMode === 'SANDBOX'} disabled={!config.payment.sandbox} onChange={() => setPaymentMode('SANDBOX')} />
-                  PayPal Sandbox {config.payment.sandbox ? '' : '(not configured on this server)'}
+                  {t.sandboxOption} {config.payment.sandbox ? '' : t.notConfigured}
                 </label>
                 <label className="radio">
                   <input type="radio" name="pay" checked={paymentMode === 'MOCK'} onChange={() => setPaymentMode('MOCK')} />
-                  Mock (no PayPal at all)
+                  {t.mockPayOption}
                 </label>
               </fieldset>
             </div>
           )}
-          <p className="small muted-text">The modes are fixed for the world and shown on every screen.</p>
+          <p className="small muted-text">{t.modesFixed}</p>
           <button className="primary" disabled={!config} onClick={() => void create()}>
-            Create demo world
+            {t.createButton}
           </button>
           {error && <Notice kind="error">{error}</Notice>}
         </section>
         {world && (
           <section className="card">
-            <h2>Your three invite links</h2>
-            <p className="small">
-              Each link signs in one role in this world. Keep them private. In real use each person would receive only their own link. Open them in separate tabs (or devices).
-            </p>
-            {(
-              [
-                ['owner', 'Shop owner'],
-                ['a', 'Existing customer (A)'],
-                ['b', 'New customer (B)'],
-              ] as const
-            ).map(([k, label]) => (
-              <div className="invite" key={k}>
-                <a className="button" href={world.links[k]} target="_blank" rel="noopener noreferrer">
-                  Open as {label}
-                </a>
-                <input className="mono" readOnly value={world.links[k]} onFocus={(e) => e.currentTarget.select()} aria-label={`${label} link`} />
-              </div>
-            ))}
-            <p className="small muted-text">Suggested order: A pays the booking and registers move conditions → B writes a request → the shop approves → A agrees → B pays.</p>
+            <h2>{t.linksTitle}</h2>
+            <p className="small">{t.linksBody}</p>
+            <InviteLinks demo={world} />
+            <p className="small muted-text">{t.suggestedOrder}</p>
+          </section>
+        )}
+        {!world && last && (
+          <section className="card">
+            <h2>{t.lastDemoTitle}</h2>
+            <InviteLinks demo={last} />
           </section>
         )}
       </main>
@@ -117,6 +133,7 @@ function Landing() {
 }
 
 function PayPalReturn({ cancelled }: { cancelled: boolean }) {
+  const { lang } = useLang();
   useEffect(() => {
     // Tell the FlexSlot tab of this browser that PayPal sent the buyer back. It only triggers a server-side check.
     if (!cancelled && 'BroadcastChannel' in window) {
@@ -126,12 +143,12 @@ function PayPalReturn({ cancelled }: { cancelled: boolean }) {
     }
   }, []);
   // IA1-02: no claim about the payment here; the FlexSlot screen shows what FlexSlot confirmed with PayPal.
-  const t = paypalReturnText(cancelled);
+  const text = paypalReturnText(cancelled, lang);
   return (
     <main>
       <section className="card">
-        <h1>{t.title}</h1>
-        <p>{t.body}</p>
+        <h1>{text.title}</h1>
+        <p>{text.body}</p>
       </section>
     </main>
   );
@@ -140,18 +157,20 @@ function PayPalReturn({ cancelled }: { cancelled: boolean }) {
 const ROLE_OF: Record<string, 'OWNER' | 'A' | 'B'> = { owner: 'OWNER', a: 'A', b: 'B' };
 
 function RoleApp({ worldId, roleSeg }: { worldId: string; roleSeg: string }) {
+  const t = useT();
+  const { lang } = useLang();
   const api = useRef(new Api(worldId, roleSeg)).current;
   const [phase, setPhase] = useState<'boot' | 'ok' | 'no-session' | 'error'>('boot');
   const [state, setState] = useState<unknown>(null);
   const [err, setErr] = useState<string | null>(null);
   const refresh = useCallback(async () => {
     try {
-      setState(await api.get('state'));
+      setState(await api.get(`state?lang=${lang}`));
       setErr(null);
     } catch (e) {
-      setErr(explain(e));
+      setErr(explain(e, t));
     }
-  }, [api]);
+  }, [api, lang]);
   useEffect(() => {
     void api.boot().then(
       async (r) => {
@@ -163,21 +182,27 @@ function RoleApp({ worldId, roleSeg }: { worldId: string; roleSeg: string }) {
   }, []);
   useEffect(() => {
     if (phase !== 'ok') return;
-    const t = setInterval(() => {
+    void refresh();
+    const timer = setInterval(() => {
       if (document.visibilityState === 'visible') void refresh();
     }, 2000);
-    return () => clearInterval(t);
-  }, [phase]);
+    return () => clearInterval(timer);
+  }, [phase, refresh]);
 
-  if (phase === 'boot' || (phase === 'ok' && !state)) return <main className="center">Loading…</main>;
+  if (phase === 'boot' || (phase === 'ok' && !state)) return <main className="center">{t.loading}</main>;
   if (phase === 'no-session') {
     return (
       <main>
-        <Notice kind="warn">This screen needs your invite link. Please open the link you received (it signs you in and is then removed from the address bar).</Notice>
+        <Notice kind="warn">{t.needInvite}</Notice>
       </main>
     );
   }
-  if (phase === 'error') return <main><Notice kind="error">Could not start the session. Please reload.</Notice></main>;
+  if (phase === 'error')
+    return (
+      <main>
+        <Notice kind="error">{t.sessionFailed}</Notice>
+      </main>
+    );
   const role = ROLE_OF[roleSeg];
   return (
     <>
@@ -204,6 +229,8 @@ function App() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LangProvider>
+      <App />
+    </LangProvider>
   </StrictMode>,
 );

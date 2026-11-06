@@ -7,7 +7,18 @@ export interface ReturnText {
   body: string;
 }
 
-export function paypalReturnText(cancelled: boolean): ReturnText {
+export function paypalReturnText(cancelled: boolean, lang: 'en' | 'ja' = 'en'): ReturnText {
+  if (lang === 'ja') {
+    return cancelled
+      ? {
+          title: 'PayPalの画面を離れました',
+          body: 'FlexSlotの画面に戻って、お支払いの状況をご確認ください。状況はFlexSlotがPayPalに直接確認します。このページではわかりません。',
+        }
+      : {
+          title: 'PayPalから戻りました',
+          body: 'FlexSlotの画面に戻ってください。FlexSlotがPayPalに承認を直接確認し、お支払いの状況をその画面に表示します。このタブは閉じてかまいません。',
+        };
+  }
   return cancelled
     ? {
         title: 'You left PayPal checkout',

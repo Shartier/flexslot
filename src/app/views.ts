@@ -9,6 +9,10 @@ import type { CaseRow } from '../executor/terms.ts';
 import { formatLocal } from '../time.ts';
 import { intakeBlocked, latestPreference, latestRequest, proposalToForm, type DraftRow, type IntakeRole, type LocalWindow, type Question } from './intake.ts';
 import { exampleTexts, getWorld, hhmm, idsFor, servicesOf, shopOf, stylistsOf, type Role } from './world.ts';
+import {
+  A_PAYMENT_JA, ACTOR_JA, BOOKINGS_CHANGED_JA, BOOKINGS_UNCHANGED_JA, CASE_LABELS_JA, EVENTS_JA, jaDateTime, nameJa, OWNER_PAYMENT_JA, PROFIT_JA,
+  REASON_DEFAULT_JA, REASON_TEXT_JA, REFUND_NOTE_JA, RELEASED_LABEL_JA, SOURCE_TEXT_JA, STEP_JA, type Lang,
+} from './views-ja.ts';
 
 export interface Money {
   minor: number;
@@ -16,13 +20,19 @@ export interface Money {
   text: string;
 }
 
-export function money(minor: number, currency: string): Money {
+export function money(minor: number, currency: string, lang: Lang = 'en'): Money {
   const sign = minor < 0 ? '-' : '';
   const abs = Math.abs(minor);
-  return { minor, currency, text: `${sign}${currency} ${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}` };
+  const n = `${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
+  const text = lang === 'ja' ? `${sign}${n}${currency === 'USD' ? 'ドル' : ` ${currency}`}` : `${sign}${currency} ${n}`;
+  return { minor, currency, text };
 }
 
-const span = (start: number, end: number, tz: string) => `${formatLocal(start, tz)}–${formatLocal(end, tz).slice(11)}`;
+const span = (start: number, end: number, tz: string, lang: Lang = 'en') =>
+  lang === 'ja' ? `${jaDateTime(formatLocal(start, tz))}〜${formatLocal(end, tz).slice(11)}` : `${formatLocal(start, tz)}–${formatLocal(end, tz).slice(11)}`;
+const at = (ms: number, tz: string, lang: Lang) => (lang === 'ja' ? jaDateTime(formatLocal(ms, tz)) : formatLocal(ms, tz));
+const nm = (name: string, lang: Lang) => (lang === 'ja' ? nameJa(name) : name);
+const sourceText = (source: string, lang: Lang) => (lang === 'ja' ? SOURCE_TEXT_JA : SOURCE_TEXT)[source];
 
 /** SPEC 7 status table, in the screens' words. */
 export const CASE_LABELS: Record<string, string> = {
@@ -120,29 +130,50 @@ function obligations(db: Db, caseId: string): Array<ObligationRow & { attempts: 
   }));
 }
 
+const STEP_EN: typeof STEP_JA = {
+  notStarted: 'Not started',
+  paid: 'Paid',
+  released: 'Authorization released',
+  refunded: 'Refunded',
+  expiredNotCharged: 'Payment window expired (not charged)',
+  cancelled: 'Cancelled',
+  attention: 'Needs attention by the shop',
+  preparingOrder: 'Preparing the PayPal order',
+  authorizing: 'Authorizing the payment',
+  waitingBuyer: 'Waiting for approval on PayPal',
+  capturing: 'Capturing the payment',
+  authorized: 'Authorized (not charged yet)',
+  capturedChecking: 'Payment captured, checking it',
+  pending: 'PayPal reports it as pending; checking again',
+  checking: 'Checking the result with PayPal',
+  releasing: 'Releasing the authorization',
+  refunding: 'Refund in progress',
+};
+
 /** One money step as a customer reads it. */
-function moneyStep(o: ReturnType<typeof obligations>[number] | undefined): { state: string; text: string } {
-  if (!o) return { state: 'NONE', text: 'Not started' };
+function moneyStep(o: ReturnType<typeof obligations>[number] | undefined, lang: Lang = 'en'): { state: string; text: string } {
+  const t = lang === 'ja' ? STEP_JA : STEP_EN;
+  if (!o) return { state: 'NONE', text: t.notStarted };
   const att = o.attempts.at(-1);
   const op = att?.ops.at(-1);
   if (o.status === 'SETTLED') {
-    return { state: 'DONE', text: o.kind === 'B_CHARGE' ? 'Paid' : o.kind === 'B_AUTH_VOID' ? 'Authorization released' : 'Refunded' };
+    return { state: 'DONE', text: o.kind === 'B_CHARGE' ? t.paid : o.kind === 'B_AUTH_VOID' ? t.released : t.refunded };
   }
-  if (o.status === 'CANCELLED') return { state: 'CANCELLED', text: att?.status === 'EXPIRED' ? 'Payment window expired (not charged)' : 'Cancelled' };
-  if (o.status === 'NEEDS_ATTENTION') return { state: 'ATTENTION', text: 'Needs attention by the shop' };
+  if (o.status === 'CANCELLED') return { state: 'CANCELLED', text: att?.status === 'EXPIRED' ? t.expiredNotCharged : t.cancelled };
+  if (o.status === 'NEEDS_ATTENTION') return { state: 'ATTENTION', text: t.attention };
   if (o.kind === 'B_CHARGE') {
-    if (!att || att.status === 'OPEN') return { state: 'WORKING', text: 'Preparing the PayPal order' };
+    if (!att || att.status === 'OPEN') return { state: 'WORKING', text: t.preparingOrder };
     if (att.status === 'ORDER_CREATED') {
-      if (op?.op_kind === 'ORDER_AUTHORIZE' && op.status !== 'NOT_ACCEPTED' && op.status !== 'FAILED') return { state: 'WORKING', text: 'Authorizing the payment' };
-      return { state: 'WAITING_BUYER', text: 'Waiting for approval on PayPal' };
+      if (op?.op_kind === 'ORDER_AUTHORIZE' && op.status !== 'NOT_ACCEPTED' && op.status !== 'FAILED') return { state: 'WORKING', text: t.authorizing };
+      return { state: 'WAITING_BUYER', text: t.waitingBuyer };
     }
-    if (att.status === 'AUTHORIZED') return { state: 'WORKING', text: op?.op_kind === 'AUTH_CAPTURE' ? 'Capturing the payment' : 'Authorized (not charged yet)' };
-    if (att.status === 'CAPTURED') return { state: 'WORKING', text: 'Payment captured, checking it' };
+    if (att.status === 'AUTHORIZED') return { state: 'WORKING', text: op?.op_kind === 'AUTH_CAPTURE' ? t.capturing : t.authorized };
+    if (att.status === 'CAPTURED') return { state: 'WORKING', text: t.capturedChecking };
   }
-  if (op?.status === 'PENDING') return { state: 'WORKING', text: 'PayPal reports it as pending; checking again' };
-  if (op?.status === 'UNKNOWN' || op?.status === 'SENDING') return { state: 'WORKING', text: 'Checking the result with PayPal' };
-  if (op?.status === 'SUCCEEDED' && op.reconcile_status === 'AWAITING') return { state: 'WORKING', text: 'Checking the result with PayPal' };
-  return { state: 'WORKING', text: o.kind === 'B_AUTH_VOID' ? 'Releasing the authorization' : 'Refund in progress' };
+  if (op?.status === 'PENDING') return { state: 'WORKING', text: t.pending };
+  if (op?.status === 'UNKNOWN' || op?.status === 'SENDING') return { state: 'WORKING', text: t.checking };
+  if (op?.status === 'SUCCEEDED' && op.reconcile_status === 'AWAITING') return { state: 'WORKING', text: t.checking };
+  return { state: 'WORKING', text: o.kind === 'B_AUTH_VOID' ? t.releasing : t.refunding };
 }
 
 function approvalsOf(db: Db, c: CaseRow): Record<'OWNER' | 'A' | 'B', string | null> {
@@ -170,12 +201,12 @@ const CUSTOMER_EVENTS: Record<string, string> = {
 // REJECTED is reached either by a party's decision or by the executor releasing the authorization (E-V: the
 // pre-capture check failed, or PayPal declined the capture) after the void is confirmed. Only the first is "declined".
 const RELEASED_LABEL = 'Not completed · authorization released';
-function statusLabel(c: CaseRow, approvals: Record<'OWNER' | 'A' | 'B', string | null>): string {
-  if (c.status === 'REJECTED' && !Object.values(approvals).includes('REJECTED')) return RELEASED_LABEL;
-  return CASE_LABELS[c.status] ?? c.status;
+function statusLabel(c: CaseRow, approvals: Record<'OWNER' | 'A' | 'B', string | null>, lang: Lang = 'en'): string {
+  if (c.status === 'REJECTED' && !Object.values(approvals).includes('REJECTED')) return lang === 'ja' ? RELEASED_LABEL_JA : RELEASED_LABEL;
+  return (lang === 'ja' ? CASE_LABELS_JA : CASE_LABELS)[c.status] ?? c.status;
 }
 
-function caseView(db: Db, c: CaseRow, role: Role, now: number) {
+function caseView(db: Db, c: CaseRow, role: Role, now: number, lang: Lang = 'en') {
   const tz = shopOf(db, c.world_id).timezone;
   const service = db.prepare('SELECT s.name FROM bookings b JOIN services s ON s.id = b.service_id WHERE b.id = ?').get(c.a_booking_id) as { name: string };
   const bService = db.prepare('SELECT s.name FROM b_requests r JOIN services s ON s.id = json_extract(r.structured_json, \'$.serviceId\') WHERE r.id = ?').get(c.b_request_id) as
@@ -200,38 +231,42 @@ function caseView(db: Db, c: CaseRow, role: Role, now: number) {
     db.prepare('SELECT action, created_at FROM audit_log WHERE case_id = ? ORDER BY id').all(c.id) as Array<{ action: string; created_at: number }>
   )
     .filter((e) => CUSTOMER_EVENTS[e.action])
-    .map((e) => ({ at: formatLocal(e.created_at, tz), text: CUSTOMER_EVENTS[e.action]! }));
+    .map((e) => ({ at: at(e.created_at, tz, lang), text: (lang === 'ja' ? EVENTS_JA : CUSTOMER_EVENTS)[e.action]! }));
   const bBooking = db.prepare("SELECT 1 FROM bookings WHERE id = ? AND status = 'CONFIRMED'").get(`${c.id}:booking:b`);
   return {
     id: c.id,
     version: c.version,
     termsHash: c.terms_hash,
     status: c.status,
-    statusLabel: statusLabel(c, approvals),
-    origin: span(c.origin_start_ms, c.origin_end_ms, tz),
-    destination: span(c.dest_start_ms, c.dest_end_ms, tz),
-    bSlot: span(c.b_start_ms, c.b_end_ms, tz),
-    aService: service.name,
-    bService: bService?.name ?? null,
-    stylist: stylist.name,
-    bPrice: money(c.b_price_minor, c.currency),
-    aCompensation: money(c.a_comp_minor, c.currency),
-    offerExpiresAt: formatLocal(c.offer_expires_at, tz),
-    paymentDeadline: chargeAtt?.expires_at ? formatLocal(chargeAtt.expires_at, tz) : null,
+    statusLabel: statusLabel(c, approvals, lang),
+    origin: span(c.origin_start_ms, c.origin_end_ms, tz, lang),
+    destination: span(c.dest_start_ms, c.dest_end_ms, tz, lang),
+    bSlot: span(c.b_start_ms, c.b_end_ms, tz, lang),
+    aService: nm(service.name, lang),
+    bService: bService ? nm(bService.name, lang) : null,
+    stylist: nm(stylist.name, lang),
+    bPrice: money(c.b_price_minor, c.currency, lang),
+    aCompensation: money(c.a_comp_minor, c.currency, lang),
+    offerExpiresAt: at(c.offer_expires_at, tz, lang),
+    paymentDeadline: chargeAtt?.expires_at ? at(chargeAtt.expires_at, tz, lang) : null,
     approvals,
     actions,
     steps: {
-      bPayment: moneyStep(charge),
-      authorizationRelease: ob('B_AUTH_VOID') ? moneyStep(ob('B_AUTH_VOID')) : null,
-      aRefund: moneyStep(ob('A_COMPENSATION_REFUND')),
-      bRefund: ob('B_RECOVERY_REFUND') ? moneyStep(ob('B_RECOVERY_REFUND')) : null,
-      bookings: bBooking ? 'Changed: the existing booking moved and the new booking is confirmed' : 'Not changed',
+      bPayment: moneyStep(charge, lang),
+      authorizationRelease: ob('B_AUTH_VOID') ? moneyStep(ob('B_AUTH_VOID'), lang) : null,
+      aRefund: moneyStep(ob('A_COMPENSATION_REFUND'), lang),
+      bRefund: ob('B_RECOVERY_REFUND') ? moneyStep(ob('B_RECOVERY_REFUND'), lang) : null,
+      bookings: bBooking
+        ? lang === 'ja' ? BOOKINGS_CHANGED_JA : 'Changed: the existing booking moved and the new booking is confirmed'
+        : lang === 'ja' ? BOOKINGS_UNCHANGED_JA : 'Not changed',
+      // The screens decide what to show from this flag, never from the wording above.
+      bookingsChanged: !!bBooking,
     },
     events,
   };
 }
 
-function header(db: Db, worldId: string, role: Role, now: number, ai: { vertexModel: string | null; mockModel: string }) {
+function header(db: Db, worldId: string, role: Role, now: number, ai: { vertexModel: string | null; mockModel: string }, lang: Lang = 'en') {
   const w = getWorld(db, worldId)!;
   const shop = shopOf(db, worldId);
   return {
@@ -243,21 +278,22 @@ function header(db: Db, worldId: string, role: Role, now: number, ai: { vertexMo
       aiAvailable: w.mode_ai === 'MOCK' || ai.vertexModel !== null,
       payment: w.mode_payment,
     },
+    lang,
     shop: {
-      name: shop.name,
+      name: nm(shop.name, lang),
       timeZone: shop.timezone,
-      hours: `${hhmm(shop.business_open_min)}–${hhmm(shop.business_close_min)}`,
-      stylists: stylistsOf(db, shop.id).map((s) => s.name),
-      services: servicesOf(db, shop.id).map((s) => ({ id: s.id, name: s.name, durationMin: s.duration_min, price: money(s.price_minor, shop.currency) })),
-      compensation: money(shop.compensation_minor, shop.currency),
+      hours: `${hhmm(shop.business_open_min)}${lang === 'ja' ? '〜' : '–'}${hhmm(shop.business_close_min)}`,
+      stylists: stylistsOf(db, shop.id).map((s) => nm(s.name, lang)),
+      services: servicesOf(db, shop.id).map((s) => ({ id: s.id, name: nm(s.name, lang), durationMin: s.duration_min, price: money(s.price_minor, shop.currency, lang) })),
+      compensation: money(shop.compensation_minor, shop.currency, lang),
     },
     baseDate: w.base_local_date,
-    serverTime: formatLocal(now, shop.timezone),
-    examples: exampleTexts(w.base_local_date ?? formatLocal(now, shop.timezone).slice(0, 10)),
+    serverTime: at(now, shop.timezone, lang),
+    examples: exampleTexts(w.base_local_date ?? formatLocal(now, shop.timezone).slice(0, 10), lang),
   };
 }
 
-function draftView(db: Db, worldId: string, role: IntakeRole, partyId: string) {
+function draftView(db: Db, worldId: string, role: IntakeRole, partyId: string, lang: Lang = 'en') {
   const d = db
     .prepare("SELECT * FROM intake_drafts WHERE world_id = ? AND party_id = ? AND kind = ? AND status = 'OPEN' ORDER BY created_at DESC, rowid DESC LIMIT 1")
     .get(worldId, partyId, role === 'A' ? 'A_PREFERENCE' : 'B_REQUEST') as DraftRow | undefined;
@@ -267,14 +303,14 @@ function draftView(db: Db, worldId: string, role: IntakeRole, partyId: string) {
     id: d.id,
     rawText: d.raw_text,
     source: d.source,
-    sourceText: SOURCE_TEXT[d.source],
+    sourceText: sourceText(d.source, lang),
     manualReason: d.manual_reason,
     proposal,
     questions: JSON.parse(d.questions_json) as Question[],
   };
 }
 
-export function profitView(db: Db, c: CaseRow) {
+export function profitView(db: Db, c: CaseRow, lang: Lang = 'en') {
   const shop = shopOf(db, c.world_id);
   const a = JSON.parse(shop.profit_assumptions_json) as {
     bServiceCostMinor: number; paymentFeesMinor: number; fillProbabilityBasisPoints: number; marginalProfitMinor: number; otherIncrementalCostMinor: number;
@@ -288,7 +324,14 @@ export function profitView(db: Db, c: CaseRow) {
     opportunityLossMinor: opportunity,
     otherIncrementalCostMinor: a.otherIncrementalCostMinor,
   });
-  const names: Record<string, string> = {
+  const names: Record<string, string> = lang === 'ja' ? {
+    bPriceMinor: PROFIT_JA.bPriceMinor,
+    aCompensationMinor: PROFIT_JA.aCompensationMinor,
+    bServiceCostMinor: PROFIT_JA.bServiceCostMinor,
+    paymentFeesMinor: PROFIT_JA.paymentFeesMinor,
+    opportunityLossMinor: PROFIT_JA.opportunityLossMinor(a.fillProbabilityBasisPoints / 100, money(a.marginalProfitMinor, c.currency, lang).text),
+    otherIncrementalCostMinor: PROFIT_JA.otherIncrementalCostMinor,
+  } : {
     bPriceMinor: "New customer's price (additional revenue)",
     aCompensationMinor: 'Fixed compensation to the existing customer',
     bServiceCostMinor: 'Extra cost of serving the new customer (assumption)',
@@ -297,10 +340,10 @@ export function profitView(db: Db, c: CaseRow) {
     otherIncrementalCostMinor: 'Other incremental costs (assumption)',
   };
   return {
-    lines: est.lines.map((l) => ({ name: names[l.key], sign: l.sign, amount: money(l.amountMinor, c.currency) })),
-    additionalRevenue: money(est.additionalRevenueMinor, c.currency),
-    additionalProfit: money(est.additionalProfitMinor, c.currency),
-    note: "Estimate with fictional assumptions. A's original payment is already booked revenue and is not counted again. The owner decides whether the swap pays off.",
+    lines: est.lines.map((l) => ({ name: names[l.key], sign: l.sign, amount: money(l.amountMinor, c.currency, lang) })),
+    additionalRevenue: money(est.additionalRevenueMinor, c.currency, lang),
+    additionalProfit: money(est.additionalProfitMinor, c.currency, lang),
+    note: lang === 'ja' ? PROFIT_JA.note : "Estimate with fictional assumptions. A's original payment is already booked revenue and is not counted again. The owner decides whether the swap pays off.",
   };
 }
 
@@ -315,7 +358,7 @@ export interface AiInfo {
   mockModel: string;
 }
 
-export function ownerView(db: Db, worldId: string, now: number, ai: AiInfo) {
+export function ownerView(db: Db, worldId: string, now: number, ai: AiInfo, lang: Lang = 'en') {
   const ids = idsFor(worldId);
   const shop = shopOf(db, worldId);
   const tz = shop.timezone;
@@ -325,14 +368,15 @@ export function ownerView(db: Db, worldId: string, now: number, ai: AiInfo) {
     }>
   ).map((b) => {
     const paid = db.prepare("SELECT kind, status_raw, verified_at FROM payments WHERE booking_id = ?").get(b.id) as { kind: string; status_raw: string; verified_at: number | null } | undefined;
+    const p = lang === 'ja' ? OWNER_PAYMENT_JA : { paid: 'Paid', paidSwap: 'Paid (swap)', verified: ' · verified', notPaid: 'Not paid' };
     return {
-      customer: b.display_name,
-      time: span(b.start_ms, b.end_ms, tz),
-      service: b.service_name,
+      customer: nm(b.display_name, lang),
+      time: span(b.start_ms, b.end_ms, tz, lang),
+      service: nm(b.service_name, lang),
       status: b.status,
       version: b.version,
-      price: money(b.price_minor, shop.currency),
-      payment: paid ? `${paid.kind === 'A_ORIGINAL' ? 'Paid' : 'Paid (swap)'} · ${paid.status_raw}${paid.verified_at ? ' · verified' : ''}` : 'Not paid',
+      price: money(b.price_minor, shop.currency, lang),
+      payment: paid ? `${paid.kind === 'A_ORIGINAL' ? p.paid : p.paidSwap}${lang === 'ja' ? '・' : ' · '}${paid.status_raw}${paid.verified_at ? p.verified : ''}` : p.notPaid,
     };
   });
   const pref = latestPreference(db, ids.aBookingId);
@@ -345,7 +389,7 @@ export function ownerView(db: Db, worldId: string, now: number, ai: AiInfo) {
     const obs = obligations(db, c.id).map((o) => ({
       id: o.id,
       kind: o.kind,
-      amount: money(o.amount_minor, o.currency),
+      amount: money(o.amount_minor, o.currency, lang),
       status: o.status,
       attempts: o.attempts.map((t) => ({
         no: t.attempt_no,
@@ -354,7 +398,7 @@ export function ownerView(db: Db, worldId: string, now: number, ai: AiInfo) {
       })),
       retryable: o.status === 'NEEDS_ATTENTION' && o.kind !== 'B_CHARGE' && o.attempts.at(-1)?.status === 'FAILED',
     }));
-    return { ...caseView(db, c, 'OWNER', now), profit: profitView(db, c), obligations: obs };
+    return { ...caseView(db, c, 'OWNER', now, lang), profit: profitView(db, c, lang), obligations: obs };
   });
   // I21 (Codex): what is stopped now (owner action needed) is kept apart from what is still being checked with a
   // mismatch seen; both come from the operations' current state, never from past audit entries.
@@ -383,21 +427,25 @@ export function ownerView(db: Db, worldId: string, now: number, ai: AiInfo) {
     db.prepare('SELECT actor, action, detail_json, created_at, case_id FROM audit_log WHERE world_id = ? ORDER BY id DESC LIMIT 60').all(worldId) as Array<{
       actor: string; action: string; detail_json: string; created_at: number; case_id: string | null;
     }>
-  ).map((e) => ({ at: formatLocal(e.created_at, tz), actor: e.actor.startsWith('executor-') ? 'executor' : e.actor, action: e.action, detail: sanitizeDetail(e.detail_json) }));
+  ).map((e) => {
+    // Parties and the system by name; any processing owner (executor-…, scripts) is shown as the executor.
+    const actor = ['OWNER', 'A', 'B', 'system'].includes(e.actor) ? e.actor : 'executor';
+    return { at: at(e.created_at, tz, lang), actor: lang === 'ja' ? (ACTOR_JA[actor] ?? actor) : actor, action: e.action, detail: sanitizeDetail(e.detail_json) };
+  });
   return {
-    header: header(db, worldId, 'OWNER', now, ai),
+    header: header(db, worldId, 'OWNER', now, ai, lang),
     bookings,
     preference: pref
-      ? { version: pref.version, source: SOURCE_TEXT[pref.input_source], edited: !!pref.edited, windows: pref.structured.windows, compensation: money(pref.compensation_minor, shop.currency), rawText: pref.raw_text }
+      ? { version: pref.version, source: sourceText(pref.input_source, lang), edited: !!pref.edited, windows: pref.structured.windows, compensation: money(pref.compensation_minor, shop.currency, lang), rawText: pref.raw_text }
       : null,
     request: req
-      ? { version: req.version, source: SOURCE_TEXT[req.input_source], edited: !!req.edited, windows: req.structured.windows, service: serviceName(db, req.structured.serviceId), rawText: req.raw_text }
+      ? { version: req.version, source: sourceText(req.input_source, lang), edited: !!req.edited, windows: req.structured.windows, service: nm(serviceName(db, req.structured.serviceId), lang), rawText: req.raw_text }
       : null,
     evaluation: evalRow
       ? {
-          at: formatLocal(evalRow.evaluated_at, tz),
+          at: at(evalRow.evaluated_at, tz, lang),
           feasible: !!evalRow.feasible,
-          reasons: (JSON.parse(evalRow.result_json) as { reasons: string[] }).reasons.map((r) => ({ code: r, text: REASON_TEXT[r] ?? r })),
+          reasons: (JSON.parse(evalRow.result_json) as { reasons: string[] }).reasons.map((r) => ({ code: r, text: (lang === 'ja' ? REASON_TEXT_JA : REASON_TEXT)[r] ?? r })),
           detail: (JSON.parse(evalRow.result_json) as { detail: unknown }).detail,
         }
       : null,
@@ -421,7 +469,7 @@ function serviceName(db: Db, serviceId: string): string {
   return (db.prepare('SELECT name FROM services WHERE id = ?').get(serviceId) as { name: string } | undefined)?.name ?? '?';
 }
 
-export function customerView(db: Db, worldId: string, role: 'A' | 'B', partyId: string, now: number, ai: AiInfo) {
+export function customerView(db: Db, worldId: string, role: 'A' | 'B', partyId: string, now: number, ai: AiInfo, lang: Lang = 'en') {
   const ids = idsFor(worldId);
   const shop = shopOf(db, worldId);
   const tz = shop.timezone;
@@ -431,8 +479,8 @@ export function customerView(db: Db, worldId: string, role: 'A' | 'B', partyId: 
       ? db.prepare('SELECT c.id FROM swap_cases c JOIN bookings b ON b.id = c.a_booking_id WHERE b.customer_id = ? AND c.world_id = ? ORDER BY c.rowid DESC').all(partyId, worldId)
       : db.prepare('SELECT c.id FROM swap_cases c JOIN b_requests r ON r.id = c.b_request_id WHERE r.customer_id = ? AND c.world_id = ? ORDER BY c.rowid DESC').all(partyId, worldId)
   ) as Array<{ id: string }>;
-  const cases = caseIds.map((r) => caseView(db, getCase(db, r.id)!, role, now));
-  const base = { header: header(db, worldId, role, now, ai), draft: draftView(db, worldId, role, partyId), intakeBlocked: blocked, cases };
+  const cases = caseIds.map((r) => caseView(db, getCase(db, r.id)!, role, now, lang));
+  const base = { header: header(db, worldId, role, now, ai, lang), draft: draftView(db, worldId, role, partyId, lang), intakeBlocked: blocked, cases };
   if (role === 'A') {
     const b = db.prepare('SELECT b.*, s.name AS service_name FROM bookings b JOIN services s ON s.id = b.service_id WHERE b.id = ?').get(ids.aBookingId) as {
       start_ms: number; end_ms: number; price_minor: number; service_name: string; version: number;
@@ -442,30 +490,31 @@ export function customerView(db: Db, worldId: string, role: 'A' | 'B', partyId: 
       | { op_kind: string; status: string }
       | undefined;
     const pref = latestPreference(db, ids.aBookingId);
+    const ap = lang === 'ja' ? A_PAYMENT_JA : { paid: 'Paid', confirming: 'Confirming the payment', waitingBuyer: 'Waiting for approval on PayPal', unpaid: 'Not paid yet' };
     return {
       ...base,
       booking: {
-        time: span(b.start_ms, b.end_ms, tz),
-        service: b.service_name,
-        stylist: stylistsOf(db, shop.id)[0]?.name ?? '',
-        price: money(b.price_minor, shop.currency),
+        time: span(b.start_ms, b.end_ms, tz, lang),
+        service: nm(b.service_name, lang),
+        stylist: nm(stylistsOf(db, shop.id)[0]?.name ?? '', lang),
+        price: money(b.price_minor, shop.currency, lang),
         payment: paid
-          ? { state: 'PAID', text: 'Paid' }
+          ? { state: 'PAID', text: ap.paid }
           : aOp
-            ? { state: 'WAITING_BUYER', text: aOp.op_kind === 'ORDER_CAPTURE' && aOp.status !== 'NOT_ACCEPTED' && aOp.status !== 'FAILED' ? 'Confirming the payment' : 'Waiting for approval on PayPal' }
-            : { state: 'UNPAID', text: 'Not paid yet' },
+            ? { state: 'WAITING_BUYER', text: aOp.op_kind === 'ORDER_CAPTURE' && aOp.status !== 'NOT_ACCEPTED' && aOp.status !== 'FAILED' ? ap.confirming : ap.waitingBuyer }
+            : { state: 'UNPAID', text: ap.unpaid },
       },
       preference: pref
         ? {
             version: pref.version,
             windows: pref.structured.windows as LocalWindow[],
-            source: SOURCE_TEXT[pref.input_source],
+            source: sourceText(pref.input_source, lang),
             edited: !!pref.edited,
             rawText: pref.raw_text,
-            compensation: money(pref.compensation_minor, shop.currency),
+            compensation: money(pref.compensation_minor, shop.currency, lang),
           }
         : null,
-      refundNote: `The compensation is refunded to the PayPal account you paid this booking with, as a partial refund of that payment.`,
+      refundNote: lang === 'ja' ? REFUND_NOTE_JA : `The compensation is refunded to the PayPal account you paid this booking with, as a partial refund of that payment.`,
     };
   }
   const req = latestRequest(db, partyId);
@@ -477,12 +526,14 @@ export function customerView(db: Db, worldId: string, role: 'A' | 'B', partyId: 
   return {
     ...base,
     request: req
-      ? { version: req.version, windows: req.structured.windows, service: serviceName(db, req.structured.serviceId), source: SOURCE_TEXT[req.input_source], edited: !!req.edited, rawText: req.raw_text }
+      ? { version: req.version, windows: req.structured.windows, service: nm(serviceName(db, req.structured.serviceId), lang), source: sourceText(req.input_source, lang), edited: !!req.edited, rawText: req.raw_text }
       : null,
     result: evalRow
       ? {
           feasible: !!evalRow.feasible,
-          reasons: (JSON.parse(evalRow.result_json) as { reasons: string[] }).reasons.map((r) => REASON_TEXT[r] ?? 'The requested time cannot be offered.'),
+          reasons: (JSON.parse(evalRow.result_json) as { reasons: string[] }).reasons.map((r) =>
+            lang === 'ja' ? (REASON_TEXT_JA[r] ?? REASON_DEFAULT_JA) : (REASON_TEXT[r] ?? 'The requested time cannot be offered.'),
+          ),
         }
       : null,
   };

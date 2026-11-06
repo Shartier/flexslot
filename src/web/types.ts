@@ -52,7 +52,7 @@ export interface CaseView {
   paymentDeadline: string | null;
   approvals: { OWNER: string | null; A: string | null; B: string | null };
   actions: { approve: boolean; reject: boolean; pay: boolean; payPal: boolean };
-  steps: { bPayment: Step; authorizationRelease: Step | null; aRefund: Step; bRefund: Step | null; bookings: string };
+  steps: { bPayment: Step; authorizationRelease: Step | null; aRefund: Step; bRefund: Step | null; bookings: string; bookingsChanged: boolean };
   events: Array<{ at: string; text: string }>;
 }
 

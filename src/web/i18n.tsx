@@ -1,0 +1,571 @@
+// Screen language (English / Japanese). English stays the default for everyone whose browser is not Japanese (the
+// hackathon judges); a Japanese browser gets Japanese written for a salon booking service, so the browser has no
+// reason to machine-translate the page. The choice can be switched on every screen and is remembered in this
+// browser only (localStorage, best effort). Server-side wording comes in the same language via ?lang= on the state.
+
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+
+export type Lang = 'en' | 'ja';
+const KEY = 'flexslot-lang';
+
+export function initialLang(): Lang {
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved === 'en' || saved === 'ja') return saved;
+  } catch {
+    // storage blocked: fall back to the browser language
+  }
+  return (navigator.languages?.[0] ?? navigator.language ?? 'en').toLowerCase().startsWith('ja') ? 'ja' : 'en';
+}
+
+const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => void }>({ lang: 'en', setLang: () => {} });
+
+export function LangProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>(initialLang);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    try {
+      localStorage.setItem(KEY, l);
+    } catch {
+      // not remembered; the choice still applies to this page
+    }
+  };
+  return <LangContext.Provider value={{ lang, setLang }}>{children}</LangContext.Provider>;
+}
+
+export const useLang = () => useContext(LangContext);
+export const useT = () => TEXTS[useContext(LangContext).lang];
+
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+/** A window's date for display: "2026-11-12" (en) or "11月12日(木)" (ja). */
+export function showDate(iso: string, lang: Lang): string {
+  if (lang !== 'ja' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
+  return `${m}月${d}日(${WD[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]})`;
+}
+
+const en = {
+  langSwitch: '日本語',
+  langSwitchLabel: 'Show this page in Japanese',
+  loading: 'Loading…',
+  // landing
+  tagline: 'compensated booking swaps',
+  heroTitle: 'A fully booked slot, one swap, everyone better off',
+  heroBody:
+    "A new customer (B) can only come at a time that is already booked. An existing customer (A) said in advance when they could move instead. FlexSlot proposes the swap; the shop and A approve; B pays with PayPal; A's booking moves and A receives a fixed compensation as a partial refund of their own payment.",
+  scope: 'One fictional salon, one stylist, two services, one swap. PayPal Sandbox only: test money, never real payments.',
+  createTitle: 'Create a demo world',
+  aiLegend: 'AI for free text',
+  notConfigured: '(not configured on this server)',
+  mockAiOption: 'Mock rules (offline, not a real AI)',
+  paymentLegend: 'Payment',
+  sandboxOption: 'PayPal Sandbox',
+  mockPayOption: 'Mock (no PayPal at all)',
+  modesFixed: 'The modes are fixed for the world and shown on every screen.',
+  createButton: 'Create demo world',
+  createFailed: (code: string) => `Could not create the demo world (${code}).`,
+  linksTitle: 'Your three invite links',
+  linksBody: 'Each link signs in one role in this world. Keep them private. In real use each person would receive only their own link. Open them in separate tabs (or devices).',
+  lastDemoTitle: 'Your last demo world on this device',
+  openAs: (label: string) => `Open as ${label}`,
+  linkOf: (label: string) => `${label} link`,
+  suggestedOrder: 'Suggested order: A pays the booking and registers move conditions → B writes a request → the shop approves → A agrees → B pays.',
+  // roles
+  roleOwner: 'Shop owner',
+  roleA: 'Existing customer (A)',
+  roleB: 'New customer (B)',
+  switchTo: 'Switch screen:',
+  // session
+  needInvite: 'This screen needs your invite link. Please open the link you received (it signs you in and is then removed from the address bar).',
+  sessionFailed: 'Could not start the session. Please reload.',
+  // top bar
+  modesAria: 'Modes of this demo world',
+  aiVertex: (model: string | null) => `AI: Gemini on Vertex AI (${model ?? 'not configured'})`,
+  aiMock: 'AI: mock rules (not a real AI)',
+  paySandbox: 'Payment: PayPal Sandbox (test money)',
+  payMock: 'Payment: mock (no PayPal)',
+  demoNote: (shop: string, stylists: string, hours: string, tz: string, now: string) =>
+    `${shop} · stylist ${stylists} · open ${hours} (${tz}) · now ${now}. Demo world: whoever created it holds all three invite links; in real use each person receives only their own link.`,
+  // approvals and timeline
+  apShop: 'Shop',
+  apA: 'Existing customer',
+  apB: 'New customer',
+  apApproved: 'approved',
+  apDeclined: 'declined',
+  apWaiting: 'waiting',
+  timeline: 'Timeline',
+  // PayPal box
+  mockPayTitle: 'Mock payment.',
+  mockPayBody: 'No PayPal is involved in this demo world. The button below plays the part of you approving on PayPal.',
+  mockApprove: 'Approve in the mock PayPal',
+  approvalUnavailable: 'PayPal did not return the approval link yet. Please try again in a moment.',
+  sandboxTitle: 'Approve on PayPal (Sandbox test account).',
+  sandboxBody: 'Log in with the Sandbox buyer account and approve. Then come back here; FlexSlot checks the order with PayPal itself.',
+  openSandbox: 'Open PayPal Sandbox',
+  iApproved: 'I have approved on PayPal',
+  approvalLink: 'Approval link (to open in another browser):',
+  copied: 'Copied',
+  copy: 'Copy',
+  // intake
+  aiFail: {
+    AI_TIMEOUT: 'the AI did not answer in time',
+    AI_API_ERROR: 'the AI service returned an error',
+    AI_INVALID_OUTPUT: "the AI's answer did not pass FlexSlot's checks",
+    AI_QUOTA_WORLD: 'this demo world used up its AI calls',
+    AI_QUOTA_DAY: "today's AI calls for this server are used up",
+    AI_NOT_CONFIGURED: 'the AI is not configured on this server',
+  } as Record<string, string>,
+  aiUnavailable: 'unavailable',
+  date: 'Date',
+  from: 'From',
+  until: 'Until',
+  removeWindow: 'Remove this time window',
+  remove: 'Remove',
+  addWindow: '+ Add a time window',
+  version: (n: number) => `(version ${n})`,
+  editedByPerson: ', edited by the person',
+  serviceLine: (s: string) => `Service: ${s}`,
+  compForVersion: (x: string) => `Fixed compensation for this version: ${x}`,
+  lockedInProgress: 'Your conditions are locked while a swap proposal is open or being processed.',
+  swapDone: 'The swap in this demo world is finished.',
+  aiCouldNotBeUsed: (why: string) => `The AI could not be used (${why}). Please fill in the form below yourself.`,
+  inYourWords: 'In your own words',
+  useExample: 'Use the example text',
+  reading: 'Reading…',
+  aiNameVertex: 'Gemini on Vertex AI',
+  aiNameMock: 'the mock AI rules',
+  structureWith: (name: string) => `Structure with ${name}`,
+  fillMyself: 'Fill the form myself',
+  aiOnlyProposes: 'The AI only proposes. You check the result and confirm it; the program then checks the times, slots and prices.',
+  savedAsVersion: (n: number) => `Saved as version ${n}.`,
+  yourText: 'Your text:',
+  proposedBy: 'Proposed by:',
+  aiNotUsedNotice: (why: string) => `The AI could not be used (${why}). Please fill in the form yourself. No other AI was used in its place.`,
+  questionsTitle: 'Questions before confirming',
+  questionsNote: ' (vague times are not turned into exact times for you):',
+  yourAnswer: 'Your answer',
+  sendAnswers: 'Send answers to the AI',
+  orSetTimes: 'Or set the exact times in the form below yourself.',
+  service: 'Service',
+  choose: 'Choose…',
+  serviceOption: (name: string, min: number, price: string) => `${name} (${min} min, ${price})`,
+  windowsA: 'You can move into these time windows (the whole service must fit):',
+  windowsB: 'You can come only within these time windows:',
+  aSameNote: (comp: string) => `Same stylist and same service only. The compensation is fixed by the shop when you confirm: ${comp}.`,
+  confirmConditions: 'Confirm these conditions',
+  // A screen
+  yourBooking: 'Your booking',
+  bookingLine: (time: string, service: string, stylist: string, price: string) => `${time} · ${service} with ${stylist} · ${price}`,
+  payFirst: 'Pay for your booking first. A swap can only be proposed for a paid booking, and the compensation is refunded to this payment.',
+  payWithSandbox: (price: string) => `Pay ${price} with PayPal Sandbox`,
+  payMockButton: (price: string) => `Pay ${price} (mock)`,
+  whenMove: 'When could you move? (optional, for a fixed compensation)',
+  yourConditions: 'Your confirmed conditions',
+  aIntroAgain: 'To change your conditions, write them again; the new version replaces the old one.',
+  aIntroNew: (comp: string) => `If someone needs your time, would you move? Tell us when you could come instead. If a swap happens you receive ${comp}.`,
+  swapProposal: 'Swap proposal',
+  moveFromTo: (o: string, d: string): ReactNode => (
+    <>
+      Move from <s>{o}</s> to <strong>{d}</strong>
+    </>
+  ),
+  sameStylistService: (st: string, sv: string) => `Same stylist (${st}) and same service (${sv}).`,
+  compensationFixed: (x: string): ReactNode => (
+    <>
+      Compensation: <strong>{x}</strong>, fixed.{' '}
+    </>
+  ),
+  replyBy: (t: string) => `Reply by ${t}.`,
+  shopFirst: 'The shop reviews the proposal first.',
+  agreeToMove: 'Agree to move',
+  declineKeep: 'Decline (keep my booking)',
+  youAgreed: 'You agreed. Waiting for the new customer to pay. Your booking stays as it is until then.',
+  yourBookingLabel: 'Your booking:',
+  movedTo: (d: string) => `Moved to ${d}`,
+  notChanged: 'Not changed',
+  yourCompensation: 'Your compensation:',
+  // B screen
+  yourRequest: 'Your request',
+  yourConfirmedRequest: 'Your confirmed request',
+  slotOffered: 'A slot can be offered. See the offer below.',
+  cannotOffer: 'The requested time cannot be offered right now:',
+  bIntro: 'Fully booked when you can come? Tell us the only times that work for you and the service you want.',
+  yourOffer: 'Your offer',
+  serviceFallback: 'service',
+  aAgreed: 'An existing customer agreed to move for a fixed compensation, and the shop approved the swap.',
+  aMayMove: 'An existing customer may move for a fixed compensation; the shop and that customer decide first.',
+  validUntil: (t: string) => `Offer valid until ${t}.`,
+  termsFrozen: 'When you start paying, the terms are frozen. This demo does not offer cancellation after that point.',
+  waitingShopA: 'Waiting for the shop and the existing customer.',
+  acceptAndPay: (price: string) => `Accept and pay ${price}`,
+  decline: 'Decline',
+  approveBy: (t: string) => `Please approve on PayPal by ${t}. Until then nothing is charged.`,
+  payment: 'Payment:',
+  authorization: 'Authorization:',
+  refundToYou: 'Refund to you:',
+  confirmedSlot: (s: string) => `Confirmed: ${s}`,
+  notConfirmedYet: 'Not confirmed yet',
+  // owner screen
+  kind: {
+    A_ORIGINAL: "Existing customer's booking payment",
+    B_CHARGE: "New customer's payment",
+    B_AUTH_VOID: 'Release of the authorization',
+    A_COMPENSATION_REFUND: 'Compensation refund to the existing customer',
+    B_RECOVERY_REFUND: 'Full refund to the new customer',
+  } as Record<string, string>,
+  stoppedNotice: (n: number) => `Automatic payment processing stopped for ${n} item(s). Your action is needed (see “Stopped”).`,
+  bookings: 'Bookings',
+  thCustomer: 'Customer',
+  thTime: 'Time',
+  thService: 'Service',
+  thPrice: 'Price',
+  thPayment: 'Payment',
+  moved: ' (moved)',
+  compRule: (x: string) => `Fixed compensation rule: ${x} per swap, at most once per booking. It is fixed when the customer registers the conditions and does not grow over time.`,
+  conditions: 'Conditions',
+  aCanMoveTo: 'Existing customer can move to',
+  bCanOnlyCome: 'New customer can only come',
+  noPreference: 'The existing customer has not registered move conditions.',
+  noRequest: 'No request from a new customer yet.',
+  programCheck: (t: string) => `Program check at ${t}: `,
+  swapPossible: 'Swap possible',
+  noSwapPossible: 'No swap possible',
+  stoppedTitle: 'Stopped: your action is needed',
+  stoppedBody:
+    'FlexSlot stopped these automatically and sends nothing new for them: no new payment, capture, refund or void. The only automatic step is at a server restart: its recovery checks each of them once more with PayPal, with the same request, and may finish or release a payment that PayPal has already decided. This demo has no button to release a stop. What to do: check the payment in the PayPal Sandbox dashboard and ask the developer; a stop is never released by waiting. Items marked “needs attention” are different: use “Recover” in the payment records when it is offered.',
+  needsAttentionItem: (k: string) => `${k}: needs attention (use “Recover” in the payment records if offered)`,
+  checkingTitle: 'Still checking with PayPal (a difference was seen)',
+  checkingBody: 'FlexSlot keeps querying PayPal for these and continues once the records match. Nothing moves meanwhile.',
+  aiCalls: 'AI calls in this world',
+  noneYet: 'None yet.',
+  thKind: 'Kind',
+  thMode: 'Mode / model',
+  thOutcome: 'Outcome',
+  thAttempts: 'Attempts',
+  thLatency: 'Latency',
+  kindMove: 'Move conditions',
+  kindRequest: 'Request',
+  history: 'History',
+  proposalVersion: (n: number) => `Swap proposal (version ${n})`,
+  ownerAMove: (o: string, d: string, st: string, sv: string): ReactNode => (
+    <>
+      Existing customer: <s>{o}</s> → <strong>{d}</strong> (same stylist {st}, {sv})
+    </>
+  ),
+  ownerBTakes: (slot: string, sv: string, price: string): ReactNode => (
+    <>
+      New customer takes <strong>{slot}</strong> ({sv}) for {price}
+    </>
+  ),
+  ownerComp: (x: string) => `Fixed compensation: ${x} (partial refund of the existing customer's PayPal payment)`,
+  approvalsDue: (t: string) => `Approvals due by ${t}`,
+  approveSwap: 'Approve this swap',
+  ownerDecline: 'Decline',
+  profitTitle: 'Profit estimate for the shop',
+  additionalProfit: 'Additional profit (estimate)',
+  bPaymentLabel: "New customer's payment:",
+  authReleaseLabel: 'Authorization release:',
+  compRefundLabel: 'Compensation refund:',
+  bRefundLabel: 'Refund to the new customer:',
+  bookingsLabel: 'Bookings:',
+  records: 'Payment records (obligations, attempts, PayPal operations)',
+  thWhat: 'What',
+  thAmount: 'Amount',
+  thStatus: 'Status',
+  thOps: 'Operations (attempt: kind status / PayPal status)',
+  reconciled: 'reconciled',
+  reconciling: 'reconciling',
+  sentTimes: (n: number) => ` · sent ${n}×`,
+  recover: 'Recover (same amount)',
+  // refusals
+  errors: {
+    OWNER_FIRST: 'The shop has to approve first.',
+    TERMS_CHANGED: 'The proposal changed. Please review it again.',
+    OFFER_EXPIRED: 'This proposal has expired.',
+    NOT_AWAITING_APPROVAL: 'This proposal is no longer waiting for approval.',
+    ALREADY_DECIDED: 'You have already decided on this proposal.',
+    NOT_REJECTABLE: 'The payment has started; this demo does not offer cancellation after that.',
+    NOT_STARTABLE: 'The payment cannot start yet (waiting for the other approvals).',
+    CASE_IN_PROGRESS: 'Your conditions are locked while a swap is in progress.',
+    SWAP_DONE: 'The swap in this demo world is finished.',
+    QUESTIONS_UNANSWERED: 'Please answer the questions, or change the times in the form yourself, before confirming.',
+    FORM_INVALID: 'Please check the times: they must be inside business hours and in the coming weeks.',
+    PAYMENT_EXPIRED: 'The payment window has expired, so FlexSlot did not authorize this payment. The status is shown on this screen.',
+    MODE_MISMATCH: 'This action is not available in this payment mode.',
+    PAYMENT_MODE_UNAVAILABLE: 'The payment service for this demo world is not available on this server.',
+    ALREADY_PAID: 'This booking is already paid.',
+    SLOT_TIME_PASSED: 'This time slot has already started, so the swap can no longer be made.',
+    B_REQUEST_CHANGED: 'The request changed after the approvals. A new proposal is needed.',
+    A_PREFERENCE_CHANGED: "The existing customer's conditions changed after the approvals. A new proposal is needed.",
+    B_SERVICE_CHANGED: 'The service changed after the approvals. A new proposal is needed.',
+    A_BOOKING_CHANGED: 'The existing booking changed. A new proposal is needed.',
+    ORDER_CREATE_UNCONFIRMED: 'PayPal did not answer yet. Please try again in a moment.',
+    NO_SESSION: 'Your session has ended. Please open your invite link again.',
+    CSRF: 'Please reload the page.',
+    ORIGIN: 'Please open FlexSlot from its own address.',
+    TEXT_LENGTH: 'Please write between 1 and 2000 characters.',
+  } as Record<string, string>,
+  errorDefault: 'This action is not possible right now.',
+  errorUnknown: 'Something went wrong. Please try again.',
+};
+
+export type Texts = typeof en;
+
+const ja: Texts = {
+  langSwitch: 'English',
+  langSwitchLabel: 'このページを英語で表示する',
+  loading: '読み込み中…',
+  tagline: '補償つきの予約の振替',
+  heroTitle: '満席の枠を、補償つきの振替で活かす',
+  heroBody:
+    '満席の時間にしか来られない新しいお客さま（B）がいます。すでに予約しているお客さま（A）は、「この日時なら移動してもいい」とあらかじめ伝えています。FlexSlotが振替を提案し、お店とAが承認すると、BがPayPalで支払い、Aの予約が移動します。Aには、ご自身のお支払いの一部返金という形で、決まった額の補償が届きます。',
+  scope: '架空の美容室1店舗・担当者1人・施術2種類・振替1件のデモです。PayPalはSandbox（テスト用のお金）だけを使い、実際の支払いは発生しません。',
+  createTitle: 'デモを始める',
+  aiLegend: '自由入力を読み取るAI',
+  notConfigured: '（このサーバーでは未設定）',
+  mockAiOption: '模擬ルール（オフライン。本物のAIではありません）',
+  paymentLegend: '支払い',
+  sandboxOption: 'PayPal Sandbox（テスト用）',
+  mockPayOption: '模擬（PayPalを使いません）',
+  modesFixed: 'モードはデモごとに固定され、すべての画面に表示されます。',
+  createButton: 'デモを作成',
+  createFailed: (code) => `デモを作成できませんでした（${code}）。`,
+  linksTitle: '3つの招待リンク',
+  linksBody: 'リンクごとに、1つの立場で画面に入れます。ほかの人には共有しないでください。本番では、それぞれの人が自分のリンクだけを受け取ります。別々のタブ（または別の端末）で開いてください。',
+  lastDemoTitle: 'この端末で最後に作ったデモ',
+  openAs: (label) => `${label}として開く`,
+  linkOf: (label) => `${label}のリンク`,
+  suggestedOrder: 'おすすめの順番：Aが予約を支払い、移動できる日時を登録 → Bが希望を入力 → お店が承認 → Aが同意 → Bが支払い',
+  roleOwner: 'お店（オーナー）',
+  roleA: '予約済みのお客さま（A）',
+  roleB: '新しいお客さま（B）',
+  switchTo: '画面を切り替え：',
+  needInvite: 'この画面を開くには招待リンクが必要です。受け取ったリンクを開いてください（ログインした後、アドレスバーからは消えます）。',
+  sessionFailed: 'セッションを開始できませんでした。再読み込みしてください。',
+  modesAria: 'このデモのモード',
+  aiVertex: (model) => `AI：Gemini on Vertex AI（${model ?? '未設定'}）`,
+  aiMock: 'AI：模擬ルール（本物のAIではありません）',
+  paySandbox: '支払い：PayPal Sandbox（テスト用のお金）',
+  payMock: '支払い：模擬（PayPalなし）',
+  demoNote: (shop, stylists, hours, tz, now) =>
+    `${shop}・担当 ${stylists}・営業 ${hours}（${tz}）・現在 ${now}。デモでは、作成した人が3つの招待リンクをすべて持っています。本番では、それぞれの人が自分のリンクだけを受け取ります。`,
+  apShop: 'お店',
+  apA: '予約済みのお客さま',
+  apB: '新しいお客さま',
+  apApproved: '承認',
+  apDeclined: '辞退',
+  apWaiting: '返事待ち',
+  timeline: '経過',
+  mockPayTitle: '模擬の支払いです。',
+  mockPayBody: 'このデモではPayPalを使いません。下のボタンが、PayPalでの承認の代わりになります。',
+  mockApprove: '模擬のPayPalで承認する',
+  approvalUnavailable: 'PayPalから承認用のリンクがまだ届いていません。少し待ってから、もう一度お試しください。',
+  sandboxTitle: 'PayPal（Sandboxのテスト用アカウント）で承認してください。',
+  sandboxBody: 'Sandboxの購入者アカウントでログインして承認し、この画面に戻ってください。結果はFlexSlotがPayPalに直接確認します。',
+  openSandbox: 'PayPal Sandboxを開く',
+  iApproved: 'PayPalで承認しました',
+  approvalLink: '承認用のリンク（別のブラウザで開く場合）：',
+  copied: 'コピーしました',
+  copy: 'コピー',
+  aiFail: {
+    AI_TIMEOUT: 'AIの応答が時間内にありませんでした',
+    AI_API_ERROR: 'AIのサービスでエラーが起きました',
+    AI_INVALID_OUTPUT: 'AIの回答がFlexSlotの確認を通りませんでした',
+    AI_QUOTA_WORLD: 'このデモで使えるAIの回数を使い切りました',
+    AI_QUOTA_DAY: 'このサーバーで今日使えるAIの回数を使い切りました',
+    AI_NOT_CONFIGURED: 'このサーバーではAIが設定されていません',
+  },
+  aiUnavailable: '利用できません',
+  date: '日付',
+  from: '開始',
+  until: '終了',
+  removeWindow: 'この時間帯を削除',
+  remove: '削除',
+  addWindow: '＋ 時間帯を追加',
+  version: (n) => `（第${n}版）`,
+  editedByPerson: '、本人が修正',
+  serviceLine: (s) => `施術：${s}`,
+  compForVersion: (x) => `この版の固定の補償：${x}`,
+  lockedInProgress: '振替の提案が出ている間や手続きの途中は、条件を変更できません。',
+  swapDone: 'このデモの振替は完了しました。',
+  aiCouldNotBeUsed: (why) => `AIを使えませんでした（${why}）。下のフォームに直接入力してください。`,
+  inYourWords: 'ご自身の言葉で',
+  useExample: '例文を使う',
+  reading: '読み取り中…',
+  aiNameVertex: 'Gemini on Vertex AI',
+  aiNameMock: '模擬ルール',
+  structureWith: (name) => `${name}で読み取る`,
+  fillMyself: '自分でフォームに入力する',
+  aiOnlyProposes: 'AIは提案するだけです。結果を確かめて確定するのはご本人で、時間・空き枠・料金はプログラムが確認します。',
+  savedAsVersion: (n) => `第${n}版として保存しました。`,
+  yourText: '入力した文：',
+  proposedBy: '提案元：',
+  aiNotUsedNotice: (why) => `AIを使えませんでした（${why}）。フォームに直接入力してください。代わりにほかのAIを使うことはしていません。`,
+  questionsTitle: '確定の前に教えてください',
+  questionsNote: '（あいまいな時間を、こちらで勝手に具体的な時間にすることはしません）：',
+  yourAnswer: '回答',
+  sendAnswers: 'AIに回答を送る',
+  orSetTimes: 'または、下のフォームで具体的な時間を直接設定してください。',
+  service: '施術',
+  choose: '選んでください',
+  serviceOption: (name, min, price) => `${name}（${min}分・${price}）`,
+  windowsA: '移動できる時間帯（施術がすべて収まる必要があります）：',
+  windowsB: '来られる時間帯：',
+  aSameNote: (comp) => `担当者と施術は変わりません。補償は、確定した時点でお店が決めた固定額です：${comp}。`,
+  confirmConditions: 'この条件で確定する',
+  yourBooking: 'ご予約',
+  bookingLine: (time, service, stylist, price) => `${time}・${service}（担当：${stylist}）・${price}`,
+  payFirst: 'まず、ご予約の代金をお支払いください。振替を提案できるのはお支払い済みの予約だけで、補償はこのお支払いへの返金としてお返しします。',
+  payWithSandbox: (price) => `${price}をPayPal Sandboxで支払う`,
+  payMockButton: (price) => `${price}を支払う（模擬）`,
+  whenMove: '移動できる日時（任意・固定の補償つき）',
+  yourConditions: '確定した条件',
+  aIntroAgain: '条件を変えるときは、もう一度入力してください。新しい版が前の版に置き換わります。',
+  aIntroNew: (comp) => `あなたの予約の時間にどうしても来たい方がいたら、移動してもかまいませんか？代わりに来られる日時を教えてください。振替が決まると、${comp}をお受け取りいただけます。`,
+  swapProposal: '振替のご提案',
+  moveFromTo: (o, d) => (
+    <>
+      <s>{o}</s> から <strong>{d}</strong> へ移動
+    </>
+  ),
+  sameStylistService: (st, sv) => `担当者（${st}）と施術（${sv}）は変わりません。`,
+  compensationFixed: (x) => (
+    <>
+      補償：<strong>{x}</strong>（固定）。
+    </>
+  ),
+  replyBy: (t) => `${t}までにお返事ください。`,
+  shopFirst: 'まずお店が提案を確認します。',
+  agreeToMove: '移動に同意する',
+  declineKeep: '辞退する（今の予約のまま）',
+  youAgreed: '同意しました。新しいお客さまのお支払いを待っています。それまで、ご予約はそのままです。',
+  yourBookingLabel: 'ご予約：',
+  movedTo: (d) => `${d}に移動しました`,
+  notChanged: '変更なし',
+  yourCompensation: '補償：',
+  yourRequest: 'ご希望',
+  yourConfirmedRequest: '確定したご希望',
+  slotOffered: 'ご案内できる枠があります。下のご案内をご覧ください。',
+  cannotOffer: 'ご希望の時間は、今はご案内できません：',
+  bIntro: '来たい時間が満席でしたか？来られる時間と、ご希望の施術を教えてください。',
+  yourOffer: 'ご案内',
+  serviceFallback: '施術',
+  aAgreed: 'すでに予約していたお客さまが固定の補償で移動に同意し、お店も振替を承認しました。',
+  aMayMove: 'すでに予約しているお客さまが、固定の補償で移動してくれる可能性があります。先にお店とそのお客さまが判断します。',
+  validUntil: (t) => `${t}までのご案内です。`,
+  termsFrozen: 'お支払いを始めると、条件が確定します。このデモでは、その後の取り消しはできません。',
+  waitingShopA: 'お店と、予約済みのお客さまのお返事を待っています。',
+  acceptAndPay: (price) => `承諾して${price}を支払う`,
+  decline: '辞退する',
+  approveBy: (t) => `${t}までにPayPalで承認してください。それまで請求は発生しません。`,
+  payment: 'お支払い：',
+  authorization: '仮売上：',
+  refundToYou: 'あなたへの返金：',
+  confirmedSlot: (s) => `確定：${s}`,
+  notConfirmedYet: 'まだ確定していません',
+  kind: {
+    A_ORIGINAL: '予約済みのお客さまの予約代金',
+    B_CHARGE: '新しいお客さまのお支払い',
+    B_AUTH_VOID: '仮売上の取り消し',
+    A_COMPENSATION_REFUND: '予約済みのお客さまへの補償の返金',
+    B_RECOVERY_REFUND: '新しいお客さまへの全額返金',
+  },
+  stoppedNotice: (n) => `${n}件の支払いの処理が自動で止まっています。対応が必要です（「停止中」をご覧ください）。`,
+  bookings: '予約一覧',
+  thCustomer: 'お客さま',
+  thTime: '日時',
+  thService: '施術',
+  thPrice: '料金',
+  thPayment: '支払い',
+  moved: '（移動）',
+  compRule: (x) => `固定の補償：振替1件につき${x}、1つの予約につき1回まで。お客さまが条件を登録した時点で決まり、時間がたっても増えません。`,
+  conditions: '条件',
+  aCanMoveTo: '予約済みのお客さまが移動できる日時',
+  bCanOnlyCome: '新しいお客さまが来られる日時',
+  noPreference: '予約済みのお客さまは、まだ移動できる日時を登録していません。',
+  noRequest: '新しいお客さまからのご希望は、まだありません。',
+  programCheck: (t) => `プログラムの判定（${t}）：`,
+  swapPossible: '振替できます',
+  noSwapPossible: '振替できません',
+  stoppedTitle: '停止中：対応が必要です',
+  stoppedBody:
+    'FlexSlotが自動で止めた項目です。新しい支払い・請求の確定・返金・取り消しは送りません。自動で動くのはサーバーを再起動したときだけで、同じ要求でPayPalにもう一度確認し、PayPal側ですでに決まっている支払いを完了または取り消すことがあります。このデモには、停止を解除するボタンはありません。PayPal Sandboxの管理画面で支払いを確かめ、開発者に連絡してください。待っていても解除はされません。「対応が必要」の項目はこれとは別で、支払いの記録に「再実行」が表示されていれば使えます。',
+  needsAttentionItem: (k) => `${k}：対応が必要（支払いの記録に「再実行」があれば使えます）`,
+  checkingTitle: 'PayPalへの確認を続けています（記録に違いがあります）',
+  checkingBody: 'FlexSlotはPayPalへの確認を続け、記録が一致したら先に進みます。それまでは何も動きません。',
+  aiCalls: 'このデモでのAIの利用',
+  noneYet: 'まだありません。',
+  thKind: '種類',
+  thMode: 'モード／モデル',
+  thOutcome: '結果',
+  thAttempts: '試行回数',
+  thLatency: '応答時間',
+  kindMove: '移動の条件',
+  kindRequest: 'ご希望',
+  history: '履歴',
+  proposalVersion: (n) => `振替の提案（第${n}版）`,
+  ownerAMove: (o, d, st, sv) => (
+    <>
+      予約済みのお客さま：<s>{o}</s> → <strong>{d}</strong>（担当 {st}・{sv}は同じ）
+    </>
+  ),
+  ownerBTakes: (slot, sv, price) => (
+    <>
+      新しいお客さま：<strong>{slot}</strong>（{sv}）・{price}
+    </>
+  ),
+  ownerComp: (x) => `固定の補償：${x}（予約済みのお客さまのPayPalでのお支払いを一部返金）`,
+  approvalsDue: (t) => `承認の期限：${t}`,
+  approveSwap: 'この振替を承認する',
+  ownerDecline: '見送る',
+  profitTitle: 'お店の利益の試算',
+  additionalProfit: '増える利益（試算）',
+  bPaymentLabel: '新しいお客さまのお支払い：',
+  authReleaseLabel: '仮売上の取り消し：',
+  compRefundLabel: '補償の返金：',
+  bRefundLabel: '新しいお客さまへの返金：',
+  bookingsLabel: '予約：',
+  records: '支払いの記録（債務・試行・PayPalへの操作）',
+  thWhat: '内容',
+  thAmount: '金額',
+  thStatus: '状態',
+  thOps: '操作（試行：種類 状態／PayPal側の状態）',
+  reconciled: '照合済み',
+  reconciling: '照合中',
+  sentTimes: (n) => `・送信${n}回`,
+  recover: '再実行（同じ金額）',
+  errors: {
+    OWNER_FIRST: '先にお店の承認が必要です。',
+    TERMS_CHANGED: '提案の内容が変わりました。もう一度ご確認ください。',
+    OFFER_EXPIRED: 'この提案は期限が切れました。',
+    NOT_AWAITING_APPROVAL: 'この提案は、もう承認を受け付けていません。',
+    ALREADY_DECIDED: 'この提案には、すでにお返事いただいています。',
+    NOT_REJECTABLE: 'お支払いが始まっているため、このデモでは取り消せません。',
+    NOT_STARTABLE: 'ほかの承認がそろうまで、お支払いを始められません。',
+    CASE_IN_PROGRESS: '振替の手続き中は、条件を変更できません。',
+    SWAP_DONE: 'このデモの振替は完了しました。',
+    QUESTIONS_UNANSWERED: '確定の前に、質問に答えるか、フォームで時間を直接設定してください。',
+    FORM_INVALID: '時間をご確認ください。営業時間内で、これから数週間のうちの日時にしてください。',
+    PAYMENT_EXPIRED: 'お支払いの期限が切れたため、FlexSlotはこのお支払いの仮売上をしていません。状況はこの画面に表示されます。',
+    MODE_MISMATCH: 'この支払いのモードでは使えない操作です。',
+    PAYMENT_MODE_UNAVAILABLE: 'このデモの支払いサービスは、このサーバーでは使えません。',
+    ALREADY_PAID: 'このご予約はお支払い済みです。',
+    SLOT_TIME_PASSED: 'この時間の枠はすでに始まっているため、振替はできません。',
+    B_REQUEST_CHANGED: '承認の後にご希望が変わりました。新しい提案が必要です。',
+    A_PREFERENCE_CHANGED: '承認の後に、予約済みのお客さまの条件が変わりました。新しい提案が必要です。',
+    B_SERVICE_CHANGED: '承認の後に施術が変わりました。新しい提案が必要です。',
+    A_BOOKING_CHANGED: '既存の予約が変わりました。新しい提案が必要です。',
+    ORDER_CREATE_UNCONFIRMED: 'PayPalからまだ応答がありません。少し待ってから、もう一度お試しください。',
+    NO_SESSION: 'セッションが終了しました。招待リンクをもう一度開いてください。',
+    CSRF: 'ページを再読み込みしてください。',
+    ORIGIN: 'FlexSlotは、そのサーバーのアドレスから開いてください。',
+    TEXT_LENGTH: '1〜2000文字で入力してください。',
+  },
+  errorDefault: 'この操作は、今はできません。',
+  errorUnknown: '問題が起きました。もう一度お試しください。',
+};
+
+export const TEXTS: Record<Lang, Texts> = { en, ja };

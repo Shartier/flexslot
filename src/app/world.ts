@@ -195,9 +195,17 @@ export function structureContextFor(db: Db, worldId: string, now: number): Struc
 }
 
 /** Example texts shown as placeholders, relative to the world's base date (they are only hints). */
-export function exampleTexts(baseDate: string): { a: string; b: string } {
+export function exampleTexts(baseDate: string, lang: 'en' | 'ja' = 'en'): { a: string; b: string } {
   const aDay = addDays(baseDate, SAMPLE_SHOP.aMoveDayOffset);
   const bDay = addDays(baseDate, SAMPLE_SHOP.aBookingDayOffset);
+  if (lang === 'ja') {
+    // Japanese examples the mock rules read as well (M月D日, H時〜H時, カット).
+    const md = (d: string) => `${Number(d.slice(5, 7))}月${Number(d.slice(8, 10))}日`;
+    return {
+      a: `${md(aDay)}なら、10時〜12時の間にカットが終われば移動できます。`,
+      b: `${md(bDay)}にカットをお願いしたいです。来られるのは14時〜15時だけです。`,
+    };
+  }
   return {
     a: `I can move to ${aDay} if my cut is done between 10:00 and 12:00.`,
     b: `I need a cut on ${bDay}, and only 14:00-15:00 works for me.`,

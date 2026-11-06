@@ -23,6 +23,7 @@ import { approvalUrl } from '../paypal/rest.ts';
 import { approveCase, isCaseParty, OFFER_TTL_MS, proposeInTx, reevaluateInTx, rejectCase } from '../app/cases.ts';
 import { answerDraft, confirmDraft, createDraft, type IntakeRole } from '../app/intake.ts';
 import { customerView, ownerView } from '../app/views.ts';
+import { parseLang } from '../app/views-ja.ts';
 import { createWorld, getWorld, idsFor, newToken, sha256, type PaymentMode, type Role } from '../app/world.ts';
 import { receiveWebhook } from '../app/webhooks.ts';
 import { fail, json, parseCookies, type Req, type Res } from './http.ts';
@@ -236,7 +237,8 @@ export function createApp(d: AppDeps): App {
     }
 
     if (sub === 'state' && req.method === 'GET') {
-      return json(200, role === 'OWNER' ? ownerView(d.db, worldId, now, aiInfo()) : customerView(d.db, worldId, role, s.party_id, now, aiInfo()));
+      const lang = parseLang(req.query.get('lang'));
+      return json(200, role === 'OWNER' ? ownerView(d.db, worldId, now, aiInfo(), lang) : customerView(d.db, worldId, role, s.party_id, now, aiInfo(), lang));
     }
 
     if (req.method !== 'POST' && !(req.method === 'GET' && sub === 'cases/approval-link')) return fail(405, 'METHOD');

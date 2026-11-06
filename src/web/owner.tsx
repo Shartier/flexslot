@@ -3,37 +3,32 @@
 // that need attention, and the history.
 
 import type { Api } from './api.ts';
+import { useT } from './i18n.tsx';
 import type { OwnerCase, OwnerState } from './types.ts';
 import { ApprovalChips, ConditionsSummary, DemoNote, Events, Notice, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
 
-const KIND: Record<string, string> = {
-  A_ORIGINAL: "Existing customer's booking payment",
-  B_CHARGE: "New customer's payment",
-  B_AUTH_VOID: 'Release of the authorization',
-  A_COMPENSATION_REFUND: 'Compensation refund to the existing customer',
-  B_RECOVERY_REFUND: 'Full refund to the new customer',
-};
-
 export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerState; refresh: () => Promise<void> }) {
+  const t = useT();
+  const kind = (k: string) => t.kind[k] ?? k;
   return (
     <>
-      <TopBar header={state.header} roleName="Shop owner" />
+      <TopBar header={state.header} roleName={t.roleOwner} roleSeg="owner" />
       <main>
         <DemoNote header={state.header} />
         {(state.stopped.length > 0 || state.needsAttentionObligations.length > 0) && (
-          <Notice kind="error">Automatic payment processing stopped for {Math.max(state.stopped.length, state.needsAttentionObligations.length)} item(s). Your action is needed (see “Stopped”).</Notice>
+          <Notice kind="error">{t.stoppedNotice(Math.max(state.stopped.length, state.needsAttentionObligations.length))}</Notice>
         )}
 
-        <Section title="Bookings">
+        <Section title={t.bookings}>
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Customer</th>
-                  <th>Time</th>
-                  <th>Service</th>
-                  <th>Price</th>
-                  <th>Payment</th>
+                  <th>{t.thCustomer}</th>
+                  <th>{t.thTime}</th>
+                  <th>{t.thService}</th>
+                  <th>{t.thPrice}</th>
+                  <th>{t.thPayment}</th>
                 </tr>
               </thead>
               <tbody>
@@ -42,7 +37,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
                     <td>{b.customer}</td>
                     <td>
                       {b.time}
-                      {b.version > 1 ? ' (moved)' : ''}
+                      {b.version > 1 ? t.moved : ''}
                     </td>
                     <td>{b.service}</td>
                     <td>{b.price.text}</td>
@@ -52,21 +47,19 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
               </tbody>
             </table>
           </div>
-          <p className="small muted-text">
-            Fixed compensation rule: {state.header.shop.compensation.text} per swap, at most once per booking. It is fixed when the customer registers the conditions and does not grow over time.
-          </p>
+          <p className="small muted-text">{t.compRule(state.header.shop.compensation.text)}</p>
         </Section>
 
-        <Section title="Conditions">
+        <Section title={t.conditions}>
           <div className="grid2">
-            {state.preference ? <ConditionsSummary c={state.preference} label="Existing customer can move to" /> : <p className="muted-text">The existing customer has not registered move conditions.</p>}
-            {state.request ? <ConditionsSummary c={state.request} label="New customer can only come" /> : <p className="muted-text">No request from a new customer yet.</p>}
+            {state.preference ? <ConditionsSummary c={state.preference} label={t.aCanMoveTo} /> : <p className="muted-text">{t.noPreference}</p>}
+            {state.request ? <ConditionsSummary c={state.request} label={t.bCanOnlyCome} /> : <p className="muted-text">{t.noRequest}</p>}
           </div>
           {state.evaluation && (
             <div className="verdict">
               <p>
-                Program check at {state.evaluation.at}:{' '}
-                <span className={`chip ${state.evaluation.feasible ? 'ok' : 'wait'}`}>{state.evaluation.feasible ? 'Swap possible' : 'No swap possible'}</span>
+                {t.programCheck(state.evaluation.at)}
+                <span className={`chip ${state.evaluation.feasible ? 'ok' : 'wait'}`}>{state.evaluation.feasible ? t.swapPossible : t.noSwapPossible}</span>
               </p>
               {!state.evaluation.feasible && (
                 <ul>
@@ -86,54 +79,52 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
         ))}
 
         {(state.stopped.length > 0 || state.needsAttentionObligations.length > 0) && (
-          <Section title="Stopped: your action is needed">
-            <p className="small">
-              FlexSlot stopped these automatically and sends nothing new for them: no new payment, capture, refund or void. The only automatic step is at a server restart: its recovery checks each of them once more with PayPal, with the same request, and may finish or release a payment that PayPal has already decided. This demo has no button to release a stop. What to do: check the payment in the PayPal Sandbox dashboard and ask the developer; a stop is never released by waiting. Items marked “needs attention” are different: use “Recover” in the payment records when it is offered.
-            </p>
+          <Section title={t.stoppedTitle}>
+            <p className="small">{t.stoppedBody}</p>
             <ul className="history">
               {state.stopped.map((e, i) => (
                 <li key={i}>
-                  {KIND[e.obligation] ?? e.obligation} · {e.operation} ({e.status}) · <span className="mono small">{e.reason}</span>
+                  {kind(e.obligation)} · {e.operation} ({e.status}) · <span className="mono small">{e.reason}</span>
                 </li>
               ))}
               {state.needsAttentionObligations.map((k, i) => (
-                <li key={`o${i}`}>{KIND[k] ?? k}: needs attention (use “Recover” in the payment records if offered)</li>
+                <li key={`o${i}`}>{t.needsAttentionItem(kind(k))}</li>
               ))}
             </ul>
           </Section>
         )}
         {state.checking.length > 0 && (
-          <Section title="Still checking with PayPal (a difference was seen)">
-            <p className="small">FlexSlot keeps querying PayPal for these and continues once the records match. Nothing moves meanwhile.</p>
+          <Section title={t.checkingTitle}>
+            <p className="small">{t.checkingBody}</p>
             <ul className="history">
               {state.checking.map((e, i) => (
                 <li key={i}>
-                  {KIND[e.obligation] ?? e.obligation} · {e.operation} · <span className="mono small">{e.reason}</span>
+                  {kind(e.obligation)} · {e.operation} · <span className="mono small">{e.reason}</span>
                 </li>
               ))}
             </ul>
           </Section>
         )}
 
-        <Section title="AI calls in this world">
+        <Section title={t.aiCalls}>
           {state.aiUsage.length === 0 ? (
-            <p className="muted-text">None yet.</p>
+            <p className="muted-text">{t.noneYet}</p>
           ) : (
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Kind</th>
-                    <th>Mode / model</th>
-                    <th>Outcome</th>
-                    <th>Attempts</th>
-                    <th>Latency</th>
+                    <th>{t.thKind}</th>
+                    <th>{t.thMode}</th>
+                    <th>{t.thOutcome}</th>
+                    <th>{t.thAttempts}</th>
+                    <th>{t.thLatency}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {state.aiUsage.map((u, i) => (
                     <tr key={i}>
-                      <td>{u.kind === 'A_PREFERENCE' ? 'Move conditions' : 'Request'}</td>
+                      <td>{u.kind === 'A_PREFERENCE' ? t.kindMove : t.kindRequest}</td>
                       <td>
                         {u.mode} / {u.model}
                       </td>
@@ -148,7 +139,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
           )}
         </Section>
 
-        <Section title="History">
+        <Section title={t.history}>
           <ul className="history">
             {state.history.map((e, i) => (
               <li key={i}>
@@ -163,33 +154,30 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
 }
 
 function OwnerCaseCard({ api, c, refresh }: { api: Api; c: OwnerCase; refresh: () => Promise<void> }) {
+  const t = useT();
   const act = useAction(refresh);
   const decision = { caseId: c.id, version: c.version, termsHash: c.termsHash };
   return (
-    <Section title={`Swap proposal (version ${c.version})`} aside={<StatusChip c={c} />}>
+    <Section title={t.proposalVersion(c.version)} aside={<StatusChip c={c} />}>
       <div className="grid2">
         <div>
           <ul className="facts">
-            <li>
-              Existing customer: <s>{c.origin}</s> → <strong>{c.destination}</strong> (same stylist {c.stylist}, {c.aService})
-            </li>
-            <li>
-              New customer takes <strong>{c.bSlot}</strong> ({c.bService}) for {c.bPrice.text}
-            </li>
-            <li>Fixed compensation: {c.aCompensation.text} (partial refund of the existing customer's PayPal payment)</li>
-            {(c.status === 'AWAITING_APPROVAL' || c.status === 'A_ACCEPTED') && <li>Approvals due by {c.offerExpiresAt}</li>}
+            <li>{t.ownerAMove(c.origin, c.destination, c.stylist, c.aService)}</li>
+            <li>{t.ownerBTakes(c.bSlot, c.bService ?? t.serviceFallback, c.bPrice.text)}</li>
+            <li>{t.ownerComp(c.aCompensation.text)}</li>
+            {(c.status === 'AWAITING_APPROVAL' || c.status === 'A_ACCEPTED') && <li>{t.approvalsDue(c.offerExpiresAt)}</li>}
           </ul>
           <ApprovalChips c={c} />
           {(c.actions.approve || c.actions.reject) && (
             <div className="row wrap">
               {c.actions.approve && (
                 <button className="primary" disabled={act.busy} onClick={() => void act.run(() => api.post('cases/approve', decision))}>
-                  Approve this swap
+                  {t.approveSwap}
                 </button>
               )}
               {c.actions.reject && (
                 <button disabled={act.busy} onClick={() => void act.run(() => api.post('cases/reject', decision))}>
-                  Decline
+                  {t.ownerDecline}
                 </button>
               )}
             </div>
@@ -197,7 +185,7 @@ function OwnerCaseCard({ api, c, refresh }: { api: Api; c: OwnerCase; refresh: (
         </div>
         <div>
           <table className="profit">
-            <caption>Profit estimate for the shop</caption>
+            <caption>{t.profitTitle}</caption>
             <tbody>
               {c.profit.lines.map((l, i) => (
                 <tr key={i}>
@@ -208,7 +196,7 @@ function OwnerCaseCard({ api, c, refresh }: { api: Api; c: OwnerCase; refresh: (
                 </tr>
               ))}
               <tr className="total">
-                <td>Additional profit (estimate)</td>
+                <td>{t.additionalProfit}</td>
                 <td className="num">{c.profit.additionalProfit.text}</td>
               </tr>
             </tbody>
@@ -218,51 +206,53 @@ function OwnerCaseCard({ api, c, refresh }: { api: Api; c: OwnerCase; refresh: (
       </div>
       <div className="steps">
         <p>
-          New customer's payment: <StepChip step={c.steps.bPayment} />
+          {t.bPaymentLabel} <StepChip step={c.steps.bPayment} />
         </p>
         {c.steps.authorizationRelease && (
           <p>
-            Authorization release: <StepChip step={c.steps.authorizationRelease} />
+            {t.authReleaseLabel} <StepChip step={c.steps.authorizationRelease} />
           </p>
         )}
         <p>
-          Compensation refund: <StepChip step={c.steps.aRefund} />
+          {t.compRefundLabel} <StepChip step={c.steps.aRefund} />
         </p>
         {c.steps.bRefund && (
           <p>
-            Refund to the new customer: <StepChip step={c.steps.bRefund} />
+            {t.bRefundLabel} <StepChip step={c.steps.bRefund} />
           </p>
         )}
-        <p>Bookings: {c.steps.bookings}</p>
+        <p>
+          {t.bookingsLabel} {c.steps.bookings}
+        </p>
       </div>
       {c.obligations.length > 0 && (
         <details>
-          <summary>Payment records (obligations, attempts, PayPal operations)</summary>
+          <summary>{t.records}</summary>
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>What</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Operations (attempt: kind status / PayPal status)</th>
+                  <th>{t.thWhat}</th>
+                  <th>{t.thAmount}</th>
+                  <th>{t.thStatus}</th>
+                  <th>{t.thOps}</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
                 {c.obligations.map((o) => (
                   <tr key={o.id}>
-                    <td>{KIND[o.kind] ?? o.kind}</td>
+                    <td>{t.kind[o.kind] ?? o.kind}</td>
                     <td>{o.amount.text}</td>
                     <td>{o.status}</td>
                     <td className="small">
-                      {o.attempts.map((t) =>
-                        t.ops.map((op, j) => (
-                          <div key={`${t.no}-${j}`}>
-                            #{t.no}: {op.kind} {op.status}
+                      {o.attempts.map((tr) =>
+                        tr.ops.map((op, j) => (
+                          <div key={`${tr.no}-${j}`}>
+                            #{tr.no}: {op.kind} {op.status}
                             {op.external ? ` / ${op.external}` : ''}
-                            {op.reconcile ? ` (${op.reconcile === 'MATCHED' ? 'reconciled' : 'reconciling'})` : ''}
-                            {op.sends > 1 ? ` · sent ${op.sends}×` : ''}
+                            {op.reconcile ? ` (${op.reconcile === 'MATCHED' ? t.reconciled : t.reconciling})` : ''}
+                            {op.sends > 1 ? t.sentTimes(op.sends) : ''}
                             {op.error ? ` · ${op.error}` : ''}
                           </div>
                         )),
@@ -271,7 +261,7 @@ function OwnerCaseCard({ api, c, refresh }: { api: Api; c: OwnerCase; refresh: (
                     <td>
                       {o.retryable && (
                         <button disabled={act.busy} onClick={() => void act.run(() => api.post('obligations/retry', { obligationId: o.id }))}>
-                          Recover (same amount)
+                          {t.recover}
                         </button>
                       )}
                     </td>
