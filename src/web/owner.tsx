@@ -5,7 +5,7 @@
 import type { Api } from './api.ts';
 import { useT } from './i18n.tsx';
 import type { OwnerCase, OwnerState } from './types.ts';
-import { ApprovalChips, CaseProgress, ConditionsSummary, DemoNote, Events, Notice, RoleHero, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
+import { ApprovalChips, CaseArt, CaseProgress, ConditionsSummary, DemoNote, Events, Notice, RoleHero, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
 
 export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerState; refresh: () => Promise<void> }) {
   const t = useT();
@@ -161,6 +161,7 @@ function OwnerCaseCard({ api, c, refresh }: { api: Api; c: OwnerCase; refresh: (
   return (
     <Section title={t.proposalVersion(c.version)} aside={<StatusChip c={c} />}>
       <CaseProgress c={c} />
+      <CaseArt c={c} />
       <div className="grid2">
         <div>
           <ul className="facts">

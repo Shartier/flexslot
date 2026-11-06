@@ -4,6 +4,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { explain, type Api } from './api.ts';
+import { ART } from './art.ts';
 import { loadDemo, type RoleSeg } from './demo-links.ts';
 import { showDate, useLang, useT } from './i18n.tsx';
 import type { Approval, CaseView, Conditions, Draft, Header, Step, Window } from './types.ts';
@@ -95,21 +96,34 @@ export function CaseProgress({ c }: { c: CaseView }) {
   );
 }
 
-const ROLE_MARK: Record<RoleSeg, string> = { owner: '店', a: 'A', b: 'B' };
-/** The screen's heading: who you are here and what this screen is for (the role images replace the mark later). */
+/** The screen's heading: who you are here and what this screen is for, with the role's illustration. */
 export function RoleHero({ roleSeg, name }: { roleSeg: RoleSeg; name: string }) {
   const t = useT();
   return (
     <section className={`role-hero role-${roleSeg}`}>
-      <span className="role-mark" aria-hidden="true">
-        {ROLE_MARK[roleSeg]}
-      </span>
+      <img className="role-img" src={ART.role[roleSeg]} alt="" aria-hidden="true" width={512} height={512} />
       <div>
         <h1>{name}</h1>
         <p>{t.roleLead[roleSeg]}</p>
       </div>
     </section>
   );
+}
+
+// Codex's guidance: "checking" only for states still unconfirmed, "done" only for a completed swap.
+const CHECKING_STATES = ['PAYMENT_UNKNOWN', 'RECONCILING', 'PAYMENT_PENDING', 'REFUND_PENDING', 'B_REFUND_PENDING', 'VOID_PENDING'];
+/** A small illustration for the case: the proposal, a result being checked, or the completed swap. */
+export function CaseArt({ c }: { c: CaseView }) {
+  const [src, w, h] =
+    c.status === 'COMPLETED'
+      ? [ART.done, 800, 600]
+      : CHECKING_STATES.includes(c.status)
+        ? [ART.checking, 800, 600]
+        : c.status === 'AWAITING_APPROVAL' || c.status === 'A_ACCEPTED'
+          ? [ART.swap, 1200, 600]
+          : [null, 0, 0];
+  if (!src) return null;
+  return <img className={`case-art ${src === ART.swap ? 'wide' : ''}`} src={src} alt="" aria-hidden="true" width={w} height={h} loading="lazy" />;
 }
 
 export function DemoNote({ header }: { header: Header }) {

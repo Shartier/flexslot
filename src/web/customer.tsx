@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Api } from './api.ts';
 import { useT } from './i18n.tsx';
 import type { AState, Approval, BState, CaseView } from './types.ts';
-import { ApprovalBox, CaseProgress, ConditionsSummary, DemoNote, Events, IntakePanel, Notice, RoleHero, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
+import { ApprovalBox, CaseArt, CaseProgress, ConditionsSummary, DemoNote, Events, IntakePanel, Notice, RoleHero, Section, StatusChip, StepChip, TopBar, useAction } from './ui.tsx';
 
 const decision = (c: CaseView) => ({ caseId: c.id, version: c.version, termsHash: c.termsHash });
 
@@ -69,6 +69,7 @@ function ACase({ api, c, refresh, refundNote }: { api: Api; c: CaseView; refresh
   return (
     <Section title={t.swapProposal} aside={<StatusChip c={c} />}>
       <CaseProgress c={c} />
+      <CaseArt c={c} />
       <p className="big">{t.moveFromTo(c.origin, c.destination)}</p>
       <ul className="facts">
         <li>{t.sameStylistService(c.stylist, c.aService)}</li>
@@ -159,6 +160,7 @@ function BCase({ api, c, refresh }: { api: Api; c: CaseView; refresh: () => Prom
   return (
     <Section title={t.yourOffer} aside={<StatusChip c={c} />}>
       <CaseProgress c={c} />
+      <CaseArt c={c} />
       <p className="big">
         {t.bookingLine(c.bSlot, c.bService ?? t.serviceFallback, c.stylist, '')}
         <strong>{c.bPrice.text}</strong>

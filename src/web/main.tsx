@@ -9,6 +9,7 @@ import { LangProvider, useLang, useT } from './i18n.tsx';
 import { OwnerScreen } from './owner.tsx';
 import type { AState, BState, OwnerState } from './types.ts';
 import { LangSwitch, Notice } from './ui.tsx';
+import { ART } from './art.ts';
 import { paypalReturnText } from './paypal-return.ts';
 import './styles.css';
 
@@ -73,20 +74,14 @@ function Landing() {
       </header>
       <main>
         <section className="card hero">
-          <h1>{t.heroTitle}</h1>
-          <div className="swap-art" aria-hidden="true">
-            <span className="slot">
-              14:00 <span className="who a">A</span>
-            </span>
-            <span className="arrow">⇄</span>
-            <span className="slot">
-              14:00 <span className="who b">B</span>
-            </span>
-            <span className="arrow">+</span>
-            <span className="coin">$</span>
+          <div className="hero-grid">
+            <div>
+              <h1>{t.heroTitle}</h1>
+              <p>{t.heroBody}</p>
+              <p className="small muted-text">{t.scope}</p>
+            </div>
+            <img className="hero-img" src={ART.hero} alt="" aria-hidden="true" width={1600} height={900} />
           </div>
-          <p>{t.heroBody}</p>
-          <p className="small muted-text">{t.scope}</p>
         </section>
         <section className="card">
           <h2>{t.createTitle}</h2>

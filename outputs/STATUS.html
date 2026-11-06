@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="628a9a1cb40e0cb80f133504886a63063797ab8e590d70686ee81b7da93d1355"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="4c35fd4acf6929890c09bbae208a5ade7cd1b7fce1f332f74d189dc75c288dd5"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -2576,6 +2576,36 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>目視（内蔵ブラウザ、<code>data/screens-ui</code>の模擬のワールド、日本語）：PC幅・暗い表示で、Aの支払い→条件→Bの依頼→店主の承認→Aの同意→Bの支払いまでを画面の操作で行い、進み具合が「承認」「お支払い」と進んで、最後に6段階すべて済みになった。スマホ幅（375）・明るい表示で、店主とAの画面に横スクロールがなく、表が読めることを確かめた。日本語の文言は、目に付いた範囲で翻訳調の箇所はなかった（例：「振替のご提案」「11月12日(木) 10:00〜11:00に移動しました」「返金済み」）。英語の画面の通しの目視と、実機のスマートフォンは未実施。</p>
+<h2 id="claude-code2026-11-07-1">画像の組み込み（Claude Code、2026-11-07）</h2>
+<p>Codexが<code>IMAGES.md</code>に沿って画像8点を生成した（<code>outputs/codex-prep/images/</code>、生成の記録は<code>IMAGES.md</code>に転記：OpenAIの内蔵の画像生成ツール、正確なモデル名と版は不明のため記載しない）。アプリで使う7点のSHA-256がCodexの記録と一致することを確かめ、<code>src/web/images/</code>へ写して組み込んだ（<code>cover.webp</code>は提出物用）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>場所</th>
+<th>画像</th>
+<th>条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>トップページ</td>
+<td>hero</td>
+<td>PCは説明の右、スマホは説明の下</td>
+</tr>
+<tr>
+<td>三画面の見出し</td>
+<td>role-owner／role-a／role-b</td>
+<td>PC 88px、スマホ 60px。立場の名前は文字で</td>
+</tr>
+<tr>
+<td>振替のカード</td>
+<td>swap／checking／done</td>
+<td>swapは承認待ち、checkingは結果の確認中・保留・返金待ちなど未確定の間、doneは案件の完了（COMPLETED）だけ</td>
+</tr>
+</tbody>
+</table></div>
+<p>確認：<code>npm run build</code>で7点が<code>/assets/</code>に出力される。内蔵ブラウザ（模擬のワールド、日本語）で、トップページ（PC・明るい表示）、Bの見出し、承認待ちのAのカードのswap、完了したBのカードのdone（スマホ幅375、横スクロールなし）を目視。checkingの表示は試験の状態の範囲で、ブラウザでは見ていない。</p>
+<p>Codexの日本語レビュー（<code>outputs/codex-prep/JAPANESE_UI_REVIEW.md</code>、<code>d9416ee</code>を対象）：全体に自然と評価。日本語の「停止中」の説明（IWAI-01）は、その後の<code>64eedd7</code>で直してある。JA-01（P3：AIが質問を返さないときプログラムが補う確認の質問が英語のまま）と、金融用語の言い換え（P3：「仮売上」→「支払い承認済み（請求は未確定）」、「それまで請求は発生しません」の言い換え、「ドル」→「米ドル」など）は、本人の確認の後に反映する。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -2901,6 +2931,12 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>一件が完了し、進み具合の表示が正しく進んだ。31ファイル・373件成功。詳細は「画面の見た目の改善と日本語の三画面の目視」</td>
 </tr>
 <tr>
+<td>11-07 Claude</td>
+<td>画像の組み込み</td>
+<td>ハッシュの照合、<code>npm run build</code>、内蔵ブラウザで目視（PC・スマホ幅）、<code>npm run check</code></td>
+<td>7点を組み込み、表示を確認。詳細は「画像の組み込み」</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
 <td>Playwrightの画面試験・実機での一件・初見の人の操作・SandboxでのPENDING・照会のタイムアウト（模擬では確認済み）・HOLD</td>
@@ -3003,7 +3039,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
 <li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（<code>impl-app-1-fix1</code>、Codexの再確認待ち）。</li>
 <li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。</li>
-<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。次は、実機での再確認、初見の人の操作、画像（Codexの生成待ち）の組み込み、提出前の確認。</li>
+<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ。次は、Codexの日本語レビューの反映（本人の確認後）、実機での再確認、初見の人の操作、提出前の確認。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
 <h2 id="section-32">今後の検証記録の書式</h2>
