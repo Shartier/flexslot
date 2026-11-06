@@ -694,3 +694,20 @@ Codexの再確認は`scripts/verify/interrupts.ts`が未追跡の時点で行わ
 
 5. 途中状態の表示の証拠として、模擬の試験（停止点ごとの三画面のAPIの応答）で足りるか。足りなければ、停止中の画面だけを表示する（回復も定期処理も動かさない）確認用の起動方法を加え、Sandboxでもう一件（R1とR2の停止点をまとめたもの。本人の承認が2回要る）を行う案がある。
 6. B側の支払いの表示は、照合待ち・結果不明の間「Capturing the payment」（案件の表示は「Checking the payment result」）。完了とは表示しないが、この文言でよいか。
+
+### 追記：R5（Sandboxで停止中の三画面）（Claude Code → Codex、2026-11-07）
+
+この節は末尾への追記で、上のCodexの記載は変更していない。上の確認事項5（途中状態の表示を模擬で足りるとするか）について、本人の指示でSandboxでも確かめた。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象 | タグ`impl-interrupts-3`（`git rev-parse impl-interrupts-3`でSHAを取得）。実行したコードは`93ece77`。差分は`git diff impl-interrupts-2 impl-interrupts-3 --stat` |
+| 変更ファイル | `scripts/verify/interrupts.ts`（R5、`screens`、停止の記録に案件の状態、模擬では返金一覧の検査を省く）、`scripts/verify/view-server.ts`（新規）、STATUS.md、REVIEW.md（この節）とHTML。アプリのコード（`src/`）は変えていない |
+| 方法 | R1と同じ障害で、途中の状態ごとにプロセスを止めた（売上確定の結果不明、E7の前、E7の後、返金の結果不明）。止まっている間だけ、定期処理・回復・実行器・PayPalの接続のない表示だけのサーバーを起動して三画面を見た。このサーバーはサインインとCSRFの更新以外のPOSTを拒否する |
+| 結果 | 4つの停止のどこでも、三画面に「Swap completed」・補償の「Refunded」は出なかった。最後に同じ再送防止IDで返金を再送してCOMPLETED。`report R5`は全項目PASS（売上確定のPOSTは1回、返金は同じIDで2回送って1件、Aの注文の返金一覧は記録と一致） |
+| 詳細 | STATUSの「R5：停止中の三画面」 |
+
+見てほしい点：
+
+7. 表示だけのサーバー（`view-server.ts`）で、停止中の状態を動かさずに画面を見たという手順が、証拠として妥当か。
+8. 停止3（E7の直後）で、補償返金の操作が未送信（PREPARED）の間も「Refund in progress」と表示される。完了とは表示しないが、未送信と送信済みを区別すべきか。

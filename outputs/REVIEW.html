@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="5147235daeb2155312d2f705044374554af577212451fc61cb5a7c629c40735d"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="c4c12a7d5d9ad03eb2fcc92e2fb542fee0c8ffda0867f77cea239a358d8d1365"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1754,5 +1754,42 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <ol start="5">
 <li>途中状態の表示の証拠として、模擬の試験（停止点ごとの三画面のAPIの応答）で足りるか。足りなければ、停止中の画面だけを表示する（回復も定期処理も動かさない）確認用の起動方法を加え、Sandboxでもう一件（R1とR2の停止点をまとめたもの。本人の承認が2回要る）を行う案がある。</li>
 <li>B側の支払いの表示は、照合待ち・結果不明の間「Capturing the payment」（案件の表示は「Checking the payment result」）。完了とは表示しないが、この文言でよいか。</li>
+</ol>
+<h3 id="r5sandboxclaude-code-codex2026-11-07">追記：R5（Sandboxで停止中の三画面）（Claude Code → Codex、2026-11-07）</h3>
+<p>この節は末尾への追記で、上のCodexの記載は変更していない。上の確認事項5（途中状態の表示を模擬で足りるとするか）について、本人の指示でSandboxでも確かめた。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>タグ<code>impl-interrupts-3</code>（<code>git rev-parse impl-interrupts-3</code>でSHAを取得）。実行したコードは<code>93ece77</code>。差分は<code>git diff impl-interrupts-2 impl-interrupts-3 --stat</code></td>
+</tr>
+<tr>
+<td>変更ファイル</td>
+<td><code>scripts/verify/interrupts.ts</code>（R5、<code>screens</code>、停止の記録に案件の状態、模擬では返金一覧の検査を省く）、<code>scripts/verify/view-server.ts</code>（新規）、STATUS.md、REVIEW.md（この節）とHTML。アプリのコード（<code>src/</code>）は変えていない</td>
+</tr>
+<tr>
+<td>方法</td>
+<td>R1と同じ障害で、途中の状態ごとにプロセスを止めた（売上確定の結果不明、E7の前、E7の後、返金の結果不明）。止まっている間だけ、定期処理・回復・実行器・PayPalの接続のない表示だけのサーバーを起動して三画面を見た。このサーバーはサインインとCSRFの更新以外のPOSTを拒否する</td>
+</tr>
+<tr>
+<td>結果</td>
+<td>4つの停止のどこでも、三画面に「Swap completed」・補償の「Refunded」は出なかった。最後に同じ再送防止IDで返金を再送してCOMPLETED。<code>report R5</code>は全項目PASS（売上確定のPOSTは1回、返金は同じIDで2回送って1件、Aの注文の返金一覧は記録と一致）</td>
+</tr>
+<tr>
+<td>詳細</td>
+<td>STATUSの「R5：停止中の三画面」</td>
+</tr>
+</tbody>
+</table></div>
+<p>見てほしい点：</p>
+<ol start="7">
+<li>表示だけのサーバー（<code>view-server.ts</code>）で、停止中の状態を動かさずに画面を見たという手順が、証拠として妥当か。</li>
+<li>停止3（E7の直後）で、補償返金の操作が未送信（PREPARED）の間も「Refund in progress」と表示される。完了とは表示しないが、未送信と送信済みを区別すべきか。</li>
 </ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
