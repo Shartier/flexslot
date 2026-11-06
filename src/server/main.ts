@@ -24,18 +24,24 @@ import { createApp } from './app.ts';
 import { nodeHandler } from './http.ts';
 import { Runtime } from './runtime.ts';
 import { WebhookInbox } from '../app/webhooks.ts';
+import { parsePublicOrigin, publicGuard, PUBLIC_MAX_WORLDS } from './public-mode.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const log = (line: Record<string, unknown>) => console.log(JSON.stringify({ t: new Date().toISOString(), ...line }));
 
+// Public mode (public-mode.ts): a temporary tunnel's origin; then mock only — .env is not read and no Sandbox or
+// Vertex is configured, whatever the environment holds.
+const publicOrigin = parsePublicOrigin(process.env.FLEXSLOT_PUBLIC_ORIGIN);
 const envFile = join(ROOT, '.env');
-if (existsSync(envFile)) process.loadEnvFile(envFile);
+if (!publicOrigin && existsSync(envFile)) process.loadEnvFile(envFile);
 const env = process.env;
 
 const port = Number(env.FLEXSLOT_PORT ?? 8787);
 const dataDir = resolve(ROOT, env.FLEXSLOT_DATA_DIR ?? 'data');
 mkdirSync(dataDir, { recursive: true });
-const origins = [`http://localhost:${port}`, `http://127.0.0.1:${port}`];
+const localOrigins = [`http://localhost:${port}`, `http://127.0.0.1:${port}`];
+// The first origin is used in invite links (and makes the session cookie Secure when it is https).
+const origins = publicOrigin ? [publicOrigin, ...localOrigins] : localOrigins;
 const clock = systemClock;
 const db = openDatabase(join(dataDir, 'flexslot.sqlite'));
 
@@ -61,7 +67,8 @@ const paypal: Partial<Record<PaymentMode, PayPalPort>> = {
 };
 let sandboxPayee: string | null = null;
 let webhookId: string | null = null;
-try {
+if (publicOrigin) log({ event: 'config', publicMode: 'mock only', publicOrigin, maxNewWorlds: PUBLIC_MAX_WORLDS, webhooks: 'closed' });
+else try {
   const cfg = loadPayPalConfig(env);
   paypal.SANDBOX = createSandboxPayPal(cfg, { clock, logger: paypalLogger });
   sandboxPayee = cfg.expectedMerchantId ?? null;
@@ -73,7 +80,7 @@ try {
 
 // ---- AI: Vertex (when configured) and the mock rules ----------------------------------------------------------
 let vertex: AiStructurer | null = null;
-try {
+if (!publicOrigin) try {
   const cfg = loadVertexConfig(env);
   vertex = vertexStructurer(createVertexModels(cfg), cfg.model);
 } catch (e) {
@@ -108,11 +115,12 @@ runtimeRef.current = runtime;
 
 await runtime.startup();
 runtime.start();
-const server = createServer(nodeHandler(app.handle, log));
+const server = createServer(nodeHandler(publicOrigin ? publicGuard(app.handle) : app.handle, log));
 server.listen(port, '127.0.0.1', () => {
   log({
     event: 'listening',
-    url: origins[0],
+    url: localOrigins[0],
+    ...(publicOrigin ? { publicOrigin } : {}),
     payment: { sandbox: !!executors.SANDBOX, sandboxPayeeSet: sandboxPayee !== null, mock: true },
     ai: { vertexModel: ai.vertexModel, mockModel: ai.mockModel },
   });

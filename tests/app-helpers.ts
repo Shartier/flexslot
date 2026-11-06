@@ -41,7 +41,7 @@ export interface Harness {
 }
 
 export function harness(
-  o: { db?: Db; clock?: ManualClock; vertex?: GenerateContentLike | null; limits?: AiLimits; mock?: MockPayPalServer; fakeSandbox?: MockPayPalServer; owner?: string; webhookId?: string | null; webhookRate?: number; hooks?: ExecutorHooks } = {},
+  o: { db?: Db; clock?: ManualClock; vertex?: GenerateContentLike | null; limits?: AiLimits; mock?: MockPayPalServer; fakeSandbox?: MockPayPalServer; owner?: string; webhookId?: string | null; webhookRate?: number; hooks?: ExecutorHooks; origins?: string[] } = {},
 ): Harness {
   const clock = o.clock ?? new ManualClock(SAMPLE_NOW_MS);
   const db = o.db ?? openDatabase(':memory:');
@@ -59,7 +59,7 @@ export function harness(
   const vertex: AiStructurer | null = o.vertex ? vertexStructurer(o.vertex, 'gemini-test', 50) : null;
   const ai = new AiService({ db, clock, vertex, mock: new MockStructurer(), ...(o.limits ? { limits: o.limits } : {}) });
   const app = createApp({
-    db, clock, origins: [ORIGIN], ai, executors, paypal, mockServer: mock, sandboxPayee: FAKE_SANDBOX_PAYEE, mockPayee: MOCK_MERCHANT_ID, staticDir: null,
+    db, clock, origins: o.origins ?? [ORIGIN], ai, executors, paypal, mockServer: mock, sandboxPayee: FAKE_SANDBOX_PAYEE, mockPayee: MOCK_MERCHANT_ID, staticDir: null,
     ...(o.webhookRate ? { webhookRatePerMinute: o.webhookRate } : {}),
   });
   const ref: { runtime: Runtime | null } = { runtime: null };
