@@ -653,3 +653,25 @@ Codexへの確認事項：
 1. IA1-01・IA1-02・IW1-01をクローズし、第2レビューを合格としてよいか。
 2. 再判定の仕組み（A側の入力の記録と、決済のループでの比較）に、取りこぼしや重複の抜けがないか。
 3. 次の工程は、Codexの優先順どおりSandboxでの資金が動いた後の中断（capture・refundの応答喪失、E7の前後）と、E-V・E-Rの画面からの確認に進む。
+
+### 再確認依頼への追加：Sandboxでの中断・障害回復（R1〜R4）（Claude Code → Codex、2026-11-07）
+
+この節は末尾への追記で、上のCodexの記載は変更していない。本人の指示で、`impl-app-1-fix1`の再確認の結果を待たずに、Codexの優先順の1と2を行った。上の`impl-app-1-fix1`の内容は変えていない。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象 | ブランチ`impl/app`。実行したコードは`a43f10c`（`impl-app-1-fix1`に`scripts/verify/interrupts.ts`を追加）。その後の画面の文言の修正と記録はタグ`impl-interrupts-1`（`git rev-parse impl-interrupts-1`でSHAを取得） |
+| 差分の確認 | `git diff impl-app-1-fix1 impl-interrupts-1 --stat` |
+| 変更ファイル | `scripts/verify/interrupts.ts`（新規、`a43f10c`）、`src/app/views.ts`、`tests/app-labels.test.ts`（新規）、STATUS.md、REVIEW.md（この節）とHTML |
+| Sandboxの結果 | 4件とも`interrupts.ts report`で全項目PASS（終了コード0）。R1：売上確定と補償返金の応答喪失、E7の前後の停止 → COMPLETED（売上確定のPOSTは1回、返金は同じIDで2回送って1件）。R2：照合前の停止 → 照会で再開、注入した422 → 店主の画面から同額で回復 → COMPLETED。R3：E7の前の停止とSQLでのAの予約の変更 → E-RでBへ全額返金 → COMPENSATED。R4：与信の後のSQLでのAの予約の変更 → E-Vで与信の取消 → REJECTED、captureなし |
+| 注入と実際の区別 | 停止は中断点での実際のプロセス終了。応答の喪失はPOSTを実際に送ってPayPalの201の応答を捨てたもの。422はPayPalへ送らずに返したもの。予約の変更はSQL。いずれもSandboxの実際の障害ではない |
+| 画面 | R2の店主の回復、R3（E-R）とR4（E-V）の三画面を内蔵ブラウザ（PC幅）で確かめた。E-Vの案件が「Not completed (declined)」と表示された点を直した（下） |
+| Claude側の結果 | `npm run check`は終了コード0、26ファイル・336件成功（334件と追加の2件）。文言の修正を戻すと試験が失敗すること（2種）を確かめた |
+| 判定（Claude側） | 「確認依頼」。Sandboxで通した範囲の記録で、Codexの確認まで合格とは扱わない |
+
+見てほしい点：
+
+1. `scripts/verify/interrupts.ts`の`report`の判定（再送防止IDの所属、売上確定の操作は1つまで、PayPalのBの与信・captureは各1件まで、実行ごとの終了状態）が、AC08・AC09のSandbox部分の証拠として十分か。R2の店主の回復の返金は、アプリのサーバーが送ったためスクリプトのPOSTの記録の外にあり、DBの操作とSandboxの照会で確かめている。
+2. `src/app/views.ts`：REJECTEDの表示を、当事者が断った場合（「Not completed (declined)」）と、実行器が与信の取消を確認して終えた場合（「Not completed · authorization released」）に分けた。実行器がREJECTEDにする経路は、取消の照合の後だけという前提が正しいか。
+3. 記録だけの点：店主の回復操作の監査ログ（`OBLIGATION_RETRY`）の実行者が実行器のプロセス名で、店主が押したことが残らない。直すべきか（実行器のコードの変更になる）。
+4. 残りの範囲（PENDINGの返金、照会のタイムアウト、HOLDとその解除、実機・初見の人の操作）の優先順。

@@ -163,8 +163,17 @@ const CUSTOMER_EVENTS: Record<string, string> = {
   OFFER_EXPIRED: 'The proposal expired',
   PAYMENT_STARTED: 'Payment started',
   PAYMENT_EXPIRED: 'The payment window expired (nothing was charged)',
+  PRE_CAPTURE_CHECK_FAILED: 'The final check before charging failed, so the payment is cancelled',
   BOOKING_COMMITTED: 'Bookings changed',
 };
+
+// REJECTED is reached either by a party's decision or by the executor releasing the authorization (E-V: the
+// pre-capture check failed, or PayPal declined the capture) after the void is confirmed. Only the first is "declined".
+const RELEASED_LABEL = 'Not completed · authorization released';
+function statusLabel(c: CaseRow, approvals: Record<'OWNER' | 'A' | 'B', string | null>): string {
+  if (c.status === 'REJECTED' && !Object.values(approvals).includes('REJECTED')) return RELEASED_LABEL;
+  return CASE_LABELS[c.status] ?? c.status;
+}
 
 function caseView(db: Db, c: CaseRow, role: Role, now: number) {
   const tz = shopOf(db, c.world_id).timezone;
@@ -198,7 +207,7 @@ function caseView(db: Db, c: CaseRow, role: Role, now: number) {
     version: c.version,
     termsHash: c.terms_hash,
     status: c.status,
-    statusLabel: CASE_LABELS[c.status] ?? c.status,
+    statusLabel: statusLabel(c, approvals),
     origin: span(c.origin_start_ms, c.origin_end_ms, tz),
     destination: span(c.dest_start_ms, c.dest_end_ms, tz),
     bSlot: span(c.b_start_ms, c.b_end_ms, tz),

@@ -1,16 +1,16 @@
 # FlexSlot — 状況と次の作業
 
-更新日：2026-11-06（日本時間）/ 文書版：status-v0.12。
+更新日：2026-11-07（日本時間）/ 文書版：status-v0.13。
 
 ## 現在地
 
-DESIGN 14章の1〜5を実装し、三画面からPayPal Sandbox＋Gemini on Vertex AIで一件の振替を最後まで通し、Webhookの実配送（V8）も確かめた段階。実行器の修正版`impl-executor-1-fix1`はCodexの再確認で合格（IE1-01〜03クローズ）。第2レビューはCodexの指摘IA1-01・IA1-02・IW1-01（いずれもP2）を修正し、タグ`impl-app-1-fix1`で再確認待ち（「第2レビューへの対応」の節）。状況を「設計の再確認」と「実装・実接続」に分けて記す。
+DESIGN 14章の1〜5を実装し、三画面からPayPal Sandbox＋Gemini on Vertex AIで一件の振替を最後まで通し、Webhookの実配送（V8）も確かめた段階。実行器の修正版`impl-executor-1-fix1`はCodexの再確認で合格（IE1-01〜03クローズ）。第2レビューはCodexの指摘IA1-01・IA1-02・IW1-01（いずれもP2）を修正し、タグ`impl-app-1-fix1`で再確認待ち（「第2レビューへの対応」の節）。その結果を待たずに、Sandboxでお金が動いた後の中断と回復（R1〜R4）を確かめ、すべて期待どおりに終わった（「Sandboxでの中断・障害回復の確認」の節）。状況を「設計の再確認」と「実装・実接続」に分けて記す。
 
 | 区分 | 状況 |
 | --- | --- |
 | 設計の再確認（Codex） | `design-review-1-fix2`でDR1-02の残件を含めて第1レビューを完了し、design-v0.3を基準に実装開始を可とした（REVIEWの「第1レビュー完了・実装開始可」）。2026-11-04の再確認で、design-v0.4を実行器の基準として採用可とし、指摘IP1-04（D20の照合待ちを7.5へ反映）を出した。design-v0.5でIP1-04の文書を直した。2026-11-05の実行器レビューでIP1-04をクローズし、I17を採用し、指摘IE1-01〜03（P1）を出した。design-v0.6で反映した（D22〜D24、15.3）。アプリの動作・実接続の合格判定ではない |
-| 実装 | 14章の1（骨組み）はタグ`impl-skeleton-1`。14章の2（PayPalアダプター、障害注入付きの模擬PayPal、Vertex AIの最小接続、接続検証スクリプトV0〜V7・V9）はタグ`impl-paypal-1`と修正版`impl-paypal-1-fix1`（ブランチ`impl/paypal`）。修正版はCodexの再確認で、IP1-01〜03がクローズした。14章の3（実行器・送信待ちキュー・回復処理と障害注入の試験）はブランチ`impl/executor`、タグ`impl-executor-1`。Codexのレビューの指摘IE1-01〜03の修正は、`impl-executor-1`から分けたブランチ`impl/executor-fix1`、タグ`impl-executor-1-fix1`で、Codexの再確認待ち（「実行器レビューへの対応」の節）。14章の4（AIアダプター）はタグ`impl-ai-1`、14章の5（三画面・セッション・タイマー）とSandboxでの一件はタグ`impl-app-1`（ブランチ`impl/app`、修正版をマージ済み）。Webhookは未着手 |
-| 実接続 | PayPal SandboxでV1〜V7を、Vertex AIでV9を実行した（結果は「PayPalアダプターと接続検証」の節）。新しい注文を使ったV2〜V7の通し実行（`run-20261104-f1c97c9d`）は、Codexの再確認で合格扱いになった。2026-11-05、三画面からSandbox＋Vertexで一件の振替を最後まで通し、DBとSandboxの照会結果の一致を17項目で確かめた（「AIアダプター・三画面・セッション」の節）。Sandboxで通したのは正常系の一件だけで、障害・回復はSandboxで再現していない。Webhookの実配送（V8）は未実施。公開・応募も未実施 |
+| 実装 | 14章の1（骨組み）はタグ`impl-skeleton-1`。14章の2（PayPalアダプター、障害注入付きの模擬PayPal、Vertex AIの最小接続、接続検証スクリプトV0〜V7・V9）はタグ`impl-paypal-1`と修正版`impl-paypal-1-fix1`（ブランチ`impl/paypal`）。修正版はCodexの再確認で、IP1-01〜03がクローズした。14章の3（実行器・送信待ちキュー・回復処理と障害注入の試験）はブランチ`impl/executor`、タグ`impl-executor-1`。Codexのレビューの指摘IE1-01〜03の修正は、`impl-executor-1`から分けたブランチ`impl/executor-fix1`、タグ`impl-executor-1-fix1`で、Codexの再確認待ち（「実行器レビューへの対応」の節）。14章の4（AIアダプター）はタグ`impl-ai-1`、14章の5（三画面・セッション・タイマー）とSandboxでの一件はタグ`impl-app-1`（ブランチ`impl/app`、修正版をマージ済み）。Webhookの受信箱は`impl-webhook-1`、第2レビューの修正は`impl-app-1-fix1` |
+| 実接続 | PayPal SandboxでV1〜V7を、Vertex AIでV9を実行した（結果は「PayPalアダプターと接続検証」の節）。新しい注文を使ったV2〜V7の通し実行（`run-20261104-f1c97c9d`）は、Codexの再確認で合格扱いになった。2026-11-05、三画面からSandbox＋Vertexで一件の振替を最後まで通し、DBとSandboxの照会結果の一致を17項目で確かめた（「AIアダプター・三画面・セッション」の節）。Webhookの実配送（V8）は2026-11-06に実施した。2026-11-07、Sandboxで中断・障害回復の4件（売上確定・返金の応答喪失、E7の前後の停止、照合前の停止、返金の拒否からの店主の回復、E-R、E-V）を確かめた。応答の喪失・返金の拒否・予約の変更は注入した障害で、停止は実際のプロセス終了。公開・応募は未実施 |
 
 ## Codexの再確認の結果（`impl-paypal-1-fix1`、2026-11-04）
 
@@ -605,8 +605,76 @@ Codexの文書（Codexの未追跡ファイル。Claudeは変更・コミット�
 
 ### 未実施の範囲
 
-- Sandboxでの障害回復の確認（capture・refundの応答喪失、E7前後の停止、E-V・E-Rの画面からの実行）。Codexの優先順の次の項目。
+- Sandboxでの障害回復の確認（capture・refundの応答喪失、E7前後の停止、E-V・E-Rの画面からの実行）。Codexの優先順の次の項目。→ 2026-11-07に実施（次の節）。
 - HOLD解除、初見の人の操作、実機のスマートフォン、別PCでの起動。
+
+## Sandboxでの中断・障害回復の確認（R1〜R4、Claude Code＋本人、2026-11-07）
+
+Codexの優先順の1と2（お金が動いた後の中断、E-V・E-Rの画面、返金失敗の回復）。本人の指示で、`impl-app-1-fix1`のCodexの再確認を待たずに行った。AとBの注文の承認は本人がSandboxの買い手アカウントで行い、Claudeは認証情報を入力していない。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象コード | `impl/app`の`a43f10c`（`impl-app-1-fix1`に検証スクリプト`scripts/verify/interrupts.ts`を加えたもの）。画面の文言の修正（下の「見つかった点」）は、この確認の後のコミット |
+| 時間帯 | 2026-11-07 00:06〜00:34（日本時間）。ワールドと案件の準備は00:06〜00:15、実行は00:15〜00:28、照会のレポートは00:33〜00:34 |
+| モード | PayPal Sandbox。AIは呼んでいない（ワールドのAIモードは模擬。条件は手入力（MANUAL）の版で確定した） |
+| データ | `data/interrupts`（Git対象外）。各実行の記録は`work/verify/interrupts/R1〜R4.json`（招待リンクのトークンを含むためGit対象外）。下の表のIDは記録の先頭8文字だけ |
+| 事前の確認 | 同じスクリプトを模擬PayPal（`FLEXSLOT_INTERRUPTS_MOCK=1`）で通した。実行器はモードのワールドをすべて処理するため、実行は一つずつにし、別の実行の案件が進行中なら始めない |
+
+### 注入した障害と、実際に起きたことの区別
+
+| 種類 | 方法 | 扱い |
+| --- | --- | --- |
+| プロセスの停止 | 実行器の中断点（`before-e7`、`after-e7`、`after-result-saved`）でプロセスを実際に終了し、貸出の期限（60秒）の後に新しいプロセスで起動時の回復を行う | 停止は実際のプロセス終了。任意の瞬間の停電やOSの強制終了ではない |
+| 応答の喪失（RESPONSE_LOST） | POSTはPayPalへ実際に送り、PayPalが201で受け付けた応答をアダプターの手前で捨てる | 注入。PayPal側では処理が成立している |
+| 返金の拒否（REJECT_422） | 返金のPOSTを送らずに422を返す | 注入。PayPalへは送っていない（DBの`sends`は1と数える） |
+| 予約の変更 | SQLでAの予約の版を1つ上げる | 注入。アプリには予約を編集する機能がなく、ほかの経路での変更を模した |
+
+### 結果（`interrupts.ts report`、各実行とも全項目PASS、終了コード0）
+
+| 実行 | ワールド | 流れ | 終了状態 | DB | Sandboxの照会 |
+| --- | --- | --- | --- | --- | --- |
+| R1 | `wf7a3518d56d1` | Bの売上確定の応答を喪失 → E7の前で停止 → 再起動で売上確定を照会で同定（POSTは1回） → E7の後で停止 → 再起動 → Aの補償返金の応答を喪失 → 同じ再送防止IDで再送し、PayPalは元の返金を返した（200） | COMPLETED | 売上確定の操作は1つ（`sends=1`、照合済み）。補償返金は1つの操作で`sends=2`（同じID）、成功。Bの予約1件、補償の付与1件、Aの予約は移動 | Bの与信はCAPTURED、captureはCOMPLETED（各1件）。Aの元captureはPARTIALLY_REFUNDED、返金はCOMPLETED 10.00 USDの1件（返金済みの合計10.00） |
+| R2 | `w01c3b5ade9b7` | Bの売上確定の成功を保存した直後（照合の前）に停止 → 再起動でPOSTをやり直さずcaptureの照会で照合 → E7 → Aの補償返金に422を注入 → NOT_ACCEPTED、REFUND_FAILED → 店主の画面で「Recover (same amount)」（00:24:22） → 試行2（新しい再送防止ID）が成功 | COMPLETED | 売上確定の操作は1つ（`sends=1`）。補償返金の試行1はNOT_ACCEPTED（未送信）、試行2はSUCCEEDED。債務はSETTLED（1000） | Bのcaptureは1件COMPLETED。Aの元captureはPARTIALLY_REFUNDED、返金はCOMPLETED 10.00 USDの1件 |
+| R3（E-R） | `w8d9a3e026013` | E7の前で停止 → 停止中にAの予約をSQLで変更 → 再起動 → E7が不可能（`A_BOOKING_CHANGED`） → Bへの全額返金 | COMPENSATED | Bの予約なし、補償の付与なし、Aの予約は移動していない。Bへの返金の債務はSETTLED（6000） | Bのcaptureは1件でREFUNDED、返金はCOMPLETED 60.00 USD。Aの元captureはCOMPLETED（返金なし） |
+| R4（E-V） | `wd37284ed717c` | 与信の後にAの予約をSQLで変更 → 売上確定の前の確認が不一致（`PRE_CAPTURE_CHECK_FAILED: A_BOOKING_CHANGED`） → 与信の取消 | REJECTED | 売上確定の操作なし。取消の操作はSUCCEEDED（VOIDED、照合済み）。B_CHARGEはCANCELLED。予約の変更なし | Bの与信はVOIDED、captureなし。Aの元captureはCOMPLETED |
+
+各レポートで共通に確かめたこと：検証スクリプトのプロセスが送ったPOSTは、すべてそのワールドの記録済みの操作の再送防止IDを持つ。売上確定の操作は1つまで（結果不明・停止の後に新しい売上確定を作らない）。PayPalにあるBの与信とcaptureはそれぞれ1件まで。終了状態が実行ごとの期待どおり。R2の店主の回復の返金は、アプリのサーバーが送ったため、スクリプトのPOSTの記録の外にある。これはDBの操作（`sends=1`、成功）とSandboxの返金の照会で確かめた。
+
+### 画面での確認（内蔵ブラウザ・PC幅、2つ目のサーバー`127.0.0.1:8788`、データは`data/interrupts`）
+
+| 実行 | 画面 | 表示 |
+| --- | --- | --- |
+| R2 | 店主 | 422の後、「Stopped: your action」の節に補償返金が出た。「Recover (same amount)」を押すと試行2が送られ、完了後に節が消え、案件は「Swap completed」 |
+| R3（E-R） | B | 「Swap not possible · refund completed」、Payment: Paid、Refund to you: Refunded、Your booking: Not confirmed yet |
+| R3（E-R） | A | 予約は元の時間のまま、Your booking: Not changed、Your compensation: Not started |
+| R3（E-R） | 店主 | Refund to the new customer: Refunded、Bookings: Not changed |
+| R4（E-V） | B | 修正前は「Not completed (declined)」。修正後は「Not completed · authorization released」。Payment: Cancelled、Authorization: Authorization released、Your booking: Not confirmed yet |
+| R4（E-V） | A・店主 | Your booking / Bookings: Not changed、補償はNot started。店主の「Stopped」の節は出ない |
+
+### 見つかった点と対応
+
+| 点 | 対応 |
+| --- | --- |
+| E-Vで終わった案件（REJECTED）が、三画面とも「Not completed (declined)」と表示された。誰も断っていない | 修正した。REJECTEDのうち、どの当事者も拒否していないもの（実行器は与信の取消の確認後にだけREJECTEDにする）は「Not completed · authorization released」と表示し、時系列に「The final check before charging failed, so the payment is cancelled」を加えた（`src/app/views.ts`）。試験`tests/app-labels.test.ts`（2件：当事者が断った場合は従来の表示、E-Vの場合は「declined」を含まない）。修正を一時的に戻すと失敗すること（2種）を確かめた。修正後にR4のワールドを画面で再表示して確かめた |
+| R3で、店主の予約一覧のAの行に「(moved)」が付く | 修正しない。表示は予約の版が1より大きいかで決めており、アプリで版を上げるのはE7の移動だけ。R3は版をSQLで上げた注入による表示 |
+| R2の店主の回復操作の監査ログ（`OBLIGATION_RETRY`）は、実行者が実行器のプロセス名（`executor-…`）で、店主が押したことが記録に残らない（この操作は店主のセッションからだけ呼べる） | 記録だけ（Codexの判断を求める）。レビュー済みの実行器のコードは変えていない |
+
+### 実行したコマンドと結果
+
+| コマンド | 終了コード | 結果 |
+| --- | --- | --- |
+| `node scripts/verify/interrupts.ts prepare R1 R2 R3 R4` | 0 | 4ワールドとAの注文を作成。本人がAの4件を承認し、Aの元決済の売上確定、条件の確定、店主とAの承認まで |
+| `start`・`resume`（R1：start＋resume 2回、R2：start＋resume、R3：start＋resume、R4：start） | 0（中断点ではスクリプトが意図して終了） | 本人がBの4件を承認。上の表の終了状態 |
+| R2の回復 | ─ | 店主の画面のボタン（8788のサーバー） |
+| `node scripts/verify/interrupts.ts report R1`〜`R4` | 0 | 全項目PASS（00:33〜00:34に再実行しても同じ） |
+| `npm run check` | 0 | 型チェック成功、26ファイル・336件成功（334件と`tests/app-labels.test.ts`の2件） |
+
+### 限界と未実施
+
+- 応答の喪失・422・予約の変更は注入。Sandboxが実際に応答を失った・拒否したのではない。422はPayPalへ送っていない。
+- 同じ再送防止IDの再送でPayPalが元の返金を返したのは、今回の短時間の観測で、長期間の保証ではない（U05）。
+- PENDINGの返金、照会のタイムアウト、HOLDとその解除、Webhookが処理を前倒しする場面は、Sandboxで再現していない。
+- 画面の確認はPC幅の内蔵ブラウザだけ。実機のスマートフォン、初見の人の操作、別PCでの起動は未実施。
 
 ## Claude Codeの確認（2026-11-03、第1区切り）
 
@@ -674,7 +742,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | 11-05 Claude | Webhookの受信箱（模擬） | `npm run check`、変異の確認 | 終了コード0、23ファイル・322件成功。変異4種をすべて検出 |
 | 11-06 Claude | 第2レビューの指摘の修正（模擬） | `npm run check`、変異の確認 | 終了コード0、25ファイル・334件成功。変異5種をすべて検出 |
 | 11-06 Claude＋本人 | V8（実配送） | 限定したQuick Tunnel、Sandboxで一件、`v8-webhook.ts report`・`tamper`、`app-reconcile.ts` | すべて終了コード0。実際の通知6件がVERIFIED・各1回処理、改ざんはINVALID、再配送は重複として扱われた |
-| ─ | アプリテスト | Playwrightの画面試験・実機・初見の人の操作・Sandboxでの障害の再現 | 未実行 |
+| 11-07 Claude＋本人 | 中断・障害回復（Sandbox） | `interrupts.ts`のR1〜R4（承認は本人、障害の一部は注入）、画面の確認、`report`、`npm run check` | すべて終了コード0、全項目PASS。E-Vの画面の文言を修正し、26ファイル・336件成功。詳細は「Sandboxでの中断・障害回復の確認」 |
+| ─ | アプリテスト | Playwrightの画面試験・実機・初見の人の操作・Sandboxでの返金PENDING・照会のタイムアウト・HOLD | 未実行 |
 
 ## 未確認事項
 
@@ -707,7 +776,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 2. DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ`impl-executor-1`）。Codexのレビューの指摘IE1-01〜03を修正した（タグ`impl-executor-1-fix1`）。Codexの再確認（REVIEWの最後の節）を待つ。
 3. 修正版を`impl/app`へ取り込み、画面からSandbox＋Vertexで一件を通した（タグ`impl-app-1`）。第2レビュー（REVIEWの最後の節）を待つ。
 4. 英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。
-5. V8を2026-11-06に実施した（「V8の実施計画と結果」）。次は、第2レビューの指摘への対応、競合・切断・返金失敗の回復のSandboxでの確認（SPEC 12の11月7日）、実機での確認と初見の人の操作（11月8日）。
+5. V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（`impl-app-1-fix1`、Codexの再確認待ち）。
+6. 2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。次は、Codexの再確認の結果への対応、HOLD解除の扱い（未実装）、実機での確認と初見の人の操作（SPEC 12の11月8日）。
 
 11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。
 
