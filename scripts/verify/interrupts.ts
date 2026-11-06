@@ -13,6 +13,9 @@
 //   node scripts/verify/interrupts.ts resume R1              # next phase (new process, after the lease ran out)
 //   node scripts/verify/interrupts.ts report R1              # DB and Sandbox queries for the run
 //   node scripts/verify/interrupts.ts owner-recover R2       # the owner's "Recover" (R2; the screen does the same)
+//   node scripts/verify/interrupts.ts screens R5             # what the three screens show now (same view functions)
+// R5 stops at every state in between (capture unknown, before E7, after E7, refund unknown) so that the screens can
+// be looked at while the run is stopped, with scripts/verify/view-server.ts (no recovery, no queue, no PayPal).
 // Runs must not overlap: finish one run (all phases) before starting the next.
 // FLEXSLOT_INTERRUPTS_MOCK=1 runs the same against the in-process mock (no network, approvals by the mock).
 
@@ -24,6 +27,7 @@ import { openDatabase, type Db } from '../../src/db/database.ts';
 import { MockStructurer } from '../../src/ai/mock.ts';
 import { AiService } from '../../src/ai/service.ts';
 import { approveCase, proposeInTx } from '../../src/app/cases.ts';
+import { customerView, ownerView } from '../../src/app/views.ts';
 import { confirmDraft, createDraft } from '../../src/app/intake.ts';
 import { addDays, createWorld, idsFor } from '../../src/app/world.ts';
 import type { ExecutorHooks } from '../../src/executor/engine.ts';
@@ -45,7 +49,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const rid = (id: string | null | undefined) => (id ? createHash('sha256').update(id).digest('hex').slice(0, 8) : '-');
 
 type Fault = 'RESPONSE_LOST' | 'REJECT_422';
-type RunId = 'R1' | 'R2' | 'R3' | 'R4';
+type RunId = 'R1' | 'R2' | 'R3' | 'R4' | 'R5';
 
 interface RunState {
   run: RunId;
@@ -62,6 +66,7 @@ const SCENARIO: Record<RunId, string> = {
   R2: 'stop right after the capture success is saved (before reconciliation) -> A refund refused (422, injected) -> owner recovery',
   R3: 'stop before E7 -> A booking changed while stopped (SQL) -> E7 impossible -> B full refund (E-R)',
   R4: 'authorized -> A booking changed (SQL) -> pre-capture check fails -> void (E-V)',
+  R5: 'stops for the screens: B capture answer lost -> stop -> stop before E7 -> stop after E7 -> A refund answer lost -> stop -> completes',
 };
 
 // ---- state, db, PayPal ---------------------------------------------------------------------------------------------
@@ -148,12 +153,13 @@ function paypalFor(s: RunState | null, faults: Map<string, Fault[]>): { port: Pa
   return { port, payee };
 }
 
-function crashHooks(s: RunState, point: string, match: (i: { opKind?: string; reconcile?: string | null }) => boolean = () => true): ExecutorHooks {
+function crashHooks(s: RunState, point: string, match: (i: { opKind?: string; status?: string; reconcile?: string | null }) => boolean = () => true): ExecutorHooks {
   return {
     at(p, info) {
       if (p !== point || !match(info)) return;
       s.crashedAt = Date.now();
-      note(s, 'PROCESS_STOPPED', { detail: `at ${p}${info.opKind ? ` (${info.opKind})` : ''}` });
+      const c = s.caseId ? getCase(openDb(), s.caseId) : null;
+      note(s, 'PROCESS_STOPPED', { detail: `at ${p}${info.opKind ? ` (${info.opKind}${info.status ? ` ${info.status}` : ''})` : ''}${c ? `, case ${c.status}` : ''}` });
       console.log(`  ! process stops at ${p} (real exit; the next phase is a new process)`);
       process.exit(0);
     },
@@ -283,11 +289,12 @@ async function start(r: RunId): Promise<void> {
   assertAlone(db, s);
   s.phase = 1;
   const faults = new Map<string, Fault[]>();
-  if (r === 'R1') faults.set('AUTH_CAPTURE', ['RESPONSE_LOST']);
+  if (r === 'R1' || r === 'R5') faults.set('AUTH_CAPTURE', ['RESPONSE_LOST']);
   const { port } = paypalFor(s, faults);
   const hooks =
     r === 'R1' || r === 'R3' ? crashHooks(s, 'before-e7')
     : r === 'R2' ? crashHooks(s, 'after-result-saved', (i) => i.opKind === 'AUTH_CAPTURE' && i.reconcile === 'AWAITING')
+    : r === 'R5' ? crashHooks(s, 'after-result-saved', (i) => i.opKind === 'AUTH_CAPTURE' && i.status === 'UNKNOWN')
     : undefined;
   const ex = executor(db, port, s, hooks);
   const c = getCase(db, s.caseId)!;
@@ -325,6 +332,12 @@ async function resume(r: RunId): Promise<void> {
   if (r === 'R1' && s.phase === 3) faults.set('CAPTURE_REFUND', ['RESPONSE_LOST']);
   if (r === 'R2' && s.phase === 2) faults.set('CAPTURE_REFUND', ['REJECT_422']);
   if (r === 'R3' && s.phase === 2) bumpABooking(db, s);
+  if (r === 'R5' && s.phase === 2) hooks = crashHooks(s, 'before-e7');
+  if (r === 'R5' && s.phase === 3) hooks = crashHooks(s, 'after-e7');
+  if (r === 'R5' && s.phase === 4) {
+    faults.set('CAPTURE_REFUND', ['RESPONSE_LOST']);
+    hooks = crashHooks(s, 'after-result-saved', (i) => i.opKind === 'CAPTURE_REFUND' && i.status === 'UNKNOWN');
+  }
   const { port } = paypalFor(s, faults);
   const ex = executor(db, port, s, hooks);
   note(s, 'RESTARTED', { detail: 'new process, startup recovery' });
@@ -352,6 +365,33 @@ async function ownerRecover(r: RunId): Promise<void> {
   const end = await drive(ex, s.caseId, db, (st) => ['COMPLETED', 'REFUND_FAILED'].includes(st));
   note(s, 'PHASE_END', { detail: end });
   console.log(`${r} owner recovery ended: ${end}`);
+}
+
+/** What the three screens show now: the same view functions the screens' API uses (read only). */
+function screens(r: RunId): void {
+  const s = loadState(r);
+  if (!s.caseId) throw new NotReady('no case');
+  const db = openDb();
+  const ids = idsFor(s.worldId);
+  const ai = { vertexModel: null, mockModel: 'mock-rules-v1' };
+  const now = clock.now();
+  type CaseOut = { status: string; statusLabel: string; steps: Record<string, { text: string } | string | null> };
+  const line = (who: string, c: CaseOut | undefined, extra = '') => {
+    if (!c) return `${who}: no case`;
+    const st = (k: string) => (typeof c.steps[k] === 'string' ? c.steps[k] : (c.steps[k] as { text: string } | null)?.text ?? '-');
+    return `${who}: "${c.statusLabel}" (${c.status}) | B payment: ${st('bPayment')} | compensation: ${st('aRefund')} | bookings: ${st('bookings')}${extra}`;
+  };
+  const b = customerView(db, s.worldId, 'B', ids.customerBId, now, ai) as unknown as { cases: CaseOut[] };
+  const a = customerView(db, s.worldId, 'A', ids.customerAId, now, ai) as unknown as { cases: CaseOut[]; booking: { time: string } };
+  const o = ownerView(db, s.worldId, now, ai) as unknown as { cases: CaseOut[]; needsAttentionObligations: string[]; stopped: unknown[]; checking: unknown[] };
+  const lines = [
+    line('B', b.cases[0]),
+    line('A', a.cases[0], ` | A's booking: ${a.booking.time}`),
+    line('owner', o.cases[0], ` | needs attention: ${o.needsAttentionObligations.join(',') || 'none'} | stopped: ${o.stopped.length} | checking: ${o.checking.length}`),
+  ];
+  for (const l of lines) console.log(l);
+  note(s, 'SCREENS', { detail: lines.join(' || ') });
+  db.close();
 }
 
 async function report(r: RunId): Promise<void> {
@@ -431,7 +471,9 @@ async function report(r: RunId): Promise<void> {
       for (const rf of q.resource.purchase_units?.[0]?.payments?.refunds ?? []) listed.push({ who, id: rf.id, text: `${who}:${rf.status} ${rf.amount?.value} ${rf.amount?.currency_code} ${anon('res', rf.id)}` });
     }
     rep.note('paypal_refunds_listed_on_orders', listed.map((x) => x.text).join(' ') || 'none');
-    rep.check(
+    // The in-process mock does not list refunds on orders (the Sandbox does), so this check is for the Sandbox only.
+    if (MOCK) rep.note('refund_list_check', 'skipped: the mock does not list refunds on orders');
+    else rep.check(
       'the refunds PayPal lists on the A and B orders are exactly the recorded successful refund operations (none extra, none twice)',
       listed.length === recordedRefunds.size && new Set(listed.map((x) => x.id)).size === listed.length && listed.every((x) => recordedRefunds.has(x.id)),
     );
@@ -440,6 +482,7 @@ async function report(r: RunId): Promise<void> {
       R2: () => c.status === 'COMPLETED' && caps.length === 1 && grants === 1 && aCap.kind === 'FOUND' && aCap.resource.status === 'PARTIALLY_REFUNDED' && refundOps.length === 1,
       R3: () => c.status === 'COMPENSATED' && caps.length === 1 && caps[0]!.status === 'REFUNDED' && grants === 0 && bBooking.n === 0 && aCap.kind === 'FOUND' && aCap.resource.status === 'COMPLETED',
       R4: () => c.status === 'REJECTED' && caps.length === 0 && auths.length === 1 && auths[0]!.status === 'VOIDED' && grants === 0 && bBooking.n === 0,
+      R5: () => c.status === 'COMPLETED' && caps.length === 1 && caps[0]!.status === 'COMPLETED' && grants === 1 && aCap.kind === 'FOUND' && aCap.resource.status === 'PARTIALLY_REFUNDED' && refundOps.length === 1,
     };
     rep.check(`end state as expected for ${r} (${SCENARIO[r]})`, expect[r]());
     db.close();
@@ -447,14 +490,15 @@ async function report(r: RunId): Promise<void> {
 }
 
 const [cmd, ...args] = process.argv.slice(2);
-const runs = args.filter((a): a is RunId => ['R1', 'R2', 'R3', 'R4'].includes(a));
+const runs = args.filter((a): a is RunId => ['R1', 'R2', 'R3', 'R4', 'R5'].includes(a));
 try {
   if (cmd === 'prepare' && runs.length) await prepare(runs);
   else if (cmd === 'start' && runs.length === 1) await start(runs[0]!);
   else if (cmd === 'resume' && runs.length === 1) await resume(runs[0]!);
   else if (cmd === 'report' && runs.length === 1) await report(runs[0]!);
   else if (cmd === 'owner-recover' && runs.length === 1) await ownerRecover(runs[0]!);
-  else throw new NotReady('usage: node scripts/verify/interrupts.ts prepare|start|resume|report R1..R4');
+  else if (cmd === 'screens' && runs.length === 1) screens(runs[0]!);
+  else throw new NotReady('usage: node scripts/verify/interrupts.ts prepare|start|resume|report|screens R1..R5');
   process.exit(process.exitCode ?? 0);
 } catch (e) {
   console.log(`error: ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
