@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="5a28a2abcd2e3aa58b805bd73b285859b79278f9760eb82aac82af5f9a2906a5"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="27858b7b053a46f4305006bdcdcf650d61ede2eb299be7d959cd9b25bb6f62ef"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -2503,6 +2503,46 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>実行したコマンドと結果：<code>npm run check</code>（30ファイル・369件成功、終了コード0）、<code>npm run build</code>（成功）、<code>node scripts/verify/interrupts.ts report R1</code>〜<code>R5</code>（Sandbox、GETだけ、すべて終了コード0・全項目PASS）、<code>FLEXSLOT_INTERRUPTS_MOCK=1 node scripts/verify/interrupts.ts report R5</code>（終了コード0・全項目PASS）、変異の確認（IR2-02の判定2種、IR2-01の旧文1種、すべて検出）、<code>render-docs.ps1 -Check</code>（9組）。新しいSandboxの支払い・返金はしていない。</p>
+<h2 id="pendingclaude-code2026-11-07">保留（PENDING）と照会のタイムアウト：三画面での確認（模擬・障害注入、Claude Code、2026-11-07）</h2>
+<p>Codexの優先順の次の項目。PayPalにPENDINGを返させることはSandboxではできないため、模擬PayPalの障害注入で行い、そう明示する（新しいSandboxの決済はしていない）。確かめたこと：三画面（英語・日本語）が完了と表示しない、FlexSlotは照会を続けるだけで新しい売上確定・返金を作らない、PayPalが確定させると一度だけ完了する。試験は<code>tests/app-pending.test.ts</code>（4件）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>場面（注入）</th>
+<th>途中の表示</th>
+<th>照会と送信</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aの補償返金がPENDING → 返金の照会が2回タイムアウト → PayPalがCOMPLETEDに</td>
+<td>案件「Booking changed · compensation refund pending」、補償「PayPal reports it as pending; checking again／PayPalで保留中・再確認します」。店主の停止・要対応なし</td>
+<td>返金の照会は続く。返金のPOSTは1回のまま</td>
+<td>完了。返金のPOST 1回、PayPalの返金1件、補償の付与1件</td>
+</tr>
+<tr>
+<td>Aの補償返金がPENDING → PayPalがFAILEDに</td>
+<td>「compensation refund needs attention」、補償「Needs attention by the shop／お店の対応が必要」。店主の要対応にAの補償返金、「Recover」が出る</td>
+<td>自動では送り直さない（返金のPOSTは1回のまま）</td>
+<td>店主の「Recover」で新しい試行の返金が1回送られ、完了。操作はFAILEDとSUCCEEDEDの2件</td>
+</tr>
+<tr>
+<td>Bの売上確定がPENDING → captureの照会が2回タイムアウト → PayPalがCOMPLETEDに</td>
+<td>「Confirming payment」、支払い「PayPal reports it as pending; checking again」。予約は変更なし</td>
+<td>売上確定のPOSTは1回のまま</td>
+<td>完了。売上確定1回、返金1回</td>
+</tr>
+<tr>
+<td>Bの売上確定の応答を喪失 → 与信・注文・captureの照会がそれぞれ2回タイムアウト</td>
+<td>「Checking the payment result」、支払い「Checking the payment result with PayPal／PayPalにお支払いの結果を確認中」。予約は変更なし</td>
+<td>照会で同定できない間に、同じ操作を同じ再送防止IDで送り直すことがある（設計どおり。PayPalは同じcaptureを返す）。売上確定の操作は1つ、送信はすべて同じID</td>
+<td>完了。PayPalのBのcaptureは1件</td>
+</tr>
+</tbody>
+</table></div>
+<p>見つかった点と対応：Bの売上確定がPENDINGの間、支払いの表示が「Capturing the payment」になっていた（送信中に見える）。B支払いの表示の分岐で、PENDINGの扱いより先に返していたため。「PayPal reports it as pending; checking again」になるよう直した（<code>src/app/views.ts</code>）。直す前は上の3番目の試験が失敗し、修正を戻すと失敗することも確かめた。</p>
+<p>限界：模擬の障害注入による確認で、SandboxでPENDINGや照会のタイムアウトを起こしたものではない。B全額返金（E-R）の返金のPENDINGは、同じ返金の処理を使うため個別には試していない。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -2816,9 +2856,15 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <td>すべて終了コード0・全項目PASS。30ファイル・369件成功。詳細は「指摘への対応（<code>impl-wait-1-fix1</code>）」</td>
 </tr>
 <tr>
+<td>11-07 Claude</td>
+<td>PENDINGと照会のタイムアウト（模擬・注入）</td>
+<td><code>tests/app-pending.test.ts</code>、<code>npm run check</code>、変異の確認</td>
+<td>終了コード0、31ファイル・373件成功。Bの売上確定のPENDING表示を修正。詳細は「保留（PENDING）と照会のタイムアウト」</td>
+</tr>
+<tr>
 <td>─</td>
 <td>アプリテスト</td>
-<td>Playwrightの画面試験・実機での一件・初見の人の操作・Sandboxでの返金PENDING・照会のタイムアウト・HOLD</td>
+<td>Playwrightの画面試験・実機での一件・初見の人の操作・SandboxでのPENDING・照会のタイムアウト（模擬では確認済み）・HOLD</td>
 <td>未実行</td>
 </tr>
 </tbody>
@@ -2918,7 +2964,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
 <li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（<code>impl-app-1-fix1</code>、Codexの再確認待ち）。</li>
 <li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。</li>
-<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。次は、日本語の画面の目視と実機での再確認、返金PENDING・照会のタイムアウトの表示と回復（模擬・注入を明示）、初見の人の操作、画像（Codexの生成待ち）の組み込み、提出前の確認。</li>
+<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。次は、日本語の画面の目視と実機での再確認、初見の人の操作、画像（Codexの生成待ち）の組み込み、提出前の確認。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
 <h2 id="section-32">今後の検証記録の書式</h2>

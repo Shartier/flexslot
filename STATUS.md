@@ -822,6 +822,21 @@ Codexの文書（Codexの未追跡ファイル。Claudeは変更・コミット�
 
 実行したコマンドと結果：`npm run check`（30ファイル・369件成功、終了コード0）、`npm run build`（成功）、`node scripts/verify/interrupts.ts report R1`〜`R5`（Sandbox、GETだけ、すべて終了コード0・全項目PASS）、`FLEXSLOT_INTERRUPTS_MOCK=1 node scripts/verify/interrupts.ts report R5`（終了コード0・全項目PASS）、変異の確認（IR2-02の判定2種、IR2-01の旧文1種、すべて検出）、`render-docs.ps1 -Check`（9組）。新しいSandboxの支払い・返金はしていない。
 
+## 保留（PENDING）と照会のタイムアウト：三画面での確認（模擬・障害注入、Claude Code、2026-11-07）
+
+Codexの優先順の次の項目。PayPalにPENDINGを返させることはSandboxではできないため、模擬PayPalの障害注入で行い、そう明示する（新しいSandboxの決済はしていない）。確かめたこと：三画面（英語・日本語）が完了と表示しない、FlexSlotは照会を続けるだけで新しい売上確定・返金を作らない、PayPalが確定させると一度だけ完了する。試験は`tests/app-pending.test.ts`（4件）。
+
+| 場面（注入） | 途中の表示 | 照会と送信 | 結果 |
+| --- | --- | --- | --- |
+| Aの補償返金がPENDING → 返金の照会が2回タイムアウト → PayPalがCOMPLETEDに | 案件「Booking changed · compensation refund pending」、補償「PayPal reports it as pending; checking again／PayPalで保留中・再確認します」。店主の停止・要対応なし | 返金の照会は続く。返金のPOSTは1回のまま | 完了。返金のPOST 1回、PayPalの返金1件、補償の付与1件 |
+| Aの補償返金がPENDING → PayPalがFAILEDに | 「compensation refund needs attention」、補償「Needs attention by the shop／お店の対応が必要」。店主の要対応にAの補償返金、「Recover」が出る | 自動では送り直さない（返金のPOSTは1回のまま） | 店主の「Recover」で新しい試行の返金が1回送られ、完了。操作はFAILEDとSUCCEEDEDの2件 |
+| Bの売上確定がPENDING → captureの照会が2回タイムアウト → PayPalがCOMPLETEDに | 「Confirming payment」、支払い「PayPal reports it as pending; checking again」。予約は変更なし | 売上確定のPOSTは1回のまま | 完了。売上確定1回、返金1回 |
+| Bの売上確定の応答を喪失 → 与信・注文・captureの照会がそれぞれ2回タイムアウト | 「Checking the payment result」、支払い「Checking the payment result with PayPal／PayPalにお支払いの結果を確認中」。予約は変更なし | 照会で同定できない間に、同じ操作を同じ再送防止IDで送り直すことがある（設計どおり。PayPalは同じcaptureを返す）。売上確定の操作は1つ、送信はすべて同じID | 完了。PayPalのBのcaptureは1件 |
+
+見つかった点と対応：Bの売上確定がPENDINGの間、支払いの表示が「Capturing the payment」になっていた（送信中に見える）。B支払いの表示の分岐で、PENDINGの扱いより先に返していたため。「PayPal reports it as pending; checking again」になるよう直した（`src/app/views.ts`）。直す前は上の3番目の試験が失敗し、修正を戻すと失敗することも確かめた。
+
+限界：模擬の障害注入による確認で、SandboxでPENDINGや照会のタイムアウトを起こしたものではない。B全額返金（E-R）の返金のPENDINGは、同じ返金の処理を使うため個別には試していない。
+
 ## Claude Codeの確認（2026-11-03、第1区切り）
 
 | 項目 | 確認結果 |
@@ -895,7 +910,8 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 | 11-07 Claude＋本人 | スマホ実機（模擬の一時公開） | 公開モード（`a872b48`）とQuick Tunnelで01:35〜01:46、本人のスマートフォンで三画面を操作 | 公開と終了は確認。振替は最後まで進まず（機械翻訳とリンクの見失い）。詳細は「スマホ実機での確認」 |
 | 11-07 Claude | 日本語の画面 | `d9416ee`、`npm run check` | 終了コード0、29ファイル・344件成功。ブラウザでの通しの目視は未実施 |
 | 11-07 Claude | IR2-01・IR2-02・IWAI-01とP3の修正 | `npm run check`、`npm run build`、report R1〜R5（Sandbox、GETだけ）と模擬R5、変異の確認 | すべて終了コード0・全項目PASS。30ファイル・369件成功。詳細は「指摘への対応（`impl-wait-1-fix1`）」 |
-| ─ | アプリテスト | Playwrightの画面試験・実機での一件・初見の人の操作・Sandboxでの返金PENDING・照会のタイムアウト・HOLD | 未実行 |
+| 11-07 Claude | PENDINGと照会のタイムアウト（模擬・注入） | `tests/app-pending.test.ts`、`npm run check`、変異の確認 | 終了コード0、31ファイル・373件成功。Bの売上確定のPENDING表示を修正。詳細は「保留（PENDING）と照会のタイムアウト」 |
+| ─ | アプリテスト | Playwrightの画面試験・実機での一件・初見の人の操作・SandboxでのPENDING・照会のタイムアウト（模擬では確認済み）・HOLD | 未実行 |
 
 ## 未確認事項
 
@@ -930,7 +946,7 @@ Gitのuser.name/user.emailは未登録だったため、初期文書コミット
 4. 英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。
 5. V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（`impl-app-1-fix1`、Codexの再確認待ち）。
 6. 2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。
-7. 2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（`d9416ee`）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（`impl-wait-1-fix1`、Codexの再確認待ち）。次は、日本語の画面の目視と実機での再確認、返金PENDING・照会のタイムアウトの表示と回復（模擬・注入を明示）、初見の人の操作、画像（Codexの生成待ち）の組み込み、提出前の確認。
+7. 2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（`d9416ee`）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（`impl-wait-1-fix1`、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。次は、日本語の画面の目視と実機での再確認、初見の人の操作、画像（Codexの生成待ち）の組み込み、提出前の確認。
 
 11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。
 

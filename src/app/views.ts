@@ -172,6 +172,8 @@ function moneyStep(o: ReturnType<typeof obligations>[number] | undefined, lang: 
     // A capture whose answer is unknown or not reconciled yet is being checked, not sent again.
     if (att.status === 'AUTHORIZED' && op?.op_kind === 'AUTH_CAPTURE' && (op.status === 'UNKNOWN' || (op.status === 'SUCCEEDED' && op.reconcile_status === 'AWAITING')))
       return { state: 'WORKING', text: t.checkingPayment };
+    // A capture PayPal reports as PENDING is waiting at PayPal, not being sent (found with the PENDING screen tests).
+    if (att.status === 'AUTHORIZED' && op?.op_kind === 'AUTH_CAPTURE' && op.status === 'PENDING') return { state: 'WORKING', text: t.pending };
     if (att.status === 'AUTHORIZED') return { state: 'WORKING', text: op?.op_kind === 'AUTH_CAPTURE' ? t.capturing : t.authorized };
     if (att.status === 'CAPTURED') return { state: 'WORKING', text: t.capturedChecking };
   }
