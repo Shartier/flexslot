@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="8cdafc8b02355bc67570555992e166e58cef62d86fb257478609184f4a4968f2"><title>FlexSlot | 画像の指示書</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
+.top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
+main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
+.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
+@media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html" aria-current="page">画像の指示書</a></nav></header>
+<main><div class="meta">正本：IMAGES.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-codexgpt-image">FlexSlot — 画像の指示書（Codex向け、GPT Image）</h1>
+<p>作成：Claude Code、2026-11-07（日本時間）。本人の指示：画面をリッチにするため、画像はCodex側でGPT Image（2.5または2.6。Codex側で使えるもの）を使って生成する。Claude Codeからは画像生成のモデルを使えない。</p>
+<h2 id="section">進め方と置き場所</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>生成する人</td>
+<td>Codex（GPT Image）。実際に使ったモデル名と版、生成日を下の「生成の記録」に書けるよう、Codexの文書に残してほしい</td>
+</tr>
+<tr>
+<td>置き場所</td>
+<td><code>outputs/codex-prep/images/</code>（Codexの作業場所）。Claudeがそこから<code>src/web/images/</code>へ写して画面に組み込む。Codexは実装のフォルダ（<code>src/</code>）を編集しない（AGENTS.mdの「同じファイルを二者で同時に編集しない」）</td>
+</tr>
+<tr>
+<td>形式</td>
+<td>WebP（透過が要るものはアルファ付き）。各300KB以下を目安。サイズは下の表</td>
+</tr>
+<tr>
+<td>使う場所</td>
+<td>三画面（店主・A・B）とトップページ、デモ動画、Devpostの表紙</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="section-1">全体の約束（すべての画像）</h2>
+<ul>
+<li>画像の中に文字・数字・記号を入れない（多言語の表示と、生成画像の文字の崩れを避ける）。</li>
+<li>実在の会社のロゴや商標を入れない（PayPal、Google、Cloudflareなど）。決済は一般的なカードやスマホで表す。</li>
+<li>実在の人物に似せない。人物は簡略化したイラスト調。</li>
+<li>画風をそろえる：落ち着いたフラットなイラスト、柔らかい影、線は細め。日本の小さな美容室の雰囲気。</li>
+<li>配色は画面に合わせる：背景のベージュ #f6f5f2、青 #1f5f8b（主色）、緑 #1e7b46（完了）、琥珀 #8a5a00（待ち）、薄紫 #6b3fa0（模擬）。明るい背景と暗い背景（#15171a）の両方で見えること。</li>
+<li>1枚目を作った後、同じ画風・配色・人物の描き方で残りを作る。</li>
+</ul>
+<h2 id="section-2">作ってほしい画像</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ファイル名</th>
+<th>サイズ・背景</th>
+<th>使う場所</th>
+<th>内容（プロンプトの下書き、英語）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hero.webp</code></td>
+<td>1600×900、背景あり（角丸のカードに入れる）</td>
+<td>トップページの最上部、動画の冒頭</td>
+<td>A cozy small Japanese hair salon at the front desk, seen from a slight angle. A large wall calendar shows one afternoon slot that is fully booked. Two customers: one relaxed regular customer smiling and gently stepping aside, and one new customer hurrying in. A stylist behind the desk. Warm, calm flat illustration with soft shadows, thin lines, beige background, blue and green accents. No text, no letters, no numbers, no logos.</td>
+</tr>
+<tr>
+<td><code>role-owner.webp</code></td>
+<td>512×512、透過</td>
+<td>店主の画面の見出しの横</td>
+<td>A friendly salon owner and stylist holding scissors and a tablet, upper body, simple flat illustration, round composition, blue accent clothing. No text, no logos.</td>
+</tr>
+<tr>
+<td><code>role-a.webp</code></td>
+<td>512×512、透過</td>
+<td>既存客Aの画面の見出しの横</td>
+<td>A relaxed regular customer holding a phone and a small calendar card, kind expression, upper body, simple flat illustration, round composition, green accent clothing. No text.</td>
+</tr>
+<tr>
+<td><code>role-b.webp</code></td>
+<td>512×512、透過</td>
+<td>新規客Bの画面の見出しの横</td>
+<td>A new customer in a slight hurry checking a phone, hopeful expression, upper body, simple flat illustration, round composition, amber accent clothing. No text.</td>
+</tr>
+<tr>
+<td><code>swap.webp</code></td>
+<td>1200×600、透過</td>
+<td>振替の提案のカード、動画の説明</td>
+<td>Two appointment cards trading places with curved arrows between them, and a small coin moving back to one of them as a refund. Clean flat icon-like illustration, blue and green accents. No text, no numbers.</td>
+</tr>
+<tr>
+<td><code>checking.webp</code></td>
+<td>800×600、透過</td>
+<td>支払いの確認中・停止中の画面の空き部分</td>
+<td>A payment card and a small clock with a magnifying glass, calm and reassuring, nothing alarming. Flat illustration, blue accent. No text, no logos.</td>
+</tr>
+<tr>
+<td><code>done.webp</code></td>
+<td>800×600、透過</td>
+<td>振替が完了した画面</td>
+<td>A calendar with a check mark, a small pair of scissors and a gentle sparkle, quiet celebration. Flat illustration, green accent. No text.</td>
+</tr>
+<tr>
+<td><code>cover.webp</code></td>
+<td>1280×720、背景あり</td>
+<td>Devpostの表紙、YouTubeのサムネイルの土台（文字は後で別に入れる）</td>
+<td>Same salon scene as hero.webp but simpler, with clear empty space on the left third for a title to be added later. No text, no logos.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="codexclaude">生成の記録（Codexが記入、Claudeが転記）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>モデル名と版</td>
+<td>（未記入）</td>
+</tr>
+<tr>
+<td>生成日</td>
+<td>（未記入）</td>
+</tr>
+<tr>
+<td>使ったプロンプト</td>
+<td>上の表から変えた場合は、変えた後の文</td>
+</tr>
+<tr>
+<td>利用条件の確認</td>
+<td>生成画像を公開リポジトリと動画に使えることを、OpenAIの利用条件で確認したか（本人の確認事項）</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="claude">Claude側の組み込み（画像が届いてから）</h2>
+<ul>
+<li><code>src/web/images/</code>へ写し、画面から読み込む（Viteが<code>/assets/</code>に出力するので、今のサーバーの配信の経路と同じ）。サーバーの種類の表に<code>.webp</code>を加える。</li>
+<li>画像は飾りとして扱い、読み上げ用の代替文は空にする（意味は画面の文で伝える）。スマホ幅では小さくするか隠す。</li>
+<li>配色・余白・カード・進み具合の表示もCSSで見直す。画像がなくても画面が成り立つようにする。</li>
+</ul>
+</article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
