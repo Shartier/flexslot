@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="d105227e9544a814870c12a3ae37b7c33023b3c74054410ca07dd8eba14802e4"><title>FlexSlot | 画像の指示書</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="667824cecf8ea3faea99ad6562aff64e51632490d7bb79ae8ee4fe85030ba516"><title>FlexSlot | 画像の指示書</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -141,7 +141,10 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<h2 id="claude2026-11-07">Claude側の組み込み（2026-11-07、済み）</h2>
+<h2 id="section-3">方向修正：デザイン案02（2026-11-07）</h2>
+<p>本人から「イラスト中心の素材はAIらしさが強い。人物よりボタン・予約カード・金額を重視したい」という方向修正があり、Codexが画面のデザイン案02（<code>outputs/codex-prep/frontend-v2/</code>）を作った。Claudeは旧8点と案02を見比べ、案02を採用した。理由：本人の希望（AIらしさを抑え、判断に必要な日時・金額・ボタンを主役にする）に合う。人物・硬貨・紙のカレンダーのイラストは画面から外した。</p>
+<p>案02の素材：写真風の架空の美容室1点（<code>salon-detail.webp</code>、900×600、OpenAIの内蔵の画像生成ツール、正確なモデル名と版は不明）と、コードで描いた18個のSVGアイコン（<code>ui-icons.svg</code>、生成画像ではない）。写真は店の補助表示だけに使う（トップページ、各画面の右列）。SHA-256はCodexの記録と一致。旧8点はCodexのフォルダに残し、アプリには入れない。</p>
+<h2 id="claude82026-11-0702">Claude側の組み込み（旧8点、2026-11-07。案02の採用で置き換え済み）</h2>
 <ul>
 <li>アプリで使う7点を<code>src/web/images/</code>へ写した（<code>cover.webp</code>は提出物用でアプリには入れない）。<code>src/web/art.ts</code>から読み込み、Viteが<code>/assets/</code>に出力する。サーバーの種類の表に<code>.webp</code>を加えた。</li>
 <li>トップページ：heroをPCでは説明の右、スマホでは説明の下に置く。三画面の見出し：立場ごとの人物（PC 88px、スマホ 60px）。振替のカード：承認待ちの間はswap、結果の確認中・保留・返金待ちなど未確定の間はchecking、案件の完了（COMPLETED）のときだけdone。</li>

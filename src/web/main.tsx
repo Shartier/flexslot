@@ -8,7 +8,7 @@ import { loadDemo, saveDemo, type DemoLinks, type RoleSeg } from './demo-links.t
 import { LangProvider, useLang, useT } from './i18n.tsx';
 import { OwnerScreen } from './owner.tsx';
 import type { AState, BState, OwnerState } from './types.ts';
-import { LangSwitch, Notice } from './ui.tsx';
+import { LangSwitch, Notice, Wordmark } from './ui.tsx';
 import { ART } from './art.ts';
 import { paypalReturnText } from './paypal-return.ts';
 import './styles.css';
@@ -65,7 +65,7 @@ function Landing() {
     <>
       <header className="topbar">
         <div className="brand">
-          <span className="logo">FlexSlot</span>
+          <Wordmark />
           <span className="role">{t.tagline}</span>
         </div>
         <div className="modes">
@@ -80,7 +80,10 @@ function Landing() {
               <p>{t.heroBody}</p>
               <p className="small muted-text">{t.scope}</p>
             </div>
-            <img className="hero-img" src={ART.hero} alt="" aria-hidden="true" width={1600} height={900} />
+            <figure className="hero-photo">
+              <img src={ART.salon} alt="" aria-hidden="true" width={900} height={600} />
+              <figcaption className="photo-credit">{t.photoCredit}</figcaption>
+            </figure>
           </div>
         </section>
         <section className="card">

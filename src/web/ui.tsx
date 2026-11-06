@@ -1,13 +1,62 @@
-// Shared pieces of the three screens: the mode bar (DESIGN 10), status chips, the PayPal approval box, and the
-// intake panel (free text -> AI proposal or manual form -> the person's confirmation, DESIGN 9). Texts come from
-// i18n.tsx (English or Japanese); the server sends its own wording in the same language.
+// Shared pieces of the three screens: the app frame and mode bar (DESIGN 10), status badges, the swap's slot,
+// before/after and amounts (design v2 from Codex, 2026-11-07), the PayPal approval box, and the intake panel (free
+// text -> AI proposal or manual form -> the person's confirmation, DESIGN 9). Texts come from i18n.tsx (English or
+// Japanese); the server sends its own wording in the same language. Everything shown comes from the server's state.
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { explain, type Api } from './api.ts';
 import { ART } from './art.ts';
 import { loadDemo, type RoleSeg } from './demo-links.ts';
 import { showDate, useLang, useT } from './i18n.tsx';
-import type { Approval, CaseView, Conditions, Draft, Header, Step, Window } from './types.ts';
+import type { Approval, CaseView, Conditions, Draft, Header, Money, Step, Window } from './types.ts';
+
+export type IconName =
+  | 'calendar'
+  | 'swap'
+  | 'arrow'
+  | 'chevron'
+  | 'down'
+  | 'check'
+  | 'circleCheck'
+  | 'clock'
+  | 'lock'
+  | 'receipt'
+  | 'person'
+  | 'scissors'
+  | 'info'
+  | 'alert'
+  | 'close'
+  | 'refund'
+  | 'sliders'
+  | 'store';
+
+/** One of Codex's 18 SVG icons (decorative: the label next to it carries the meaning). */
+export function Icon({ name }: { name: IconName }) {
+  return (
+    <svg className="ico" aria-hidden="true" focusable="false">
+      <use href={`${ART.icons}#fs-${name}`} />
+    </svg>
+  );
+}
+
+/** An amount for display: "$60.00 USD" (amounts inside sentences keep the server's wording). */
+export function Amount({ m, sign }: { m: Money; sign?: '+' | '−' }) {
+  const n = (Math.abs(m.minor) / 100).toFixed(2);
+  return (
+    <span className="amount num">
+      {sign ?? (m.minor < 0 ? '−' : '')}
+      {m.currency === 'USD' ? '$' : ''}
+      {n}
+      <span className="currency">{m.currency}</span>
+    </span>
+  );
+}
+
+/** "11月9日(月) 14:00〜15:00" / "2026-11-09 14:00–15:00" -> [date, time range]. */
+export function splitSpan(span: string): [string, string] {
+  const i = span.lastIndexOf(' ');
+  return i < 0 ? [span, ''] : [span.slice(0, i), span.slice(i + 1)];
+}
 
 export function LangSwitch() {
   const { lang, setLang } = useLang();
@@ -43,13 +92,22 @@ export function DemoSwitcher({ worldId, current }: { worldId: string; current: R
   );
 }
 
+export function Wordmark() {
+  return (
+    <span className="wordmark">
+      <span className="mark" aria-hidden="true" />
+      FlexSlot
+    </span>
+  );
+}
+
 export function TopBar({ header, roleName, roleSeg }: { header: Header; roleName: string; roleSeg: RoleSeg }) {
   const m = header.modes;
   const t = useT();
   return (
     <header className="topbar">
       <div className="brand">
-        <span className="logo">FlexSlot</span>
+        <Wordmark />
         <span className="role">{roleName}</span>
       </div>
       <div className="modes" aria-label={t.modesAria}>
@@ -59,6 +117,123 @@ export function TopBar({ header, roleName, roleSeg }: { header: Header; roleName
       </div>
       <DemoSwitcher worldId={header.worldId} current={roleSeg} />
     </header>
+  );
+}
+
+/** The frame of a role screen: the owner gets a navy side rail with in-page links (wide screens only). */
+export function Shell({ header, roleName, roleSeg, children }: { header: Header; roleName: string; roleSeg: RoleSeg; children: ReactNode }) {
+  const t = useT();
+  return (
+    <div className={`shell ${roleSeg === 'owner' ? 'with-rail' : 'customer'}`}>
+      {roleSeg === 'owner' && (
+        <aside className="sidebar">
+          <Wordmark />
+          <p className="rail-label">{t.workspace}</p>
+          <nav className="rail-nav" aria-label={t.workspace}>
+            <a href="#swap">
+              <Icon name="swap" />
+              {t.nav.swap}
+            </a>
+            <a href="#bookings">
+              <Icon name="calendar" />
+              {t.nav.bookings}
+            </a>
+            <a href="#conditions">
+              <Icon name="sliders" />
+              {t.nav.conditions}
+            </a>
+            <a href="#history">
+              <Icon name="receipt" />
+              {t.nav.history}
+            </a>
+          </nav>
+          <div className="rail-foot">
+            <p className="rail-shop">
+              <Icon name="store" />
+              {header.shop.name}
+            </p>
+            <p className="rail-note">{t.shopFoot(header.shop.stylists.join(', '))}</p>
+          </div>
+        </aside>
+      )}
+      <div className="workspace">
+        <TopBar header={header} roleName={roleName} roleSeg={roleSeg} />
+        <main>{children}</main>
+      </div>
+    </div>
+  );
+}
+
+export function PageHeading({ eyebrow, title, lead }: { eyebrow: string; title: string; lead: string }) {
+  return (
+    <div className="page-heading">
+      <p className="eyebrow">{eyebrow}</p>
+      <h1>{title}</h1>
+      <p className="lead">{lead}</p>
+    </div>
+  );
+}
+
+/** The requested slot in large type, with the shop's local time zone. */
+export function SlotHeading({ label, span, tz }: { label: string; span: string; tz: string }) {
+  const t = useT();
+  const [date, time] = splitSpan(span);
+  return (
+    <div className="slot-heading">
+      <div>
+        <p className="slot-label">{label}</p>
+        <p className="date">{date}</p>
+        <p className="time num">{time}</p>
+        <p className="time-zone">{t.localTime(tz)}</p>
+      </div>
+      <span className="slot-symbol" aria-hidden="true">
+        <Icon name="calendar" />
+      </span>
+    </div>
+  );
+}
+
+/** A's booking before and after the swap. */
+export function MoveCards({ from, to }: { from: string; to: string }) {
+  const t = useT();
+  const [fd, ft] = splitSpan(from);
+  const [td, tt] = splitSpan(to);
+  return (
+    <div className="move">
+      <div className="move-col">
+        <p className="move-label">
+          <Icon name="calendar" />
+          {t.fromLabel}
+        </p>
+        <p className="move-date">{fd}</p>
+        <p className="move-time num">{ft}</p>
+      </div>
+      <span className="move-arrow" aria-hidden="true">
+        <Icon name="arrow" />
+      </span>
+      <div className="move-col to">
+        <p className="move-label">
+          <Icon name="swap" />
+          {t.toLabel}
+        </p>
+        <p className="move-date">{td}</p>
+        <p className="move-time num">{tt}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Amounts in a row, shown before the buttons. */
+export function AmountGrid({ items }: { items: Array<{ label: string; m: Money; sign?: '+' | '−'; strong?: boolean }> }) {
+  return (
+    <div className="amount-grid">
+      {items.map((it) => (
+        <div key={it.label} className={it.strong ? 'strong' : ''}>
+          <p className="amount-label">{it.label}</p>
+          <Amount m={it.m} {...(it.sign ? { sign: it.sign } : {})} />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -85,45 +260,61 @@ export function CaseProgress({ c }: { c: CaseView }) {
   const t = useT();
   const states = stagesOf(c);
   return (
-    <ol className="progress" aria-label={t.progressAria}>
+    <ol className="stepper" aria-label={t.progressAria}>
       {t.stages.map((label, i) => (
-        <li key={label} className={`stage ${states[i]}`} aria-current={states[i] === 'current' || states[i] === 'attention' ? 'step' : undefined}>
-          <span className="dot" aria-hidden="true" />
-          <span className="stage-label">{label}</span>
+        <li key={label} className={states[i]} aria-current={states[i] === 'current' || states[i] === 'attention' ? 'step' : undefined}>
+          <span className="step-dot" aria-hidden="true">
+            {states[i] === 'done' ? <Icon name="check" /> : states[i] === 'attention' ? '!' : states[i] === 'ended' ? '–' : i + 1}
+          </span>
+          <span className="step-label">{label}</span>
         </li>
       ))}
     </ol>
   );
 }
 
-/** The screen's heading: who you are here and what this screen is for, with the role's illustration. */
-export function RoleHero({ roleSeg, name }: { roleSeg: RoleSeg; name: string }) {
+/** The owner's profit estimate as a navy card: the result first, then each line. */
+export function ProfitCard({ profit }: { profit: { lines: Array<{ name: string; sign: number; amount: Money }>; additionalProfit: Money; note: string } }) {
   const t = useT();
   return (
-    <section className={`role-hero role-${roleSeg}`}>
-      <img className="role-img" src={ART.role[roleSeg]} alt="" aria-hidden="true" width={512} height={512} />
-      <div>
-        <h1>{name}</h1>
-        <p>{t.roleLead[roleSeg]}</p>
+    <section className="panel profit-card" aria-labelledby="profit-title">
+      <p className="profit-label" id="profit-title">
+        <Icon name="receipt" />
+        {t.profitTitle}
+      </p>
+      <p className="profit-amount">
+        <Amount m={profit.additionalProfit} sign="+" />
+      </p>
+      <p className="profit-kicker">{t.profitKicker}</p>
+      <div className="profit-breakdown">
+        {profit.lines.map((l, i) => (
+          <div key={i} className={i === 0 ? 'revenue' : ''}>
+            <span>{l.name}</span>
+            <strong>
+              <Amount m={l.amount} sign={l.sign < 0 ? '−' : '+'} />
+            </strong>
+          </div>
+        ))}
       </div>
+      <p className="profit-foot">{profit.note}</p>
     </section>
   );
 }
 
-// Codex's guidance: "checking" only for states still unconfirmed, "done" only for a completed swap.
-const CHECKING_STATES = ['PAYMENT_UNKNOWN', 'RECONCILING', 'PAYMENT_PENDING', 'REFUND_PENDING', 'B_REFUND_PENDING', 'VOID_PENDING'];
-/** A small illustration for the case: the proposal, a result being checked, or the completed swap. */
-export function CaseArt({ c }: { c: CaseView }) {
-  const [src, w, h] =
-    c.status === 'COMPLETED'
-      ? [ART.done, 800, 600]
-      : CHECKING_STATES.includes(c.status)
-        ? [ART.checking, 800, 600]
-        : c.status === 'AWAITING_APPROVAL' || c.status === 'A_ACCEPTED'
-          ? [ART.swap, 1200, 600]
-          : [null, 0, 0];
-  if (!src) return null;
-  return <img className={`case-art ${src === ART.swap ? 'wide' : ''}`} src={src} alt="" aria-hidden="true" width={w} height={h} loading="lazy" />;
+/** The salon: a small supporting photo (fictional, AI-generated) and the shop's terms. */
+export function ShopCard({ header, children }: { header: Header; children?: ReactNode }) {
+  const t = useT();
+  return (
+    <section className="panel shop-card">
+      <figure className="photo-card">
+        <img src={ART.salon} alt="" aria-hidden="true" width={900} height={600} loading="lazy" />
+      </figure>
+      <p className="photo-credit">{t.photoCredit}</p>
+      <p className="shop-name">{header.shop.name}</p>
+      <p className="small muted-text">{t.shopSub(header.shop.stylists.join(', '))}</p>
+      {children}
+    </section>
+  );
 }
 
 export function DemoNote({ header }: { header: Header }) {
@@ -132,9 +323,9 @@ export function DemoNote({ header }: { header: Header }) {
   return <p className="demo-note">{t.demoNote(header.shop.name, header.shop.stylists.join(lang === 'ja' ? '、' : ', '), header.shop.hours, header.shop.timeZone, header.serverTime)}</p>;
 }
 
-export function Section({ title, children, aside }: { title: ReactNode; children: ReactNode; aside?: ReactNode }) {
+export function Section({ title, children, aside, id }: { title: ReactNode; children: ReactNode; aside?: ReactNode; id?: string }) {
   return (
-    <section className="card">
+    <section className="card" id={id}>
       <div className="card-head">
         <h2>{title}</h2>
         {aside}
@@ -152,18 +343,25 @@ export function StepChip({ step }: { step: Step }) {
 
 export function StatusChip({ c }: { c: CaseView }) {
   const cls = c.status === 'COMPLETED' ? 'ok' : ['REJECTED', 'EXPIRED', 'COMPENSATED'].includes(c.status) ? 'muted' : /FAILED|ATTENTION/.test(c.status) ? 'bad' : c.status === 'AWAITING_APPROVAL' || c.status === 'A_ACCEPTED' ? 'wait' : 'work';
-  return <span className={`chip ${cls}`}>{c.statusLabel}</span>;
+  const icon: IconName = cls === 'ok' ? 'circleCheck' : cls === 'bad' ? 'alert' : cls === 'muted' ? 'info' : 'clock';
+  return (
+    <span className={`badge ${cls}`}>
+      <Icon name={icon} />
+      {c.statusLabel}
+    </span>
+  );
 }
 
 export function ApprovalChips({ c }: { c: CaseView }) {
   const t = useT();
   const one = (label: string, v: string | null) => (
-    <span className={`chip ${v === 'APPROVED' ? 'ok' : v === 'REJECTED' ? 'bad' : 'muted'}`}>
+    <span className={`approval-item ${v === 'APPROVED' ? 'approved' : v === 'REJECTED' ? 'declined' : ''}`}>
+      <Icon name={v === 'APPROVED' ? 'check' : v === 'REJECTED' ? 'close' : 'clock'} />
       {label}: {v === 'APPROVED' ? t.apApproved : v === 'REJECTED' ? t.apDeclined : t.apWaiting}
     </span>
   );
   return (
-    <div className="chips">
+    <div className="approval-row">
       {one(t.apShop, c.approvals.OWNER)}
       {one(t.apA, c.approvals.A)}
       {one(t.apB, c.approvals.B)}
