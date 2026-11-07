@@ -70,7 +70,7 @@ Claude Code supported implementation and testing; Codex provided independent rev
 
 ### What is next
 
-The immediate work is to finish the remaining review fixes, test with a first-time user and a physical phone, and prepare reproducible judging access. Salon interviews have not been conducted, and demand is not validated. A future version could add this workflow to an existing booking system; that integration is outside this demo. Natural next steps for the workflow itself: an opt-in choice at booking time, sequential offers to several opted-in customers, and an optional priority fee for B that funds the compensation.
+The immediate work is first-time usability testing and final submission preparation. The final design was checked at desktop and phone widths in a browser; physical-phone testing of this design remains future work. Salon interviews have not been conducted, and demand is not validated. A future version could add this workflow to an existing booking system; that integration is outside this demo. Natural next steps for the workflow itself: an opt-in choice at booking time, sequential offers to several opted-in customers, and an optional priority fee for B that funds the compensation.
 
 Compensation could also become dynamic. In this demo it is a fixed USD 10.00 known at registration, which is easy to explain but could invite someone to book busy weekend slots just to collect it. A later version could set the amount per offer from demand, notice time and how long ago the booking was made, show it only when a real offer arrives (A still sees and accepts the exact amount before anything changes), and limit how often one customer can receive it. This is not implemented.
 
@@ -109,7 +109,7 @@ Prepare the demo dates using the app's current sample text. Do not hard-code exp
 
 | Item | Current evidence or next action |
 | --- | --- |
-| Review basis | `impl-app-1-fix1` passed the second review. R1–R5 evidence is accepted for those scenarios. IR2-01, IR2-02 and IWAI-01 are fixed in `impl-wait-1-fix1`. Codex's final review is requested for `impl-wait-1-fix1` through `impl-ui-6` (REVIEW.md, last section): PENDING checks, Japanese wording, and the redesigned screens |
+| Review basis | Codex rechecked `impl-final-2` (`1a235cfc263250d5e56afbf9a3572125a1e0fe03`) on 7 November 2026: 390 tests passed, the browser prevented a second POST while state refresh was pending, the mock flow completed, and shipped licence texts matched. FR1-01 and FR1-02 are closed; the remaining FR1-03 editorial wording was aligned in this documentation update. This was not a new Sandbox or Vertex run. Earlier R1–R5 evidence applies to those recorded scenarios |
 | Final copy | Update the reviewed tag, test count and limitations after fixes. Do not describe an earlier API run as a new run of the final code |
 | Physical phone and first-time user | The owner chose to judge the final design on a PC screen; phone widths were checked in a browser only. A first-time user has not tried the final screens yet |
 | Recovery coverage | PENDING captures and refunds and query timeouts are checked with the mock and injected faults (`tests/app-pending.test.ts`): no screen shows them as completed, no new capture or refund is created, and the case completes once. A naturally pending result on the Sandbox has not been observed; do not repeat Sandbox payments just to obtain one |

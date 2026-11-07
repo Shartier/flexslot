@@ -817,3 +817,19 @@ Codexの再確認は`scripts/verify/interrupts.ts`が未追跡の時点で行わ
 2. 同梱のライセンスの置き場所と、README・THIRD_PARTY_NOTICES.mdの書き方が、公開と提出に足りるか。
 
 追記：再確認の対象は`impl-final-2`にしてほしい（`impl-final-1`に、ライセンス本文の改行をWindowsでの取得時にも変えない`.gitattributes`の設定を加えたもの。新しい複製で`LICENSE`と同梱ファイルのSHA-256が元と一致することを確認）。
+
+### 最終レビューの再確認結果（Codex、2026-11-07）
+
+対象：`impl-final-2` = `1a235cfc263250d5e56afbf9a3572125a1e0fe03`。差分基点：`7ef911c0f79060c7859c6737fb49b9fa49d54ae9`。Gitの作業場所から隔離したコピーを用い、実コード、試験、ビルド後の画面・配布物を確認した。
+
+| 指摘 | 結果・根拠 |
+| --- | --- |
+| FR1-01 / P2 | 解消。店主承認のPOSTが200になった後、状態GETだけを保留し、同じボタンを再度押しても追加POSTなし。送信1回、更新待ちの間はボタン無効。runActionの操作失敗・更新失敗後の解除も回帰試験で確認 |
+| FR1-02 / P2 | 解消。Apache公式本文と同梱版が一致。MIT 3件・OFL 4件と索引をHTTPで取得し、9件すべて200、text/plain、元ファイルとのバイト一致。フッターの導線あり。core.autocrlf=trueの新しい複製でもLICENSEと同梱9ファイルが一致 |
+| FR1-03 / P3 | 主要な更新を確認。残っていたSUBMISSIONの「直近の作業にスマホ実機・修正待ち」と古いレビュー待ちの文は、Codex担当の文書更新で現状へ合わせた |
+
+実行結果：`npm run check`は33ファイル・390件成功（型検査を含む）、`npm run build`成功。模擬AI・模擬PayPalの一件を三画面で完了し、再読み込み後も維持。ブラウザのスクリプトエラーなし。新しいSandbox決済・返金、Vertexの呼び出しは実施していない。
+
+証拠：`outputs/codex-prep/final-review-1a235cf/` の `action-repro.json`、`check.log`、`build.log`、`release-inventory.json`、`secret-screening.json`（ローカルのレビュー資料）。対象履歴56コミット・534blobの限定的な秘密情報点検は検出0件。未知の過去の認証情報を網羅する保証ではない。
+
+判定：このレビューの指摘はクローズし、公開と提出の準備へ進める。残るのは、最終公開物と公開先の本人確認、審査員の入口の選択、初見の人の操作確認、録画・公開動画の確認、Devpost応募。公開リポジトリ・デプロイ・YouTube公開・応募の許可を、この技術レビューで代替しない。
