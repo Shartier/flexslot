@@ -19,14 +19,14 @@ npm run dev
 
 Open <http://localhost:8787>. (The server listens on 127.0.0.1 only. Use `localhost`, not another host name: requests from other origins are refused.)
 
-1. Choose **AI: Mock rules** and **Payment: Mock**, then **Create demo world**. Mock modes are offline stand-ins and are labelled as such on every screen.
-2. You get three invite links: shop owner, existing customer (A), new customer (B). Open each in its own tab. (In real use each person would receive only their own link; the demo creator holds all three.)
+1. Choose **Mock rules** (AI) and **Mock payment**, then **Create demo world**. Mock modes are offline stand-ins and are labelled as such on every screen.
+2. You get the three screens: shop owner, existing customer (A), new customer (B). *Open this screen* opens one in this tab; the **Demo** switch at the top of each screen moves between them. Each card also shows the invite link, to open a screen in another tab or device. (In real use each person would receive only their own link; the demo creator holds all three.)
 3. Suggested order:
    - **A**: pay the booking (*Approve in the mock PayPal*), then write when you could move (*Use the example text* → *Structure with …* → *Confirm these conditions*).
    - **B**: write the request (*Use the example text* → structure → confirm). FlexSlot checks the slots and proposes the swap, or shows why it cannot.
    - **Owner**: review the proposal, the fixed compensation and the profit estimate → *Approve this swap*.
    - **A**: *Agree to move*.
-   - **B**: *Accept and pay* → *Approve in the mock PayPal*. Within a few seconds the payment is authorized and captured, the bookings are swapped, and A's compensation is refunded. All three screens show each step.
+   - **B**: *Pay USD 60.00* → *Approve in the mock PayPal*. Within a few seconds the payment is authorized and captured, the bookings are swapped, and A's compensation is refunded. All three screens show each step.
 
 The demo dates are generated relative to today (A's booking is two days ahead). Data lives in `data/` (SQLite); delete that folder to start over.
 
@@ -89,5 +89,9 @@ The detailed specification, design, status and reviews are in `SPEC.md`, `DESIGN
 - Webhooks: `POST /webhooks/paypal` stores each delivery, verifies it with PayPal's verify-webhook-signature API (needs `PAYPAL_WEBHOOK_ID`), handles each event once, and uses it only to trigger the next query of the payment it names. It is tested with the mock, and was checked once with real Sandbox deliveries through a temporary tunnel that passed only `POST /webhooks/paypal` (`scripts/verify/v8-relay.ts`; see `STATUS.md`). The local server itself listens on 127.0.0.1 only.
 - Stopped items ("HOLD"): when FlexSlot cannot continue a payment step safely (for example a resend whose body no longer matches, the retry limit, or an order whose approval is still unconfirmed), the normal queue stops retrying that step and the owner sees it under "Stopped". Restarting the server can resume recovery: FlexSlot may query PayPal, resend the same operation with the same request ID, and carry out the recovery steps that follow from the result (for example an authorization release or a refund). This version has no button to release a stop; the owner checks the payment in PayPal and a developer resolves it. A refund that PayPal refused (a confirmed failure) is different: when "Recover" is offered in the payment records, the owner can retry it for the same amount.
 - Not yet done: checks on a real phone (phone widths were checked in a browser), a first-time user going through the screens, public hosting.
-- The screens are in English, or in Japanese when the browser's language is Japanese (switch at the top of every screen; the choice is remembered in that browser). Amounts are in USD on a US Sandbox business account.
+- The screens are in English, or in Japanese when the browser's language is Japanese (the 日本語 | EN switch at the top right of every screen; the choice is remembered in that browser). Amounts are in USD on a US Sandbox business account.
 - License: not decided yet.
+
+## Design and assets
+
+The screens use warm neutrals with one terracotta accent, photographs of a **fictional, AI-generated salon** (no people, text or logos; the screens say so), bundled fonts (SIL Open Font License 1.1) and code-drawn icons, seals and charts. Details and licences: `THIRD_PARTY_NOTICES.md`. Motion (cards rising, the progress line growing, amounts counting up) stops when the device asks for reduced motion.

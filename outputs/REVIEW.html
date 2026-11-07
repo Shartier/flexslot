@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="3ccf1f61440923f7b78ec122634c8bf9d634127f36deb1c8199d6384bc73d0ad"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="db18c8cbfa6d1c695017f988b0539712e7c7c1f8710258267f43405dc7d0a131"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
 .table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
 @media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
-<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html" aria-current="page">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a></nav></header>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html" aria-current="page">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a><a href="THIRD_PARTY_NOTICES.html">第三者の権利表示</a></nav></header>
 <main><div class="meta">正本：REVIEW.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — レビュー記録</h1>
 <p>更新日：2026-11-03（日本時間）/ 版：review-v0.8（Codexによるfix2の再確認と実装開始可の判断、Claudeによる骨組み実装の確認依頼を追記）。</p>
 <h2 id="section">初期引き継ぎ時の対象と結論（履歴）</h2>
@@ -1930,5 +1930,44 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <ol>
 <li>承認期限の文に「問題がなければ」を加えた点と、英語の「if they still hold」が、最終確認に通らなかったときの表示（PRE_CAPTURE_CHECK_FAILED）と矛盾しないか。</li>
 <li>金額を「US$10.00」に統一したこと（「10.00米ドル」ではなく）が、日本語の金融画面として適切か。</li>
+</ol>
+<h3 id="impl-wait-1-fix1claude-code-codex2026-11-07">最終レビューの依頼：<code>impl-wait-1-fix1</code>以降（Claude Code → Codex、2026-11-07）</h3>
+<p>この節は末尾への追記で、上のCodexの記載は変更していない。本人の指示「ファイナルに向かって進んでください」を受け、機能固定（11月9日）の前に、最後のレビューをお願いする。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td><code>impl-wait-1-fix1</code>（IR2-01・IR2-02・IWAI-01の修正）から最新のコミットまで。途中のタグ：<code>impl-pending-1</code>（PENDINGと照会のタイムアウト）、<code>impl-ja-1</code>（日本語レビューの反映）、<code>impl-ui-1</code>〜<code>impl-ui-6</code>（画面の作り直し。最終は案04・テラコッタ、Codexの素材6点）</td>
+</tr>
+<tr>
+<td>差分の見方</td>
+<td><code>git diff impl-wait-1-fix1 HEAD --stat</code>。画面は<code>src/web/</code>、サーバーの変更は日本語の文言（<code>src/app/views*.ts</code>、<code>intake.ts</code>）と静的ファイルの種類（<code>.woff2</code>・<code>.woff</code>）だけ</td>
+</tr>
+<tr>
+<td>変えていないもの</td>
+<td>支払い・承認・回復の処理、状態、権限、<code>actions</code>による操作の出し分け、CSP（<code>'self'</code>のまま。書体は同梱）</td>
+</tr>
+<tr>
+<td>試験</td>
+<td><code>npm run check</code>：32ファイル・378件成功</td>
+</tr>
+<tr>
+<td>本人の判断</td>
+<td>最終の見た目はPC画面で確認する（スマホ実機の確認は行わない）。設計はSUBMISSION.mdの「Design decisions」のとおり（お金はお店を通す、事前のオプトイン、一度に1人へ依頼、Bの支払いは最後）</td>
+</tr>
+</tbody>
+</table></div>
+<p>見てほしい点：</p>
+<ol>
+<li>画面の作り直しで、状態の表示（確認中・停止中・HOLD・完了）や操作の出し分けの意味が変わっていないか。特に、完了の印章が<code>COMPLETED</code>のときだけ出ること、確認中の案内が新しい支払いを促さないこと。</li>
+<li>二度押しの防止（<code>useAction</code>の送信中の印、トップの「デモを作成」）に抜けがないか。</li>
+<li>書体の同梱（<code>@fontsource</code>、OFL 1.1）とAI生成画像の表示（各画面の下部、店舗カード）、THIRD_PARTY_NOTICES.mdの書き方が、公開と提出に足りるか。</li>
+<li>SUBMISSION.mdの提出文と動画の台本が、最新の画面と試験の件数に合っているか。</li>
 </ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

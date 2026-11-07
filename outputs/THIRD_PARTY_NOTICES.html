@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="a41e597925e764b1d6c14837e8ccae60632476777572bf272ca6f86ca2d62724"><title>FlexSlot | 第三者の権利表示</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
+.top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
+main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
+.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
+@media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a><a href="THIRD_PARTY_NOTICES.html" aria-current="page">第三者の権利表示</a></nav></header>
+<main><div class="meta">正本：THIRD_PARTY_NOTICES.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-third-party-notices-and-generated-assets">FlexSlot — Third-party notices and generated assets</h1>
+<p>This file lists material in this repository that FlexSlot's own source licence does not cover by itself. The source licence for the project has not been chosen yet; it will be added before the repository is made public.</p>
+<h2 id="fonts-bundled-into-the-screens">Fonts (bundled into the screens)</h2>
+<p>The screens bundle these fonts from npm packages published by Fontsource. They are served from the app's own origin; no font is loaded from a third-party server.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Font</th>
+<th>npm package (exact version)</th>
+<th>Licence</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Shippori Mincho</td>
+<td><code>@fontsource/shippori-mincho</code> 5.3.0</td>
+<td>SIL Open Font License 1.1</td>
+<td>Headings</td>
+</tr>
+<tr>
+<td>Zen Kaku Gothic New</td>
+<td><code>@fontsource/zen-kaku-gothic-new</code> 5.3.1</td>
+<td>SIL Open Font License 1.1</td>
+<td>Body text</td>
+</tr>
+<tr>
+<td>Inter</td>
+<td><code>@fontsource/inter</code> 5.3.0</td>
+<td>SIL Open Font License 1.1</td>
+<td>Figures</td>
+</tr>
+<tr>
+<td>Cormorant Garamond</td>
+<td><code>@fontsource/cormorant-garamond</code> 5.3.0</td>
+<td>SIL Open Font License 1.1</td>
+<td>Small Latin captions</td>
+</tr>
+</tbody>
+</table></div>
+<p>The licence text of each font is included in its package (<code>node_modules/@fontsource/&lt;name&gt;/LICENSE</code>) and is copied into the built files the fonts belong to. The fonts are not sold on their own.</p>
+<h2 id="ai-generated-images">AI-generated images</h2>
+<p>The salon photographs and the paper texture in <code>src/web/images/</code> (<code>salon-cover</code>, <code>salon-station</code>, <code>card-backdrop</code>, <code>service-still</code>, <code>done-backdrop</code>, <code>paper-texture</code>) are AI-generated. They depict a fictional salon, not a photographed real business, and contain no people, text or logos.</p>
+<ul>
+<li>Created on 7 November 2026 with OpenAI's built-in image generation tool, used through Codex. The tool did not expose the model name or version, so none is claimed.</li>
+<li>After generation, the images were only resized, trimmed slightly at the edges to the target ratio, and converted to WebP.</li>
+<li>The screens state that the photos are AI-generated and not a real business.</li>
+<li>Generation records (prompts, sizes, SHA-256) are kept with the creator's working files; <code>IMAGES.md</code> summarises them.</li>
+</ul>
+<h2 id="icons-and-drawings">Icons and drawings</h2>
+<p>The 18 icons in <code>src/web/images/ui-icons.svg</code>, the logo, the seals, the progress line and the profit bar are drawn in code for this project and are not generated images.</p>
+<h2 id="services">Services</h2>
+<p>PayPal (Sandbox only) and Google Cloud Vertex AI (Gemini) are used through their public APIs under the creator's own developer accounts. Their names are used to describe the integration; no endorsement by PayPal or Google is implied.</p>
+</article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

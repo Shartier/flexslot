@@ -2,8 +2,8 @@ param([switch]$Check)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $outputRoot = Join-Path $repoRoot 'outputs'
-$docs = @('README', 'AGENTS', 'SPEC', 'DESIGN', 'STATUS', 'REVIEW', 'CLAUDE_START', 'SUBMISSION', 'IMAGES')
-$labels = @{ README='README'; AGENTS='共同作業ルール'; SPEC='仕様'; DESIGN='技術設計'; STATUS='進捗'; REVIEW='レビュー'; CLAUDE_START='Claudeへの依頼'; SUBMISSION='提出物の下書き'; IMAGES='画像の指示書' }
+$docs = @('README', 'AGENTS', 'SPEC', 'DESIGN', 'STATUS', 'REVIEW', 'CLAUDE_START', 'SUBMISSION', 'IMAGES', 'THIRD_PARTY_NOTICES')
+$labels = @{ README='README'; AGENTS='共同作業ルール'; SPEC='仕様'; DESIGN='技術設計'; STATUS='進捗'; REVIEW='レビュー'; CLAUDE_START='Claudeへの依頼'; SUBMISSION='提出物の下書き'; IMAGES='画像の指示書'; THIRD_PARTY_NOTICES='第三者の権利表示' }
 $css = @'
 :root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}

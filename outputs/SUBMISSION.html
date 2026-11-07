@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="00049ace996e5c5392968e203b603960914ff5a506833674a325b1789acaef60"><title>FlexSlot | 提出物の下書き</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="720de2e07f3f0f49122f9f52e5d2910ccd273849a3b80ae2ce170d5d8bd47570"><title>FlexSlot | 提出物の下書き</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
 .table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:7px}table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}th,td{padding:13px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:#eaf2f4;color:#204854;font-weight:700}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f8fafb}code{font-family:Consolas,"Yu Gothic UI",monospace;font-size:.9em;background:#edf3f6;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{padding:20px;background:#f0f5f7;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}pre code{background:none;padding:0}blockquote{margin:20px 0;padding:10px 20px;border-left:4px solid #78abb4;background:#f3f8fa}footer{color:var(--muted);font-size:12px;margin-top:32px;padding-top:16px;border-top:1px solid var(--line)}
 @media(max-width:700px){body{font-size:15px}.top{padding:20px 16px}main{margin:16px 10px 36px;padding:20px 17px;border-radius:8px}h1{font-size:24px}h2{font-size:19px;margin-top:32px}th,td{padding:10px 12px}nav a{font-size:12px;padding:5px 9px}pre{padding:13px}}
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
-<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html" aria-current="page">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a></nav></header>
+<body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html" aria-current="page">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a><a href="THIRD_PARTY_NOTICES.html">第三者の権利表示</a></nav></header>
 <main><div class="meta">正本：SUBMISSION.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-submission-text-and-video-script-draft">FlexSlot — submission text and video script (draft)</h1>
 <p>Draft revised by Codex on 7 November 2026 (JST) from <code>impl-wait-1</code> (<code>9b212d3</code>) and the recorded reviews (<code>outputs/codex-prep/SUBMISSION_REVISED.md</code>), adopted here by Claude Code on the same day with the changes since then: the review fixes IR2-01, IR2-02 and IWAI-01, the Japanese screens and the current test count (Section 3). <strong>Not published or submitted.</strong> Section 1 is proposed Devpost copy; Section 2 is a recording plan; Section 3 is an internal release checklist. Update the final version and evidence before publication.</p>
 <h2 id="proposed-devpost-copy">1. Proposed Devpost copy</h2>
@@ -93,7 +93,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>1:21–1:51</td>
-<td>B: Accept and pay; actual Sandbox approval; return; show booking change and A's refund</td>
+<td>B: <em>Pay US$60.00</em>; actual Sandbox approval; return; show the “Booked” seal, the booking change and A's refund</td>
 <td>The new customer approves payment with PayPal Sandbox, using test money. FlexSlot authorizes, rechecks and captures the payment. It changes both bookings in one database transaction, then requests the ten-dollar partial refund from the existing customer's original payment. The payment and refund have separate progress indicators.</td>
 </tr>
 <tr>
@@ -108,7 +108,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>2:34–2:47</td>
-<td>Final owner/A/B results; project name</td>
+<td>Final owner/A/B results (completion cards with seals); project name</td>
 <td>The shop gains a booking. The existing customer receives compensation for moving. The new customer gets the time they need. That is FlexSlot.</td>
 </tr>
 </tbody>
@@ -133,7 +133,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tbody>
 <tr>
 <td>Review basis</td>
-<td><code>impl-app-1-fix1</code> passed the second review. R1–R5 evidence is accepted for those scenarios. IR2-01, IR2-02 and IWAI-01 are fixed in <code>impl-wait-1-fix1</code> and wait for Codex's re-check. The Japanese screens (<code>d9416ee</code>) are not reviewed yet</td>
+<td><code>impl-app-1-fix1</code> passed the second review. R1–R5 evidence is accepted for those scenarios. IR2-01, IR2-02 and IWAI-01 are fixed in <code>impl-wait-1-fix1</code>. Codex's final review is requested for <code>impl-wait-1-fix1</code> through <code>impl-ui-6</code> (REVIEW.md, last section): PENDING checks, Japanese wording, and the redesigned screens</td>
 </tr>
 <tr>
 <td>Final copy</td>
@@ -141,7 +141,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>Physical phone and first-time user</td>
-<td>Still to be checked. Browser width emulation is useful but does not close these acceptance items</td>
+<td>The owner chose to judge the final design on a PC screen; phone widths were checked in a browser only. A first-time user has not tried the final screens yet</td>
 </tr>
 <tr>
 <td>Recovery coverage</td>
@@ -161,11 +161,11 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>Images and icons</td>
-<td>Design v2 (Codex): one photo-like image of a fictional salon (OpenAI's built-in image tool, 7 November 2026; the tool did not report the exact model or version, so none is claimed) and 18 code-drawn SVG icons. The earlier eight illustrations are not used in the app (the owner preferred less AI-looking, UI-first screens); <code>cover.webp</code> may still serve as a thumbnail base. The owner confirms their use in the public repository and the video before publishing (IMAGES.md)</td>
+<td>18 code-drawn SVG icons. Earlier images (eight illustrations, the design-v2 photo) are no longer used in the app. Codex's v4 <code>cover.webp</code> (16:9) can serve as the Devpost and video thumbnail base. The owner confirms the images' use in the public repository and the video before publishing (IMAGES.md, THIRD_PARTY_NOTICES.md)</td>
 </tr>
 <tr>
 <td>Design and fonts</td>
-<td>The screens follow the crafted mockup v4 with a terracotta accent (owner's choice, 7 November 2026). Photos and the paper texture: Codex's v4 set (six images in the app plus an optional cover; OpenAI's built-in image tool, 7 November 2026; the tool did not report the model or version, so none is claimed); the screens say the photos are AI-generated and not a real business. Fonts are bundled from @fontsource and served from the app's own origin: Shippori Mincho, Zen Kaku Gothic New, Inter and Cormorant Garamond, all under the SIL Open Font License 1.1 (to be listed with the repository's licence before publishing). Seals, the logo, the progress line and the profit bar are drawn in code</td>
+<td>The screens follow the crafted mockup v4 with a terracotta accent (owner's choice, 7 November 2026). Photos and the paper texture: Codex's v4 set (six images in the app plus an optional cover; OpenAI's built-in image tool, 7 November 2026; the tool did not report the model or version, so none is claimed); the screens say the photos are AI-generated and not a real business. Fonts are bundled from @fontsource and served from the app's own origin: Shippori Mincho, Zen Kaku Gothic New, Inter and Cormorant Garamond, all under the SIL Open Font License 1.1 (listed in THIRD_PARTY_NOTICES.md). Seals, the logo, the progress line and the profit bar are drawn in code</td>
 </tr>
 <tr>
 <td>Video</td>
