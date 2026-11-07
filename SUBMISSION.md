@@ -34,6 +34,13 @@ The owner sees an estimate, not a promise of profit. The sample is **USD 60.00 a
 
 Compensation does not increase while a customer waits, and each booking can receive it once. These limits reduce some incentives to hold busy slots for compensation; they do not eliminate strategic behaviour or prove demand.
 
+### Design decisions
+
+- **Money always flows between a customer and the shop.** B pays the shop the normal price; the shop refunds a fixed part of A's own original payment. Customers never pay each other, which avoids person-to-person money transfer and keeps one merchant responsible for every payment and refund.
+- **A opts in before anyone asks.** A registers when they could move, and the fixed compensation is set at that moment. Only people who agreed in advance are ever asked, the program can check a swap at once, and nobody negotiates the amount.
+- **One existing customer is asked at a time.** In this demo, one matching A receives the proposal. A later version would offer it to opted-in customers one after another with a deadline, never to several at once, so two people cannot both accept the same slot.
+- **B pays last.** The shop approves, then A agrees, then B approves the payment. FlexSlot authorizes first, checks the terms again, and only then captures; if the check fails, it releases the authorization instead of charging.
+
 ### How it is built
 
 **PayPal is part of the core workflow.** Orders v2 and Payments v2 support approval, authorization, capture, partial refund, authorization void and a recovery refund to B if the booking cannot be committed after capture. A database transaction cannot atomically include PayPal, so each payment operation is recorded before dispatch, with its fixed input and request identifier. Recovery uses stored results, queries and, where appropriate, a retry of the same operation with the same request ID. Related order and capture queries help verify the recipient, amount and resource relationships before dependent steps continue. Verified webhooks prompt queries; their payloads do not directly settle a booking or payment.
@@ -50,7 +57,7 @@ The hardest part was recovering from an uncertain payment result without treatin
 - Five Sandbox scenarios, R1–R5, exercised interruption and recovery. Response loss and refund rejection were injected, and booking conflicts were introduced deliberately; these were not PayPal outages. Process stops were actual exits. The observed final bookings and expected payment resources matched, without duplicate captures or refunds in those runs.
 - R5 paused at four intermediate states. The three screens did not show the swap or compensation as completed at those pauses. A separate viewing server kept the payment workflow paused.
 - Real Sandbox webhook deliveries were signature-verified and deduplicated, and a tampered copy was rejected.
-- The recorded automated check has **369 tests**, using mock or fake external services and local HTTP relay tests. It is separate from the real Sandbox and Vertex checks.
+- The recorded automated check has **378 tests**, using mock or fake external services and local HTTP relay tests. It is separate from the real Sandbox and Vertex checks.
 - Phone-width and desktop-width browser emulation, and startup from a clean clone in another folder on the same PC, were checked. These are not physical-phone or different-PC tests.
 
 ### What we learned
@@ -63,7 +70,7 @@ Claude Code supported implementation and testing; Codex provided independent rev
 
 ### What is next
 
-The immediate work is to finish the remaining review fixes, test with a first-time user and a physical phone, and prepare reproducible judging access. Salon interviews have not been conducted, and demand is not validated. A future version could add this workflow to an existing booking system; that integration is outside this demo.
+The immediate work is to finish the remaining review fixes, test with a first-time user and a physical phone, and prepare reproducible judging access. Salon interviews have not been conducted, and demand is not validated. A future version could add this workflow to an existing booking system; that integration is outside this demo. Natural next steps for the workflow itself: an opt-in choice at booking time, sequential offers to several opted-in customers, and an optional priority fee for B that funds the compensation.
 
 ### Built with
 
