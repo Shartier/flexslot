@@ -12,7 +12,7 @@ export function paypalReturnText(cancelled: boolean, lang: 'en' | 'ja' = 'en'): 
     return cancelled
       ? {
           title: 'PayPalの画面を離れました',
-          body: 'FlexSlotの画面に戻って、お支払いの状況をご確認ください。状況はFlexSlotがPayPalに直接確認します。このページではわかりません。',
+          body: 'FlexSlotの画面に戻って、お支払いの状況をご確認ください。状況はFlexSlotがPayPalに直接確認します。このページでは決済結果を確定できません。',
         }
       : {
           title: 'PayPalから戻りました',

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="87a6cbaa3a4369357991725f7e2b05ca3ce3bd71de2c11dd824e288c632c4726"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="1ea4a3e192678ee5e5c958ef16c9bbfbab8624c09fd071501482279f4a099064"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,7 +8,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
-<p>更新日：2026-11-07（日本時間）/ 文書版：status-v0.14。</p>
+<p>更新日：2026-11-07（日本時間）/ 文書版：status-v0.15。</p>
 <h2 id="section">現在地</h2>
 <p>DESIGN 14章の1〜5を実装し、三画面からPayPal Sandbox＋Gemini on Vertex AIで一件の振替を最後まで通し、Webhookの実配送（V8）も確かめた段階。実行器の修正版<code>impl-executor-1-fix1</code>はCodexの再確認で合格（IE1-01〜03クローズ）。第2レビューはCodexの指摘IA1-01・IA1-02・IW1-01（いずれもP2）を修正し、タグ<code>impl-app-1-fix1</code>がCodexの再確認で合格した（2026-11-07、「Codexの再確認の結果（<code>impl-app-1-fix1</code>）」の節）。その結果を待たずに、Sandboxでお金が動いた後の中断と回復（R1〜R4）を確かめ、すべて期待どおりに終わった（「Sandboxでの中断・障害回復の確認」の節）。その後、R5（停止中の画面）、スマホ実機の確認、日本語の画面を加え、Codexの指摘IR2-01・IR2-02・IWAI-01（P2）を<code>impl-wait-1-fix1</code>で修正した（Codexの再確認待ち）。状況を「設計の再確認」と「実装・実接続」に分けて記す。</p>
 <div class="table-wrap"><table>
@@ -2605,7 +2605,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>確認：<code>npm run build</code>で7点が<code>/assets/</code>に出力される。内蔵ブラウザ（模擬のワールド、日本語）で、トップページ（PC・明るい表示）、Bの見出し、承認待ちのAのカードのswap、完了したBのカードのdone（スマホ幅375、横スクロールなし）を目視。checkingの表示は試験の状態の範囲で、ブラウザでは見ていない。</p>
-<p>Codexの日本語レビュー（<code>outputs/codex-prep/JAPANESE_UI_REVIEW.md</code>、<code>d9416ee</code>を対象）：全体に自然と評価。日本語の「停止中」の説明（IWAI-01）は、その後の<code>64eedd7</code>で直してある。JA-01（P3：AIが質問を返さないときプログラムが補う確認の質問が英語のまま）と、金融用語の言い換え（P3：「仮売上」→「支払い承認済み（請求は未確定）」、「それまで請求は発生しません」の言い換え、「ドル」→「米ドル」など）は、本人の確認の後に反映する。</p>
+<p>Codexの日本語レビュー（<code>outputs/codex-prep/JAPANESE_UI_REVIEW.md</code>、<code>d9416ee</code>を対象）：全体に自然と評価。日本語の「停止中」の説明（IWAI-01）は、その後の<code>64eedd7</code>で直してある。JA-01（P3：AIが質問を返さないときプログラムが補う確認の質問が英語のまま）と、金融用語の言い換え（P3：「仮売上」→「支払い承認済み（請求は未確定）」、「それまで請求は発生しません」の言い換え、「ドル」→「米ドル」など）は、本人の確認の後に反映した（「Codexの日本語レビューの反映」の節）。</p>
 <h2 id="claude-code2026-11-07-2">画面デザイン案02の採用（Claude Code、2026-11-07）</h2>
 <p>本人の方向修正（イラストはAIらしさが強い。人物よりボタン・予約カード・金額を重視、日米で通用するリッチな画面）を受け、Codexがデザイン案02（<code>outputs/codex-prep/frontend-v2/</code>：独立した画面案、色・角丸・影の定義、18個のSVGアイコン、写真風の架空の美容室1点）を作った。Claudeは旧8点の組み込み（<code>impl-ui-2</code>）と案02を見比べ、<strong>案02を採用</strong>した（本人の希望に合う。判断に必要な日時・金額・ボタンが主役で、人物のイラストに頼らない）。</p>
 <div class="table-wrap"><table>
@@ -2639,6 +2639,52 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>確認：内蔵ブラウザで、店主（PC幅、承認待ち）、A（スマホ幅、承認待ち）、B（スマホ幅・英語、完了）を目視。横スクロールなし、アイコン18個の表示、英語の段階名が1行に収まることを確かめた（「Approvals」「Compensation」が途中で折り返していたため、英語の段階名を短くした）。<code>npm run check</code>は31ファイル・373件成功。実機のスマートフォン、キーボードだけの操作の通し、暗い配色での確認は未実施。英語の日付は従来どおり<code>2026-11-09</code>の形（案02の「Sat, Nov 7」の形は未対応）。</p>
+<h2 id="codexclaude-code2026-11-07-1">Codexの日本語レビューの反映（Claude Code、2026-11-07）</h2>
+<p>本人の指示（「反映して」）で、Codexの日本語レビュー（<code>outputs/codex-prep/JAPANESE_UI_REVIEW.md</code>）の指摘と言い換えを反映した。お金の処理・状態・操作の出し分けは変えていない。対象は<code>impl-ui-3</code>の次のコミット（タグ<code>impl-ja-1</code>）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JA-01（P3）</td>
+<td>AIが日時・施術を返さず質問も返さないときに、プログラムが補う確認の質問へ<code>code</code>（<code>ASK_WINDOWS</code>・<code>ASK_SERVICE</code>）を付け、画面の言語で表示するようにした（<code>views.ts</code>）。日本語：Bは「ご希望の日付と時間帯を教えてください。」「ご希望の施術を選んでください。」、Aは「予約を変更できる日付と時間帯を教えてください。」。AI自身の質問は書かれたまま表示する</td>
+</tr>
+<tr>
+<td>IWAI-01の日本語</td>
+<td>「停止中」の説明をCodexの文案に差し替えた（ボタン名は現在の「再実行（同じ金額）」に合わせた）</td>
+</tr>
+<tr>
+<td>支払いの用語</td>
+<td>「仮売上」をやめ、「支払い承認済み（請求は未確定）」「支払いの承認処理中」「支払いの承認を取り消し中」「支払いの承認を取り消しました」「支払い承認の取り消し」に統一。最終確認に通らなかったときは「請求の確定を見合わせています。支払いの承認取消の状況をご確認ください」</td>
+</tr>
+<tr>
+<td>承認期限</td>
+<td>「それまで請求は発生しません」をやめ、「PayPalでの承認期限：…。承認後に条件を再確認し、問題がなければお支払いを確定します。」。英語も同じ意味に直した（「Until then nothing is charged」を削除）</td>
+</tr>
+<tr>
+<td>金額</td>
+<td>日本語の金額を「10.00ドル」から「US$10.00」に変えた（円に換算しない）。英語は従来どおり「USD 10.00」</td>
+</tr>
+<tr>
+<td>移動→予約変更</td>
+<td>「移動できる日時」「移動に同意する」などを「予約を変更できる日時」「予約変更に同意する」などに統一（理由の文・履歴・利益の内訳・例文を含む）</td>
+</tr>
+<tr>
+<td>その他の言い換え</td>
+<td>「補償付きの予約振替」、「この条件での補償額（固定）」、Aの説明の「元のお支払いから…を一部返金します」、Bの「振替の候補が見つかりました。以下の日時と条件をご確認ください。」、店主の「支払い・返金の履歴」、確認中の「関連する次の処理には進みません」（英語も同様）、PayPalの戻りページの「このページでは決済結果を確定できません。」、「本番では」→「実際に運用する場合は」、期限切れの「承認処理を行っていません（請求はありません）」</td>
+</tr>
+<tr>
+<td>トップページ</td>
+<td>Codexの文案を採用：見出し「満席の時間に、新しい選択肢を。」、説明にA・Bの役割を残し、補足に「表示金額は米ドル、決済はPayPal Sandboxのテスト用」。英語のトップページは変えていない</td>
+</tr>
+</tbody>
+</table></div>
+<p>試験：<code>tests/app-ja-wording.test.ts</code>（5件）を追加した。偽のVertex（外部への接続なし）で、AIが質問を返さないときの日本語・英語の質問（B・A）、AI自身の質問がそのまま出ること、<code>US$</code>の表示、日本語の文言に「仮売上」「移動」「本番」「わかりません」と単独の「ドル」が残っていないことを確かめる。質問の言語の切り替えを戻すと3件が失敗することを確かめた。<code>tests/app-ja.test.ts</code>の金額の期待値を<code>US$</code>に更新した。<code>npm run check</code>は32ファイル・378件成功、<code>npm run build</code>も成功。</p>
+<p>画面：内蔵ブラウザで、模擬AI・模擬PayPalのデモを日本語で一件最後まで通した（トップページ、Aの支払いと条件の登録、Bの希望、店主の承認、Aの「予約変更に同意する」、Bの承認期限の表示、完了後の店主・A）。新しい日本語の例文は従来と同じ時間帯（11月12日 10:00〜12:00）に読み取られた。スマホ幅（375px）でAの完了画面に横スクロールが出ないことを確かめた。JA-01の経路（AIが質問を返さない）は模擬ルールでは起きないため、画面では確認しておらず、偽のVertexの試験だけで確かめた。実機のスマートフォンと実際のVertexの日本語の回答は未確認。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -3078,7 +3124,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
 <li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（<code>impl-app-1-fix1</code>、Codexの再確認待ち）。</li>
 <li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。</li>
-<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。次は、Codexの日本語レビューの反映（本人の確認後）、実機での再確認、初見の人の操作、提出前の確認。</li>
+<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。Codexの日本語レビューを反映した（<code>impl-ja-1</code>）。次は、実機での再確認、初見の人の操作、提出前の確認。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
 <h2 id="section-32">今後の検証記録の書式</h2>

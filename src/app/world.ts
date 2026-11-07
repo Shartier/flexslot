@@ -202,7 +202,7 @@ export function exampleTexts(baseDate: string, lang: 'en' | 'ja' = 'en'): { a: s
     // Japanese examples the mock rules read as well (M月D日, H時〜H時, カット).
     const md = (d: string) => `${Number(d.slice(5, 7))}月${Number(d.slice(8, 10))}日`;
     return {
-      a: `${md(aDay)}なら、10時〜12時の間にカットが終われば移動できます。`,
+      a: `${md(aDay)}なら、10時〜12時の間にカットが終わる時間に予約を変更できます。`,
       b: `${md(bDay)}にカットをお願いしたいです。来られるのは14時〜15時だけです。`,
     };
   }

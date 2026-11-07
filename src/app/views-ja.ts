@@ -51,34 +51,41 @@ export const CASE_LABELS_JA: Record<string, string> = {
   COMPLETED: '振替が完了しました',
   REJECTED: '不成立（辞退）',
   EXPIRED: '不成立（期限切れ）',
-  VOID_PENDING: '不成立・仮売上を取り消し中',
+  VOID_PENDING: '不成立・支払いの承認を取り消し中',
   B_REFUND_PENDING: '振替できず・新しいお客さまへ返金中',
   B_REFUND_FAILED: '振替できず・返金に対応が必要',
   COMPENSATED: '振替できず・返金済み',
 };
-export const RELEASED_LABEL_JA = '不成立・仮売上を取り消しました';
+export const RELEASED_LABEL_JA = '不成立・支払いの承認を取り消しました';
 
 export const REASON_TEXT_JA: Record<string, string> = {
   NO_BOOKING_IN_REQUESTED_WINDOW: 'ご希望の時間に既存の予約はありません（通常の予約で取れる可能性があります）。',
   A_BOOKING_NOT_CONFIRMED: '既存の予約が確定していません。',
   A_BOOKING_ALREADY_STARTED: '既存の予約はすでに始まっています。',
   A_PAYMENT_NOT_VERIFIED: '予約済みのお客さまのお支払いが、まだ確認できていません。',
-  A_NO_FLEX_PREFERENCE: '予約済みのお客さまが、まだ移動できる日時を登録していません。',
+  A_NO_FLEX_PREFERENCE: '予約済みのお客さまが、まだ変更できる日時を登録していません。',
   B_STYLIST_MISMATCH: 'ご希望の担当者が異なります。',
   B_SERVICE_LONGER_THAN_REQUEST_WINDOW: 'ご希望の施術が、ご希望の時間内に収まりません。',
   B_SERVICE_LONGER_THAN_ORIGIN_SLOT: 'ご希望の施術は、既存の予約の時間より長くかかります。',
   B_WINDOW_OUTSIDE_ORIGIN_SLOT: 'ご希望の時間が、既存の予約の時間に収まりません。',
   B_SLOT_OUTSIDE_BUSINESS_HOURS: 'ご希望の時間は営業時間外です。',
   B_SLOT_CONFLICT: 'ご希望の時間は、ほかの予約や確保中の枠と重なっています。',
-  A_SERVICE_LONGER_THAN_WINDOW: '予約済みのお客さまの施術が、移動できる時間内に収まりません。',
-  DESTINATION_IN_PAST: '移動先の時間がすでに過ぎています。',
-  DESTINATION_OUTSIDE_BUSINESS_HOURS: '移動先の時間が営業時間外です。',
-  DESTINATION_OVERLAPS_ORIGIN: '移動先の時間が、元の予約と重なっています。',
-  DESTINATION_CONFLICT: '移動先の時間が、ほかの予約や確保中の枠と重なっています。',
+  A_SERVICE_LONGER_THAN_WINDOW: '予約済みのお客さまの施術が、変更できる時間内に収まりません。',
+  DESTINATION_IN_PAST: '変更先の時間がすでに過ぎています。',
+  DESTINATION_OUTSIDE_BUSINESS_HOURS: '変更先の時間が営業時間外です。',
+  DESTINATION_OVERLAPS_ORIGIN: '変更先の時間が、元の予約と重なっています。',
+  DESTINATION_CONFLICT: '変更先の時間が、ほかの予約や確保中の枠と重なっています。',
   CASE_IN_PROGRESS: '別の振替がすでに進んでいます。',
   A_ALREADY_COMPENSATED: 'この予約は、すでに一度補償を受けています。',
   PAYEE_NOT_SET: 'お店のPayPalアカウントが設定されていません。',
 };
+/** Questions the program adds when the model left them out (intake.ts questionsFor; JA-01). */
+export const PROGRAM_QUESTIONS_JA = {
+  ASK_WINDOWS: 'ご希望の日付と時間帯を教えてください。',
+  ASK_WINDOWS_A: '予約を変更できる日付と時間帯を教えてください。',
+  ASK_SERVICE: 'ご希望の施術を選んでください。',
+};
+
 export const REASON_DEFAULT_JA = 'ご希望の時間は、今はご案内できません。';
 
 export const SOURCE_TEXT_JA: Record<string, string> = {
@@ -90,7 +97,7 @@ export const SOURCE_TEXT_JA: Record<string, string> = {
 export const EVENTS_JA: Record<string, string> = {
   CASE_PROPOSED: '振替の提案ができました',
   OWNER_APPROVED: 'お店が承認しました',
-  A_APPROVED: '予約済みのお客さまが移動に同意しました',
+  A_APPROVED: '予約済みのお客さまが予約変更に同意しました',
   B_APPROVED: '新しいお客さまが承諾しました',
   OWNER_REJECTED: 'お店が見送りました',
   A_REJECTED: '予約済みのお客さまが辞退しました',
@@ -98,7 +105,7 @@ export const EVENTS_JA: Record<string, string> = {
   OFFER_EXPIRED: '提案の期限が切れました',
   PAYMENT_STARTED: 'お支払いを始めました',
   PAYMENT_EXPIRED: 'お支払いの期限が切れました（請求はありません）',
-  PRE_CAPTURE_CHECK_FAILED: '請求前の最終確認に通らなかったため、このお支払いは請求しません。仮売上の取り消しの状況は下の表示をご確認ください',
+  PRE_CAPTURE_CHECK_FAILED: '最終確認に通らなかったため、請求の確定を見合わせています。支払いの承認取消の状況をご確認ください',
   BOOKING_COMMITTED: '予約を変更しました',
 };
 
@@ -106,26 +113,26 @@ export const EVENTS_JA: Record<string, string> = {
 export const STEP_JA = {
   notStarted: '未開始',
   paid: '支払い済み',
-  released: '仮売上を取り消し済み',
+  released: '支払いの承認を取り消しました',
   refunded: '返金済み',
   expiredNotCharged: '支払い期限切れ（請求なし）',
   cancelled: '取り消し',
   attention: 'お店の対応が必要',
   preparingOrder: 'PayPalの注文を準備中',
-  authorizing: '仮売上の手続き中',
+  authorizing: '支払いの承認処理中',
   waitingBuyer: 'PayPalでの承認待ち',
   capturing: '請求を確定中',
   checkingPayment: 'PayPalにお支払いの結果を確認中',
   preparingRefund: '返金を準備中',
-  authorized: '仮売上済み（まだ請求されていません）',
+  authorized: '支払い承認済み（請求は未確定）',
   capturedChecking: '請求済み・内容を確認中',
   pending: 'PayPalで保留中・再確認します',
   checking: 'PayPalに結果を確認中',
-  releasing: '仮売上を取り消し中',
+  releasing: '支払いの承認を取り消し中',
   refunding: '返金の手続き中',
 };
 
-export const BOOKINGS_CHANGED_JA = '変更済み：予約済みのお客さまの予約を移動し、新しい予約を確定しました';
+export const BOOKINGS_CHANGED_JA = '変更済み：予約済みのお客さまの予約を変更し、新しい予約を確定しました';
 export const BOOKINGS_UNCHANGED_JA = '変更なし';
 
 export const PROFIT_JA = {
@@ -133,7 +140,7 @@ export const PROFIT_JA = {
   aCompensationMinor: '予約済みのお客さまへの固定の補償',
   bServiceCostMinor: '新しいお客さまの施術にかかる追加費用（仮定）',
   paymentFeesMinor: '支払い・返金の追加手数料（仮定。PayPalの料率ではありません）',
-  opportunityLossMinor: (pct: number, profit: string) => `移動先の枠で失う見込みの利益（仮定：${pct}% × ${profit}）`,
+  opportunityLossMinor: (pct: number, profit: string) => `変更先の枠で失う見込みの利益（仮定：${pct}% × ${profit}）`,
   otherIncrementalCostMinor: 'その他の追加費用（仮定）',
   note: '架空の仮定による試算です。予約済みのお客さまの元のお支払いはすでに売上に入っているため、二重には数えていません。振替が見合うかどうかは、お店が判断します。',
 };

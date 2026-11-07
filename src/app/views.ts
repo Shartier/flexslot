@@ -7,11 +7,11 @@ import { estimateSwapProfit, expectedOpportunityLossMinor } from '../domain/prof
 import { getCase } from '../executor/store.ts';
 import type { CaseRow } from '../executor/terms.ts';
 import { formatLocal } from '../time.ts';
-import { intakeBlocked, latestPreference, latestRequest, proposalToForm, type DraftRow, type IntakeRole, type LocalWindow, type Question } from './intake.ts';
+import { intakeBlocked, latestPreference, latestRequest, proposalToForm, type DraftRow, type IntakeRole, type LocalWindow, type ProgramQuestion, type Question } from './intake.ts';
 import { exampleTexts, getWorld, hhmm, idsFor, servicesOf, shopOf, stylistsOf, type Role } from './world.ts';
 import {
   A_PAYMENT_JA, ACTOR_JA, BOOKINGS_CHANGED_JA, BOOKINGS_UNCHANGED_JA, CASE_LABELS_JA, EVENTS_JA, jaDateTime, nameJa, OWNER_PAYMENT_JA, PROFIT_JA,
-  REASON_DEFAULT_JA, REASON_TEXT_JA, REFUND_NOTE_JA, RELEASED_LABEL_JA, SOURCE_TEXT_JA, STEP_JA, type Lang,
+  PROGRAM_QUESTIONS_JA, REASON_DEFAULT_JA, REASON_TEXT_JA, REFUND_NOTE_JA, RELEASED_LABEL_JA, SOURCE_TEXT_JA, STEP_JA, type Lang,
 } from './views-ja.ts';
 
 export interface Money {
@@ -24,7 +24,8 @@ export function money(minor: number, currency: string, lang: Lang = 'en'): Money
   const sign = minor < 0 ? '-' : '';
   const abs = Math.abs(minor);
   const n = `${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
-  const text = lang === 'ja' ? `${sign}${n}${currency === 'USD' ? 'ドル' : ` ${currency}`}` : `${sign}${currency} ${n}`;
+  // Japanese: "US$10.00" (Codex JAPANESE_UI_REVIEW: the currency stays explicit; amounts are never converted to JPY).
+  const text = lang === 'ja' ? `${sign}${currency === 'USD' ? 'US$' : `${currency} `}${n}` : `${sign}${currency} ${n}`;
   return { minor, currency, text };
 }
 
@@ -316,9 +317,17 @@ function draftView(db: Db, worldId: string, role: IntakeRole, partyId: string, l
     sourceText: sourceText(d.source, lang),
     manualReason: d.manual_reason,
     proposal,
-    questions: JSON.parse(d.questions_json) as Question[],
+    questions: (JSON.parse(d.questions_json) as Question[]).map((q) => ({ field: q.field, question: q.code ? programQuestion(q.code, role, lang) : q.question })),
   };
 }
+
+/** The questions the program adds itself, in the screen's language (JA-01). The model's own questions are shown as written. */
+const PROGRAM_QUESTIONS: Record<ProgramQuestion, string> = {
+  ASK_WINDOWS: 'Which date and time window works for you?',
+  ASK_SERVICE: 'Which service would you like?',
+};
+const programQuestion = (code: ProgramQuestion, role: IntakeRole, lang: Lang): string =>
+  lang === 'ja' ? (code === 'ASK_WINDOWS' && role === 'A' ? PROGRAM_QUESTIONS_JA.ASK_WINDOWS_A : PROGRAM_QUESTIONS_JA[code]) : PROGRAM_QUESTIONS[code];
 
 export function profitView(db: Db, c: CaseRow, lang: Lang = 'en') {
   const shop = shopOf(db, c.world_id);

@@ -38,7 +38,12 @@ export interface BReqStructured {
 }
 
 export type IntakeRole = 'A' | 'B';
-export type Question = { field: string; question: string };
+/**
+ * A question to the person before confirming. `code` marks a question the program added itself (the model left it
+ * out); the screens show those in the person's language (views.ts). The model's own questions stay as it wrote them.
+ */
+export type Question = { field: string; question: string; code?: ProgramQuestion };
+export type ProgramQuestion = 'ASK_WINDOWS' | 'ASK_SERVICE';
 
 export interface DraftRow {
   id: string;
@@ -96,9 +101,11 @@ function questionsFor(role: IntakeRole, proposal: APreference | BRequest): Quest
   const qs: Question[] = proposal.ambiguities.map((a) => ({ field: a.field, question: a.question }));
   const windows = role === 'A' ? (proposal as APreference).allowed_windows : (proposal as BRequest).required_windows;
   // The program adds the questions the model left out: no time at all, or no service for B.
-  if (windows.length === 0 && qs.length === 0) qs.push({ field: role === 'A' ? 'allowed_windows' : 'required_windows', question: 'Which date and time window works for you?' });
+  if (windows.length === 0 && qs.length === 0) {
+    qs.push({ field: role === 'A' ? 'allowed_windows' : 'required_windows', question: 'Which date and time window works for you?', code: 'ASK_WINDOWS' });
+  }
   if (role === 'B' && (proposal as BRequest).service_id === null && !qs.some((q) => q.field === 'service_id')) {
-    qs.push({ field: 'service_id', question: 'Which service would you like?' });
+    qs.push({ field: 'service_id', question: 'Which service would you like?', code: 'ASK_SERVICE' });
   }
   return qs;
 }

@@ -17,8 +17,8 @@ function expectJapaneseCase(c: any) {
   expect(c.steps.bookings).toMatch(JA);
   for (const e of c.events) expect(e.text).toMatch(JA);
   for (const t of [c.origin, c.destination, c.bSlot, c.offerExpiresAt]) expect(t).toMatch(/^\d{1,2}月\d{1,2}日\([日月火水木金土]\) \d{2}:\d{2}/);
-  expect(c.bPrice.text).toBe('60.00ドル');
-  expect(c.aCompensation.text).toBe('10.00ドル');
+  expect(c.bPrice.text).toBe('US$60.00');
+  expect(c.aCompensation.text).toBe('US$10.00');
 }
 
 describe('Japanese example texts', () => {
@@ -41,7 +41,7 @@ describe('the three screens in Japanese', () => {
     const a0 = await ja(w.a);
     expect(a0.header.shop).toMatchObject({ name: 'フレックスサロン', stylists: ['ミカ'], hours: '10:00〜18:00' });
     expect(a0.header.shop.services.map((s: any) => s.name)).toEqual(['カット', 'カット＋カラー']);
-    expect(a0.header.shop.compensation.text).toBe('10.00ドル');
+    expect(a0.header.shop.compensation.text).toBe('US$10.00');
     expect(a0.booking).toMatchObject({ service: 'カット', stylist: 'ミカ', payment: { state: 'UNPAID', text: '未払い' } });
     expect(a0.booking.time).toMatch(/^\d{1,2}月\d{1,2}日\(.\) 14:00〜15:00$/);
 
@@ -49,7 +49,7 @@ describe('the three screens in Japanese', () => {
     expect((await ja(w.a)).booking.payment).toEqual({ state: 'PAID', text: '支払い済み' });
     await intake(w.a, a0.header.examples.a, 'A');
     const a1 = await ja(w.a);
-    expect(a1.preference).toMatchObject({ source: 'AI（模擬ルール）', compensation: { text: '10.00ドル' } });
+    expect(a1.preference).toMatchObject({ source: 'AI（模擬ルール）', compensation: { text: 'US$10.00' } });
     expect(a1.refundNote).toMatch(JA);
 
     const b0 = await ja(w.b);
@@ -63,7 +63,7 @@ describe('the three screens in Japanese', () => {
     expectJapaneseCase(cs);
 
     const o1 = await ja(w.owner);
-    expect(o1.cases[0].profit.additionalProfit.text).toBe('20.50ドル');
+    expect(o1.cases[0].profit.additionalProfit.text).toBe('US$20.50');
     for (const l of o1.cases[0].profit.lines) expect(l.name).toMatch(JA);
     expect(o1.cases[0].profit.note).toMatch(JA);
     expect(o1.bookings[0]).toMatchObject({ customer: 'お客さまA', service: 'カット' });
