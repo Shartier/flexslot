@@ -1,11 +1,13 @@
-// Shared pieces of the three screens: the app frame and mode bar (DESIGN 10), status badges, the swap's slot,
-// before/after and amounts (design v2 from Codex, 2026-11-07), the PayPal approval box, and the intake panel (free
-// text -> AI proposal or manual form -> the person's confirmation, DESIGN 9). Texts come from i18n.tsx (English or
-// Japanese); the server sends its own wording in the same language. Everything shown comes from the server's state.
+// Shared pieces of the three screens in design 1 "salon" of the HTML mockup v3 (design/mockup-v3, chosen by the
+// owner on 2026-11-07): the app bar (the screen named by what it is for, a fixed-width language switch, the modes and
+// the demo switcher), two-line action buttons with a busy state that refuses a second send, the swap's slot,
+// before/after, amounts, approvals and progress, notices, image slots, the PayPal approval box and the intake panel
+// (DESIGN 9). Texts come from i18n.tsx; the server sends its own wording in the same language. Everything shown comes
+// from the server's state; no inline styles (CSP).
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { explain, type Api } from './api.ts';
-import { ART } from './art.ts';
+import { ART, PHOTOS } from './art.ts';
 import { loadDemo, type RoleSeg } from './demo-links.ts';
 import { showDate, useLang, useT } from './i18n.tsx';
 import type { Approval, CaseView, Conditions, Draft, Header, Money, Step, Window } from './types.ts';
@@ -30,7 +32,7 @@ export type IconName =
   | 'sliders'
   | 'store';
 
-/** One of Codex's 18 SVG icons (decorative: the label next to it carries the meaning). */
+/** One of the 18 SVG icons (decorative: the label next to it carries the meaning). */
 export function Icon({ name }: { name: IconName }) {
   return (
     <svg className="ico" aria-hidden="true" focusable="false">
@@ -39,15 +41,14 @@ export function Icon({ name }: { name: IconName }) {
   );
 }
 
-/** An amount for display: "$60.00 USD" (amounts inside sentences keep the server's wording). */
+/** An amount for display: "US$60.00" (amounts inside sentences keep the server's wording). */
 export function Amount({ m, sign }: { m: Money; sign?: '+' | '−' }) {
   const n = (Math.abs(m.minor) / 100).toFixed(2);
   return (
-    <span className="amount num">
+    <span className="money num">
       {sign ?? (m.minor < 0 ? '−' : '')}
-      {m.currency === 'USD' ? '$' : ''}
+      <span className="cur">{m.currency === 'USD' ? 'US$' : `${m.currency} `}</span>
       {n}
-      <span className="currency">{m.currency}</span>
     </span>
   );
 }
@@ -58,13 +59,19 @@ export function splitSpan(span: string): [string, string] {
   return i < 0 ? [span, ''] : [span.slice(0, i), span.slice(i + 1)];
 }
 
+/** Two fixed-width choices: the switch never moves when the language changes (phone finding, 2026-11-07). */
 export function LangSwitch() {
   const { lang, setLang } = useLang();
   const t = useT();
   return (
-    <button type="button" className="lang-switch" onClick={() => setLang(lang === 'ja' ? 'en' : 'ja')} aria-label={t.langSwitchLabel} lang={lang === 'ja' ? 'en' : 'ja'}>
-      {t.langSwitch}
-    </button>
+    <div className="lang-seg" role="group" aria-label={t.langAria}>
+      <button type="button" lang="ja" aria-pressed={lang === 'ja'} onClick={() => setLang('ja')}>
+        日本語
+      </button>
+      <button type="button" lang="en" aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
+        EN
+      </button>
+    </div>
   );
 }
 
@@ -73,17 +80,17 @@ export function DemoSwitcher({ worldId, current }: { worldId: string; current: R
   const t = useT();
   const demo = loadDemo();
   if (!demo || demo.worldId !== worldId) return null;
-  const label: Record<RoleSeg, string> = { owner: t.roleOwner, a: t.roleA, b: t.roleB };
+  const label: Record<RoleSeg, string> = { owner: t.demoShop, a: 'A', b: 'B' };
   return (
-    <nav className="switcher" aria-label={t.switchTo}>
-      <span className="small muted-text">{t.switchTo}</span>
+    <nav className="demo-seg" aria-label={t.switchTo}>
+      <span className="demo-label">{t.demoLabel}</span>
       {(['owner', 'a', 'b'] as const).map((k) =>
         k === current ? (
-          <span key={k} className="chip ok" aria-current="page">
+          <span key={k} className="on" aria-current="page">
             {label[k]}
           </span>
         ) : (
-          <a key={k} className="chip link-chip" href={demo.links[k]}>
+          <a key={k} href={demo.links[k]}>
             {label[k]}
           </a>
         ),
@@ -94,42 +101,57 @@ export function DemoSwitcher({ worldId, current }: { worldId: string; current: R
 
 export function Wordmark() {
   return (
-    <span className="wordmark">
-      <span className="mark" aria-hidden="true" />
+    <span className="brand">
+      <span className="logo" aria-hidden="true">
+        <Icon name="swap" />
+      </span>
       FlexSlot
     </span>
   );
 }
 
-export function TopBar({ header, roleName, roleSeg }: { header: Header; roleName: string; roleSeg: RoleSeg }) {
-  const m = header.modes;
+/** The top of every screen: brand and language, the screen's title, then the modes and the demo switcher. */
+export function AppBar({ title, eyebrow, header, roleSeg }: { title: string; eyebrow: string; header?: Header; roleSeg?: RoleSeg }) {
   const t = useT();
+  const m = header?.modes;
   return (
-    <header className="topbar">
-      <div className="brand">
-        <Wordmark />
-        <span className="role">{roleName}</span>
+    <header className="appbar">
+      <div className="appbar-inner">
+        <div className="appbar-row">
+          <Wordmark />
+          <LangSwitch />
+        </div>
+        <div className="appbar-title">
+          <h1>{title}</h1>
+          <p className="eyebrow">{eyebrow}</p>
+        </div>
+        {header && m && roleSeg && (
+          <div className="modes" role="group" aria-label={t.modesAria}>
+            <span className={`mode ${m.ai === 'VERTEX' ? 'live' : 'mock'}`}>
+              <Icon name="sliders" />
+              {m.ai === 'VERTEX' ? t.aiVertex(m.aiModel) : t.aiMock}
+            </span>
+            <span className={`mode ${m.payment === 'SANDBOX' ? 'live' : 'mock'}`}>
+              <Icon name="lock" />
+              {m.payment === 'SANDBOX' ? t.paySandbox : t.payMock}
+            </span>
+            <DemoSwitcher worldId={header.worldId} current={roleSeg} />
+          </div>
+        )}
       </div>
-      <div className="modes" aria-label={t.modesAria}>
-        <span className={`mode ${m.ai === 'VERTEX' ? 'live' : 'mock'}`}>{m.ai === 'VERTEX' ? t.aiVertex(m.aiModel) : t.aiMock}</span>
-        <span className={`mode ${m.payment === 'SANDBOX' ? 'live' : 'mock'}`}>{m.payment === 'SANDBOX' ? t.paySandbox : t.payMock}</span>
-        <LangSwitch />
-      </div>
-      <DemoSwitcher worldId={header.worldId} current={roleSeg} />
     </header>
   );
 }
 
-/** The frame of a role screen: the owner gets a navy side rail with in-page links (wide screens only). */
-export function Shell({ header, roleName, roleSeg, children }: { header: Header; roleName: string; roleSeg: RoleSeg; children: ReactNode }) {
+/** The frame of a role screen: app bar, main column, side column; the owner gets in-page links (wide screens). */
+export function Shell({ header, roleSeg, title, side, children }: { header: Header; roleSeg: RoleSeg; title: string; side?: ReactNode; children: ReactNode }) {
   const t = useT();
   return (
-    <div className={`shell ${roleSeg === 'owner' ? 'with-rail' : 'customer'}`}>
-      {roleSeg === 'owner' && (
-        <aside className="sidebar">
-          <Wordmark />
-          <p className="rail-label">{t.workspace}</p>
-          <nav className="rail-nav" aria-label={t.workspace}>
+    <>
+      <AppBar title={title} eyebrow={t.eyebrowRole[roleSeg](header.shop.name)} header={header} roleSeg={roleSeg} />
+      <div className={`layout${roleSeg === 'owner' ? ' has-rail' : ''}`}>
+        {roleSeg === 'owner' && (
+          <nav className="rail" aria-label={t.workspace}>
             <a href="#swap">
               <Icon name="swap" />
               {t.nav.swap}
@@ -147,49 +169,110 @@ export function Shell({ header, roleName, roleSeg, children }: { header: Header;
               {t.nav.history}
             </a>
           </nav>
-          <div className="rail-foot">
-            <p className="rail-shop">
-              <Icon name="store" />
-              {header.shop.name}
-            </p>
-            <p className="rail-note">{t.shopFoot(header.shop.stylists.join(', '))}</p>
-          </div>
-        </aside>
-      )}
-      <div className="workspace">
-        <TopBar header={header} roleName={roleName} roleSeg={roleSeg} />
-        <main>{children}</main>
+        )}
+        <main className="content">{children}</main>
+        {side && <aside className="side">{side}</aside>}
       </div>
-    </div>
+      <footer className="app-foot">
+        <DemoNote header={header} />
+        <p>{t.appFoot}</p>
+      </footer>
+    </>
   );
 }
 
-export function PageHeading({ eyebrow, title, lead }: { eyebrow: string; title: string; lead: string }) {
+// ---- buttons ---------------------------------------------------------------------------------------------------
+
+type BtnKind = 'primary' | 'secondary' | 'ghost';
+
+function BtnInner({ kind, icon, label, sub, busy, arrow }: { kind: BtnKind; icon: IconName; label: ReactNode; sub?: ReactNode; busy: boolean; arrow: boolean }) {
   return (
-    <div className="page-heading">
-      <p className="eyebrow">{eyebrow}</p>
-      <h1>{title}</h1>
-      <p className="lead">{lead}</p>
-    </div>
+    <>
+      {kind === 'primary' && (
+        <span className="bi" aria-hidden="true">
+          {busy ? <span className="spin" /> : <Icon name={icon} />}
+        </span>
+      )}
+      <span className="bt">
+        <span className="bl">{label}</span>
+        {sub && <span className="bs">{sub}</span>}
+      </span>
+      {kind === 'primary' && arrow && (
+        <span className="ba" aria-hidden="true">
+          <Icon name="arrow" />
+        </span>
+      )}
+    </>
   );
 }
+
+/** A two-line action: what it does, and what happens next. While busy it shows that and accepts no second press. */
+export function ActionButton(p: { kind?: BtnKind; icon?: IconName; label: ReactNode; sub?: ReactNode; busy?: boolean; busyLabel?: string; disabled?: boolean; onClick: () => void }) {
+  const t = useT();
+  const kind = p.kind ?? 'primary';
+  const busy = p.busy ?? false;
+  return (
+    <button type="button" className={`btn btn-${kind}${busy ? ' is-loading' : ''}`} disabled={busy || p.disabled} aria-busy={busy || undefined} onClick={p.onClick}>
+      <BtnInner kind={kind} icon={p.icon ?? 'check'} label={busy ? (p.busyLabel ?? t.working) : p.label} sub={busy ? t.workingSub : p.sub} busy={busy} arrow={!busy && !p.disabled} />
+    </button>
+  );
+}
+
+export function ActionLink(p: { kind?: BtnKind; icon?: IconName; label: ReactNode; sub?: ReactNode; href: string; newTab?: boolean }) {
+  const kind = p.kind ?? 'primary';
+  return (
+    <a className={`btn btn-${kind}`} href={p.href} {...(p.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+      <BtnInner kind={kind} icon={p.icon ?? 'arrow'} label={p.label} sub={p.sub} busy={false} arrow />
+    </a>
+  );
+}
+
+/** The decision: on phones the main action stays at the bottom while the card is read (`pinned`). */
+export function ActionBar({ primary, secondary, note, pinned = true }: { primary?: ReactNode; secondary?: ReactNode; note?: ReactNode; pinned?: boolean }) {
+  return (
+    <>
+      {primary && <div className={`action-bar${pinned ? '' : ' static'}`}>{primary}</div>}
+      {secondary && <div className="action-alt">{secondary}</div>}
+      {note && <p className="fine">{note}</p>}
+    </>
+  );
+}
+
+// ---- the swap ----------------------------------------------------------------------------------------------------
 
 /** The requested slot in large type, with the shop's local time zone. */
 export function SlotHeading({ label, span, tz }: { label: string; span: string; tz: string }) {
   const t = useT();
   const [date, time] = splitSpan(span);
   return (
-    <div className="slot-heading">
-      <div>
-        <p className="slot-label">{label}</p>
-        <p className="date">{date}</p>
-        <p className="time num">{time}</p>
-        <p className="time-zone">{t.localTime(tz)}</p>
+    <>
+      <p className="label">{label}</p>
+      <div className="big-slot">
+        <span className="cal" aria-hidden="true">
+          <Icon name="calendar" />
+        </span>
+        <div>
+          <p className="d">{date}</p>
+          <p className="t num">{time}</p>
+          <p className="tz">{t.localTime(tz)}</p>
+        </div>
       </div>
-      <span className="slot-symbol" aria-hidden="true">
-        <Icon name="calendar" />
+    </>
+  );
+}
+
+export function ServiceMeta({ service, stylist }: { service: ReactNode; stylist: ReactNode }) {
+  return (
+    <p className="meta">
+      <span>
+        <Icon name="scissors" />
+        {service}
       </span>
-    </div>
+      <span>
+        <Icon name="person" />
+        {stylist}
+      </span>
+    </p>
   );
 }
 
@@ -200,24 +283,18 @@ export function MoveCards({ from, to }: { from: string; to: string }) {
   const [td, tt] = splitSpan(to);
   return (
     <div className="move">
-      <div className="move-col">
-        <p className="move-label">
-          <Icon name="calendar" />
-          {t.fromLabel}
-        </p>
-        <p className="move-date">{fd}</p>
-        <p className="move-time num">{ft}</p>
+      <div className="slot from">
+        <span className="lbl">{t.beforeLabel}</span>
+        <span className="d">{fd}</span>
+        <span className="t num">{ft}</span>
       </div>
       <span className="move-arrow" aria-hidden="true">
         <Icon name="arrow" />
       </span>
-      <div className="move-col to">
-        <p className="move-label">
-          <Icon name="swap" />
-          {t.toLabel}
-        </p>
-        <p className="move-date">{td}</p>
-        <p className="move-time num">{tt}</p>
+      <div className="slot to">
+        <span className="lbl">{t.afterLabel}</span>
+        <span className="d">{td}</span>
+        <span className="t num">{tt}</span>
       </div>
     </div>
   );
@@ -226,10 +303,10 @@ export function MoveCards({ from, to }: { from: string; to: string }) {
 /** Amounts in a row, shown before the buttons. */
 export function AmountGrid({ items }: { items: Array<{ label: string; m: Money; sign?: '+' | '−'; strong?: boolean }> }) {
   return (
-    <div className="amount-grid">
+    <div className="tiles">
       {items.map((it) => (
-        <div key={it.label} className={it.strong ? 'strong' : ''}>
-          <p className="amount-label">{it.label}</p>
+        <div key={it.label} className={`tile${it.strong ? ' strong' : ''}`}>
+          <span className="tl">{it.label}</span>
           <Amount m={it.m} {...(it.sign ? { sign: it.sign } : {})} />
         </div>
       ))}
@@ -240,6 +317,8 @@ export function AmountGrid({ items }: { items: Array<{ label: string; m: Money; 
 /** Where the swap stands, as six stages; an ended case shows where it stopped. Derived from the server's status. */
 type StageState = 'done' | 'current' | 'attention' | 'ended' | 'todo';
 const PAYMENT = ['READY', 'PAYMENT_STARTED', 'AUTHORIZING', 'AUTHORIZED', 'CAPTURING', 'PAYMENT_PENDING', 'PAYMENT_UNKNOWN', 'RECONCILING', 'VOID_PENDING'];
+/** Statuses in which the payment's result is being checked (no new payment is requested). */
+export const CHECKING = ['CAPTURING', 'PAYMENT_PENDING', 'PAYMENT_UNKNOWN', 'RECONCILING'];
 export function stagesOf(c: CaseView): StageState[] {
   const s = c.status;
   const at = (i: number, here: StageState): StageState[] => [0, 1, 2, 3, 4, 5].map((k) => (k < i ? 'done' : k === i ? here : 'todo'));
@@ -262,56 +341,66 @@ export function CaseProgress({ c }: { c: CaseView }) {
   return (
     <ol className="stepper" aria-label={t.progressAria}>
       {t.stages.map((label, i) => (
-        <li key={label} className={states[i]} aria-current={states[i] === 'current' || states[i] === 'attention' ? 'step' : undefined}>
-          <span className="step-dot" aria-hidden="true">
+        <li key={label} className={`step ${states[i]}`} aria-current={states[i] === 'current' || states[i] === 'attention' ? 'step' : undefined}>
+          <span className="dot" aria-hidden="true">
             {states[i] === 'done' ? <Icon name="check" /> : states[i] === 'attention' ? '!' : states[i] === 'ended' ? '–' : i + 1}
           </span>
-          <span className="step-label">{label}</span>
+          <span className="sl">{label}</span>
         </li>
       ))}
     </ol>
   );
 }
 
-/** The owner's profit estimate as a navy card: the result first, then each line. */
+/** The owner's profit estimate: the result first, then each line. */
 export function ProfitCard({ profit }: { profit: { lines: Array<{ name: string; sign: number; amount: Money }>; additionalProfit: Money; note: string } }) {
   const t = useT();
   return (
-    <section className="panel profit-card" aria-labelledby="profit-title">
-      <p className="profit-label" id="profit-title">
-        <Icon name="receipt" />
+    <section className="card profit-card" aria-labelledby="profit-title">
+      <p className="label" id="profit-title">
         {t.profitTitle}
       </p>
-      <p className="profit-amount">
+      <p className="amount-big plus">
         <Amount m={profit.additionalProfit} sign="+" />
       </p>
-      <p className="profit-kicker">{t.profitKicker}</p>
-      <div className="profit-breakdown">
+      <p className="fine">{t.profitKicker}</p>
+      <div className="rows">
         {profit.lines.map((l, i) => (
-          <div key={i} className={i === 0 ? 'revenue' : ''}>
+          <div key={i} className="row">
             <span>{l.name}</span>
-            <strong>
-              <Amount m={l.amount} sign={l.sign < 0 ? '−' : '+'} />
-            </strong>
+            <Amount m={l.amount} sign={l.sign < 0 ? '−' : '+'} />
           </div>
         ))}
       </div>
-      <p className="profit-foot">{profit.note}</p>
+      <p className="fine">{profit.note}</p>
     </section>
   );
 }
 
-/** The salon: a small supporting photo (fictional, AI-generated) and the shop's terms. */
+/** A place for a photo. Until Codex's images for design 1 arrive, a plain surface in the design's colours. */
+export function ImageSlot({ shape = 'photo', icon = 'store', src }: { shape?: 'photo' | 'wide' | 'sq'; icon?: IconName; src?: string | undefined }) {
+  return (
+    <figure className={`img-slot ${shape}`} aria-hidden="true">
+      {src ? (
+        <img src={src} alt="" loading="lazy" />
+      ) : (
+        <span className="img-ic">
+          <Icon name={icon} />
+        </span>
+      )}
+    </figure>
+  );
+}
+
+/** The salon: its picture, name and the terms of a change. */
 export function ShopCard({ header, children }: { header: Header; children?: ReactNode }) {
   const t = useT();
   return (
-    <section className="panel shop-card">
-      <figure className="photo-card">
-        <img src={ART.salon} alt="" aria-hidden="true" width={900} height={600} loading="lazy" />
-      </figure>
-      <p className="photo-credit">{t.photoCredit}</p>
+    <section className="card shop-card">
+      <ImageSlot src={PHOTOS.side} />
+      {PHOTOS.side && <p className="photo-credit">{t.photoCredit}</p>}
       <p className="shop-name">{header.shop.name}</p>
-      <p className="small muted-text">{t.shopSub(header.shop.stylists.join(', '))}</p>
+      <p className="fine">{t.shopSub(header.shop.stylists.join(', '))}</p>
       {children}
     </section>
   );
@@ -352,21 +441,19 @@ export function StatusChip({ c }: { c: CaseView }) {
   );
 }
 
+/** The three approvals side by side. */
 export function ApprovalChips({ c }: { c: CaseView }) {
   const t = useT();
   const one = (label: string, v: string | null) => (
-    <span className={`approval-item ${v === 'APPROVED' ? 'approved' : v === 'REJECTED' ? 'declined' : ''}`}>
-      <Icon name={v === 'APPROVED' ? 'check' : v === 'REJECTED' ? 'close' : 'clock'} />
-      {label}: {v === 'APPROVED' ? t.apApproved : v === 'REJECTED' ? t.apDeclined : t.apWaiting}
-    </span>
-  );
-  return (
-    <div className="approval-row">
-      {one(t.apShop, c.approvals.OWNER)}
-      {one(t.apA, c.approvals.A)}
-      {one(t.apB, c.approvals.B)}
+    <div key={label} className={`ap ${v === 'APPROVED' ? 'ok' : v === 'REJECTED' ? 'no' : 'wait'}`}>
+      <span className="who">{label}</span>
+      <span className="st">
+        <Icon name={v === 'APPROVED' ? 'check' : v === 'REJECTED' ? 'close' : 'clock'} />
+        {v === 'APPROVED' ? t.apApproved : v === 'REJECTED' ? t.apDeclined : t.apWaiting}
+      </span>
     </div>
   );
+  return <div className="approvals">{[one(t.apShop, c.approvals.OWNER), one(t.apA, c.approvals.A), one(t.apB, c.approvals.B)]}</div>;
 }
 
 export function Events({ c }: { c: CaseView }) {
@@ -386,28 +473,53 @@ export function Events({ c }: { c: CaseView }) {
   );
 }
 
-export function Notice({ kind, children }: { kind: 'info' | 'warn' | 'error' | 'ok'; children: ReactNode }) {
-  return <div className={`notice ${kind}`} role={kind === 'error' ? 'alert' : 'status'}>{children}</div>;
+type NoticeKind = 'info' | 'wait' | 'warn' | 'error' | 'ok';
+const NOTICE_ICON: Record<NoticeKind, IconName> = { info: 'info', wait: 'clock', warn: 'alert', error: 'alert', ok: 'circleCheck' };
+
+/** A notice with an icon; `pending` shows a turning mark while something is being checked. */
+export function Notice({ kind, title, pending, children }: { kind: NoticeKind; title?: ReactNode; pending?: boolean; children?: ReactNode }) {
+  return (
+    <div className={`notice ${kind}`} role={kind === 'error' ? 'alert' : 'status'}>
+      <span className="nic" aria-hidden="true">
+        {pending ? <span className="spin" /> : <Icon name={NOTICE_ICON[kind]} />}
+      </span>
+      <div className="nbody">
+        {title && <strong className="ntitle">{title}</strong>}
+        {children}
+      </div>
+    </div>
+  );
 }
 
-/** Runs an action with a busy flag and a plain-language error. */
+/**
+ * Runs an action with a busy flag and a plain-language error. A second run while one is in flight is ignored, even
+ * before the screen has re-rendered (the "Create demo" double tap on the phone, 2026-11-07). `busyKey` names the
+ * button that started it, so only that one shows the busy state.
+ */
 export function useAction(refresh: () => Promise<void>) {
   const [busy, setBusy] = useState(false);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const inFlight = useRef(false);
   const t = useT();
-  const run = async (fn: () => Promise<unknown>) => {
+  const run = async (fn: () => Promise<unknown>, key = 'main') => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
+    setBusyKey(key);
     setError(null);
     try {
       await fn();
     } catch (e) {
       setError(explain(e, t));
     } finally {
+      inFlight.current = false;
       setBusy(false);
+      setBusyKey(null);
       await refresh();
     }
   };
-  return { busy, error, run, setError };
+  return { busy, busyKey, error, run, setError };
 }
 
 /**
@@ -432,9 +544,7 @@ export function ApprovalBox(p: { approval: Approval | null; onApproved: () => Pr
         <p>
           <strong>{t.mockPayTitle}</strong> {t.mockPayBody}
         </p>
-        <button className="primary" disabled={p.busy} onClick={() => void p.onMock()}>
-          {t.mockApprove}
-        </button>
+        <ActionBar pinned={false} primary={<ActionButton icon="lock" label={t.mockApprove} sub={t.mockApproveSub} busy={p.busy} onClick={() => void p.onMock()} />} />
       </div>
     );
   }
@@ -447,15 +557,12 @@ export function ApprovalBox(p: { approval: Approval | null; onApproved: () => Pr
       <p>
         <strong>{t.sandboxTitle}</strong> {t.sandboxBody}
       </p>
-      <div className="row wrap">
-        <a className="button primary" href={url} target="_blank" rel="noopener noreferrer">
-          {t.openSandbox}
-        </a>
-        <button disabled={p.busy} onClick={() => void p.onApproved()}>
-          {t.iApproved}
-        </button>
-      </div>
-      <label className="small">
+      <ActionBar
+        pinned={false}
+        primary={<ActionLink icon="lock" href={url} newTab label={t.openSandbox} sub={t.openSandboxSub} />}
+        secondary={<ActionButton kind="secondary" label={t.iApproved} busy={p.busy} onClick={() => void p.onApproved()} />}
+      />
+      <label className="small copy-link">
         {t.approvalLink}
         <span className="row">
           <input className="mono" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
@@ -552,14 +659,14 @@ export function IntakePanel(p: {
   }, [draft?.id]);
 
   if (p.blocked === 'CASE_IN_PROGRESS') return <Notice kind="info">{t.lockedInProgress}</Notice>;
-  if (p.blocked === 'SWAP_DONE') return <Notice kind="info">{t.swapDone}</Notice>;
+  if (p.blocked === 'SWAP_DONE') return <Notice kind="ok">{t.swapDone}</Notice>;
 
   const submit = (useAi: boolean) =>
     act.run(async () => {
       const r = await p.api.post<{ aiFailure: string | null }>('intake/draft', { text, useAi });
       setResult(r.aiFailure ? t.aiCouldNotBeUsed(t.aiFail[`AI_${r.aiFailure}`] ?? r.aiFailure) : null);
       setText('');
-    });
+    }, useAi ? 'ai' : 'manual');
 
   if (!draft) {
     return (
@@ -572,15 +679,22 @@ export function IntakePanel(p: {
         <button type="button" className="link small" onClick={() => setText(example)}>
           {t.useExample}
         </button>
-        <div className="row wrap">
-          <button className="primary" disabled={act.busy || !text.trim() || !p.header.modes.aiAvailable} onClick={() => void submit(true)}>
-            {act.busy ? t.reading : t.structureWith(aiName)}
-          </button>
-          <button disabled={act.busy || !text.trim()} onClick={() => void submit(false)}>
-            {t.fillMyself}
-          </button>
-        </div>
-        <p className="small muted-text">{t.aiOnlyProposes}</p>
+        <ActionBar
+          pinned={false}
+          primary={
+            <ActionButton
+              icon="sliders"
+              label={t.structureWith(aiName)}
+              sub={t.structureSub}
+              busy={act.busyKey === 'ai'}
+              busyLabel={t.reading}
+              disabled={act.busy || !text.trim() || !p.header.modes.aiAvailable}
+              onClick={() => void submit(true)}
+            />
+          }
+          secondary={<ActionButton kind="secondary" label={t.fillMyself} busy={act.busyKey === 'manual'} disabled={act.busy || !text.trim()} onClick={() => void submit(false)} />}
+          note={t.aiOnlyProposes}
+        />
         {result && <Notice kind="info">{result}</Notice>}
         {act.error && <Notice kind="error">{act.error}</Notice>}
       </div>
@@ -592,11 +706,11 @@ export function IntakePanel(p: {
       const body = p.role === 'A' ? { draftId: draft.id, windows } : { draftId: draft.id, windows, serviceId, stylistId: draft.proposal?.stylistId ?? null };
       const r = await p.api.post<{ version: number; proposal: { feasible: boolean } | null }>('intake/confirm', body);
       setResult(t.savedAsVersion(r.version));
-    });
+    }, 'confirm');
   const answer = () =>
     act.run(async () => {
       await p.api.post('intake/answer', { draftId: draft.id, answers: answers.filter((a) => a.trim()) });
-    });
+    }, 'answer');
 
   return (
     <div className="intake">
@@ -620,9 +734,7 @@ export function IntakePanel(p: {
               <input value={answers[i] ?? ''} onChange={(e) => setAnswers(answers.map((a, j) => (j === i ? e.target.value : a)))} placeholder={t.yourAnswer} />
             </label>
           ))}
-          <button disabled={act.busy || !answers.some((a) => a.trim())} onClick={() => void answer()}>
-            {t.sendAnswers}
-          </button>
+          <ActionBar pinned={false} secondary={<ActionButton kind="secondary" label={t.sendAnswers} busy={act.busyKey === 'answer'} disabled={act.busy || !answers.some((a) => a.trim())} onClick={() => void answer()} />} />
           <p className="small muted-text">{t.orSetTimes}</p>
         </div>
       )}
@@ -644,11 +756,18 @@ export function IntakePanel(p: {
         <WindowsEditor windows={windows} onChange={setWindows} />
         {p.role === 'A' && <p className="small muted-text">{t.aSameNote(p.header.shop.compensation.text)}</p>}
       </div>
-      <div className="row wrap">
-        <button className="primary" disabled={act.busy || windows.length === 0 || (p.role === 'B' && !serviceId)} onClick={() => void confirm()}>
-          {t.confirmConditions}
-        </button>
-      </div>
+      <ActionBar
+        pinned={false}
+        primary={
+          <ActionButton
+            label={t.confirmConditions}
+            sub={t.confirmSub}
+            busy={act.busyKey === 'confirm'}
+            disabled={act.busy || windows.length === 0 || (p.role === 'B' && !serviceId)}
+            onClick={() => void confirm()}
+          />
+        }
+      />
       {act.error && <Notice kind="error">{act.error}</Notice>}
     </div>
   );

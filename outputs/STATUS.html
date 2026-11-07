@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="7168fd8e4d274e9ca0c751979608ffb3b7236e2fd0673fbaca6518266e409b27"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="59685a8d2f2b1822571e77c3818f20e4eab53e8685bbfffd91128666dff84a7d"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -2746,6 +2746,39 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>確認：内蔵ブラウザで、3案×5画面×各状態×日英×スマホ・PCの144通りについて、端末の枠からのはみ出しがないことをスクリプトで確かめた（最初の版では、スマホ幅で承認状況の3列がはみ出していたため直した）。スマホ幅で案1のお店、案2のA、案3のBを、1360px幅で案1のお店を目視。主要ボタンの処理中の表示と二度押しの無視、アプリ内の言語の切り替えが位置を変えずに働くことを確かめた。実機のスマートフォンでは未確認。本人の選択待ち。</p>
+<h2 id="impl-ui-4claude-code2026-11-07">案1「上質サロン」の組み込み（<code>impl-ui-4</code>、Claude Code、2026-11-07）</h2>
+<p>本人が画面イメージ案03から**案1「上質サロン」**を選んだ（「OKです。とてもいいです」の後の選択）。Codexへの画像の依頼は<code>IMAGES.md</code>の末尾の節にまとめた（<code>04c652b</code>）。画像を待つ間に、案1を三画面とトップページに組み込んだ。サーバー・お金の処理・状態・権限・<code>actions</code>による操作の出し分けは変えていない。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変更</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>上段</td>
+<td>焦げ茶の帯に、ロゴ・言語の切り替え（日本語｜EN、幅固定で位置が動かない）・画面の見出し（お店「振替の確認と承認」、A「ご予約の確認」／提案がある間は「ご予約の日時変更のお願い」、B「満席の時間のご予約」、トップ「予約の振替（デモ）」）・店名と立場・モードの表示・デモ用の画面切り替え（お店／A／B）</td>
+</tr>
+<tr>
+<td>ボタン</td>
+<td>主要な操作は2行（操作と、その次に起きること）。金茶のグラデーションと影、ホバー・押下・キーボードの焦点・無効・処理中を区別。処理中は「処理しています…」と回転する印。<code>useAction</code>に送信中の印を加え、画面が描き直される前の二度押しも受け付けない（「デモを作成」も同じ）。スマホでは判断のボタンを画面下に残す</td>
+</tr>
+<tr>
+<td>各画面</td>
+<td>A：提案があると濃い色の案内（返金額 US$10.00）→変更前後→返金の内訳→承認状況→同意のボタン。完了で緑の案内。B：案内→予約券（日時・施術・合計）→承諾と支払い→進み具合。完了で緑の案内。支払いの確認中は「お支払いの結果を確認しています。もう一度お支払いいただく必要はありません」。お店：承認が必要なとき・確認中・完了のお知らせ→振替の提案（希望枠・変更前後・お金の見込み・承認状況・承認のボタン）→お金と予約の動き。右列（PC）に利益の試算と店のカード。トップ：見出し・説明・3つの印、模擬／Sandboxの選択カード、作成後は3画面のカード（開く・リンク）</td>
+</tr>
+<tr>
+<td>画像</td>
+<td>以前の写真（<code>salon-detail.webp</code>）は表示しない（ファイルは残置）。Codexの画像が届くまで、案1の色の仮の面を表示する（トップ16:10、店のカード3:2、Bの予約券1:1）。届いたら<code>src/web/art.ts</code>の<code>PHOTOS</code>に入れる</td>
+</tr>
+<tr>
+<td>書体</td>
+<td>見出しは明朝（端末のYu Mincho・Hiragino Mincho・Noto Serif CJKなど。外部の書体は読み込まない）、本文はゴシック</td>
+</tr>
+</tbody>
+</table></div>
+<p>確認：<code>npm run check</code>は32ファイル・378件成功（画面の変更で落ちた試験はない）、<code>npm run build</code>成功。内蔵ブラウザで模擬AI・模擬決済のデモを一件最後まで通した（トップ→A→B→お店→A→B→完了、途中で英語に切り替え、最後に日本語で確認）。「デモを作成」を同時に2回押してもPOSTは1回だけ。言語を切り替えても切り替えの位置は同じ。1360px幅でお店の三列（メニュー・本体・右列）を目視し、右列の金額が折り返しで左に落ちていたのを直した。375px幅で、トップ・お店・A・Bを日英とも横にはみ出さないことをスクリプトで確かめ、判断のボタンがスマホ幅でだけ画面下に残る設定であることを確かめた。実機のスマートフォン、Sandbox・Vertexのモードでの新しい画面、キーボードだけの操作の通しは未確認。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -3185,7 +3218,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
 <li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（<code>impl-app-1-fix1</code>、Codexの再確認待ち）。</li>
 <li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。</li>
-<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。Codexの日本語レビューを反映した（<code>impl-ja-1</code>）。実機で再確認し、切り替え・上段のタイトル・写真・ボタンの所見を受けた。HTMLの画面イメージ案03（3つの方向）を作った（本人の選択待ち）。次は、案を固めてからフロントエンドを強化し、その後Codexに画像を依頼する。初見の人の操作、提出前の確認。</li>
+<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。Codexの日本語レビューを反映した（<code>impl-ja-1</code>）。実機で再確認し、切り替え・上段のタイトル・写真・ボタンの所見を受けた。HTMLの画面イメージ案03（3つの方向）を作り、本人が案1「上質サロン」を選んだ。Codexへ画像を依頼する文を<code>IMAGES.md</code>にまとめ、案1を画面に組み込んだ（<code>impl-ui-4</code>）。次は、Codexの画像の組み込み、実機での確認、初見の人の操作、提出前の確認。初見の人の操作、提出前の確認。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
 <h2 id="section-33">今後の検証記録の書式</h2>

@@ -1,4 +1,5 @@
 // Entry of the screens: the landing page (create a demo world), the three role screens, and the PayPal return page.
+// Design 1 "salon" of the HTML mockup v3 (design/mockup-v3, chosen by the owner on 2026-11-07).
 
 import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -8,29 +9,61 @@ import { loadDemo, saveDemo, type DemoLinks, type RoleSeg } from './demo-links.t
 import { LangProvider, useLang, useT } from './i18n.tsx';
 import { OwnerScreen } from './owner.tsx';
 import type { AState, BState, OwnerState } from './types.ts';
-import { LangSwitch, Notice, Wordmark } from './ui.tsx';
-import { ART } from './art.ts';
+import { ActionBar, ActionButton, ActionLink, AppBar, Icon, ImageSlot, Notice } from './ui.tsx';
+import { PHOTOS } from './art.ts';
 import { paypalReturnText } from './paypal-return.ts';
 import './styles.css';
 
-function InviteLinks({ demo }: { demo: DemoLinks }) {
+/** The three screens of a demo world: open here, or copy a link for another device. */
+function DemoLinksCard({ demo, title, created }: { demo: DemoLinks; title: string; created?: boolean }) {
   const t = useT();
-  const roles: Array<[RoleSeg, string]> = [
-    ['owner', t.roleOwner],
-    ['a', t.roleA],
-    ['b', t.roleB],
+  const roles: Array<[RoleSeg, string, string]> = [
+    ['owner', 'S', t.roleOwner],
+    ['a', 'A', t.roleA],
+    ['b', 'B', t.roleB],
   ];
   return (
-    <>
-      {roles.map(([k, label]) => (
-        <div className="invite" key={k}>
-          <a className="button" href={demo.links[k]} target="_blank" rel="noopener noreferrer">
-            {t.openAs(label)}
-          </a>
-          <input className="mono" readOnly value={demo.links[k]} onFocus={(e) => e.currentTarget.select()} aria-label={t.linkOf(label)} />
-        </div>
-      ))}
-    </>
+    <section className="card">
+      <div className="card-head">
+        <h2>{title}</h2>
+        {created && (
+          <span className="chip ok">
+            <Icon name="check" />
+            {t.createdChip}
+          </span>
+        )}
+      </div>
+      {created && <p className="fine">{t.createdBody}</p>}
+      <div className="links3">
+        {roles.map(([k, badge, label]) => (
+          <div className="role" key={k}>
+            <p className="rh">
+              <span className="badge-role" aria-hidden="true">
+                {badge}
+              </span>
+              {label}
+            </p>
+            <p className="rb">{t.roleTask[k]}</p>
+            <ActionLink kind="secondary" href={demo.links[k]} label={t.openScreen} />
+            <input className="mono" readOnly value={demo.links[k]} onFocus={(e) => e.currentTarget.select()} aria-label={t.linkOf(label)} />
+          </div>
+        ))}
+      </div>
+      {created && <p className="fine">{t.suggestedOrder}</p>}
+    </section>
+  );
+}
+
+function Option(p: { name: string; checked: boolean; disabled?: boolean; onChange: () => void; title: string; sub: string }) {
+  return (
+    <label className={`opt${p.checked ? ' on' : ''}${p.disabled ? ' off' : ''}`}>
+      <input type="radio" name={p.name} checked={p.checked} disabled={p.disabled} onChange={p.onChange} />
+      <span className="radio" aria-hidden="true" />
+      <span className="opt-text">
+        <b>{p.title}</b>
+        <span>{p.sub}</span>
+      </span>
+    </label>
   );
 }
 
@@ -42,6 +75,8 @@ function Landing() {
   const [world, setWorld] = useState<DemoLinks | null>(null);
   const [last] = useState<DemoLinks | null>(loadDemo);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   useEffect(() => {
     void fetch('/api/config').then(async (r) => {
       const c = (await r.json()) as NonNullable<typeof config>;
@@ -50,93 +85,125 @@ function Landing() {
       if (c.payment.sandbox) setPaymentMode('SANDBOX');
     });
   }, []);
+  // One demo per press: a second tap while the first request runs is ignored (phone check, 2026-11-07).
   const create = async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
     setError(null);
-    const r = await fetch('/api/worlds', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ aiMode, paymentMode }) });
-    if (!r.ok) {
-      setError(t.createFailed(((await r.json()) as { error?: string }).error ?? String(r.status)));
-      return;
+    try {
+      const r = await fetch('/api/worlds', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ aiMode, paymentMode }) });
+      if (!r.ok) {
+        setError(t.createFailed(((await r.json()) as { error?: string }).error ?? String(r.status)));
+        return;
+      }
+      const w = (await r.json()) as DemoLinks;
+      saveDemo({ worldId: w.worldId, links: w.links });
+      setWorld(w);
+    } catch {
+      setError(t.errorUnknown);
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
     }
-    const w = (await r.json()) as DemoLinks;
-    saveDemo({ worldId: w.worldId, links: w.links });
-    setWorld(w);
   };
   return (
     <>
-      <header className="topbar">
-        <div className="brand">
-          <Wordmark />
-          <span className="role">{t.tagline}</span>
-        </div>
-        <div className="modes">
-          <LangSwitch />
-        </div>
-      </header>
-      <main>
-        <section className="card hero">
-          <div className="hero-grid">
+      <AppBar title={t.landingTitle} eyebrow={t.landingEyebrow} />
+      <div className="layout single">
+        <main className="content">
+          <section className="top-hero">
             <div>
-              <h1>{t.heroTitle}</h1>
-              <p>{t.heroBody}</p>
-              <p className="small muted-text">{t.scope}</p>
+              <span className="kicker soft">
+                <Icon name="swap" />
+                {t.landingKicker}
+              </span>
+              <h2 className="display">{t.heroTitle}</h2>
+              <p className="lead">{t.heroLead}</p>
+              <p className="chips">
+                <span className="chip muted">
+                  <Icon name="store" />
+                  {t.chipSalon}
+                </span>
+                <span className="chip muted">
+                  <Icon name="receipt" />
+                  {t.chipUsd}
+                </span>
+                <span className="chip muted">
+                  <Icon name="lock" />
+                  {t.chipTest}
+                </span>
+              </p>
             </div>
-            <figure className="hero-photo">
-              <img src={ART.salon} alt="" aria-hidden="true" width={900} height={600} />
-              <figcaption className="photo-credit">{t.photoCredit}</figcaption>
-            </figure>
-          </div>
-        </section>
-        <section className="card">
-          <h2>{t.createTitle}</h2>
-          {!config ? (
-            <p>{t.loading}</p>
+            <ImageSlot shape="wide" src={PHOTOS.hero} />
+          </section>
+
+          {world ? (
+            <DemoLinksCard demo={world} title={t.createdTitle} created />
           ) : (
-            <div className="grid2">
-              <fieldset>
-                <legend>{t.aiLegend}</legend>
-                <label className="radio">
-                  <input type="radio" name="ai" checked={aiMode === 'VERTEX'} disabled={!config.ai.vertex} onChange={() => setAiMode('VERTEX')} />
-                  Gemini on Vertex AI {config.ai.vertexModel ? `(${config.ai.vertexModel})` : t.notConfigured}
-                </label>
-                <label className="radio">
-                  <input type="radio" name="ai" checked={aiMode === 'MOCK'} onChange={() => setAiMode('MOCK')} />
-                  {t.mockAiOption}
-                </label>
-              </fieldset>
-              <fieldset>
-                <legend>{t.paymentLegend}</legend>
-                <label className="radio">
-                  <input type="radio" name="pay" checked={paymentMode === 'SANDBOX'} disabled={!config.payment.sandbox} onChange={() => setPaymentMode('SANDBOX')} />
-                  {t.sandboxOption} {config.payment.sandbox ? '' : t.notConfigured}
-                </label>
-                <label className="radio">
-                  <input type="radio" name="pay" checked={paymentMode === 'MOCK'} onChange={() => setPaymentMode('MOCK')} />
-                  {t.mockPayOption}
-                </label>
-              </fieldset>
-            </div>
+            <section className="card">
+              <h2>{t.createTitle}</h2>
+              {!config ? (
+                <p>{t.loading}</p>
+              ) : (
+                <div className="grid2">
+                  <fieldset className="choice">
+                    <legend>{t.aiLegend}</legend>
+                    <Option
+                      name="ai"
+                      checked={aiMode === 'VERTEX'}
+                      disabled={!config.ai.vertex}
+                      onChange={() => setAiMode('VERTEX')}
+                      title="Gemini on Vertex AI"
+                      sub={config.ai.vertex ? t.optVertexSub(config.ai.vertexModel) : t.notOnServer}
+                    />
+                    <Option name="ai" checked={aiMode === 'MOCK'} onChange={() => setAiMode('MOCK')} title={t.optMockAi} sub={t.optMockAiSub} />
+                  </fieldset>
+                  <fieldset className="choice">
+                    <legend>{t.paymentLegend}</legend>
+                    <Option
+                      name="pay"
+                      checked={paymentMode === 'SANDBOX'}
+                      disabled={!config.payment.sandbox}
+                      onChange={() => setPaymentMode('SANDBOX')}
+                      title={t.optSandbox}
+                      sub={config.payment.sandbox ? t.optSandboxSub : t.notOnServer}
+                    />
+                    <Option name="pay" checked={paymentMode === 'MOCK'} onChange={() => setPaymentMode('MOCK')} title={t.optMockPay} sub={t.optMockPaySub} />
+                  </fieldset>
+                </div>
+              )}
+              <ActionBar
+                pinned={false}
+                primary={<ActionButton icon="swap" label={t.createButton} sub={t.createSub} busy={busy} disabled={!config} onClick={() => void create()} />}
+                note={t.modesFixed}
+              />
+              {error && <Notice kind="error">{error}</Notice>}
+            </section>
           )}
-          <p className="small muted-text">{t.modesFixed}</p>
-          <button className="primary" disabled={!config} onClick={() => void create()}>
-            {t.createButton}
-          </button>
-          {error && <Notice kind="error">{error}</Notice>}
-        </section>
-        {world && (
+          {!world && last && <DemoLinksCard demo={last} title={t.lastDemoTitle} />}
+
           <section className="card">
-            <h2>{t.linksTitle}</h2>
-            <p className="small">{t.linksBody}</p>
-            <InviteLinks demo={world} />
-            <p className="small muted-text">{t.suggestedOrder}</p>
+            <h2>{t.howTitle}</h2>
+            <ol className="steps3">
+              {t.how.map(([title, body], i) => (
+                <li key={i}>
+                  <span className="n" aria-hidden="true">
+                    <Icon name={(['calendar', 'person', 'check'] as const)[i] ?? 'check'} />
+                  </span>
+                  <span>
+                    <b>{title}</b>
+                    <span>{body}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </section>
-        )}
-        {!world && last && (
-          <section className="card">
-            <h2>{t.lastDemoTitle}</h2>
-            <InviteLinks demo={last} />
-          </section>
-        )}
-      </main>
+        </main>
+      </div>
+      <footer className="app-foot">
+        <p>{t.appFoot}</p>
+      </footer>
     </>
   );
 }
@@ -154,12 +221,14 @@ function PayPalReturn({ cancelled }: { cancelled: boolean }) {
   // IA1-02: no claim about the payment here; the FlexSlot screen shows what FlexSlot confirmed with PayPal.
   const text = paypalReturnText(cancelled, lang);
   return (
-    <main>
-      <section className="card">
-        <h1>{text.title}</h1>
-        <p>{text.body}</p>
-      </section>
-    </main>
+    <div className="layout single">
+      <main className="content">
+        <section className="card">
+          <h1 className="page-h1">{text.title}</h1>
+          <p>{text.body}</p>
+        </section>
+      </main>
+    </div>
   );
 }
 
