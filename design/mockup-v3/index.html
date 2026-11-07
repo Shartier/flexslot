@@ -84,6 +84,10 @@ button{font:inherit}
 }
 .app[data-theme=friendly]{background:radial-gradient(520px 260px at 100% 0,#ffe0d4 0,rgba(255,224,212,0) 70%),radial-gradient(420px 260px at 0 35%,#ffe6f0 0,rgba(255,230,240,0) 70%),var(--bg)}
 .app[data-theme=friendly] .hero.ok{color:#1f4a42}
+/* 配色の比較（案1のみ、2026-11-07 本人の所見「緑とゴールドにやや違和感」）。green は組み込み済みの配色 */
+.app[data-theme=salon][data-palette=navy]{--ok:#2c4a72;--ok-soft:#e6ecf5;--ok-line:#c5d2e6;--ok-hero:linear-gradient(135deg,#1c2e4a,#2f4d78)}
+.app[data-theme=salon][data-palette=brown]{--ok:#6b4a2e;--ok-soft:#f2e7d8;--ok-line:#dcc6a8;--ok-hero:linear-gradient(135deg,#2b2420,#4d3b2e)}
+.app[data-theme=salon][data-palette=espresso]{--brand-hi:#55453b;--brand-lo:#2b2420;--on-brand:#f6efe6;--brand-soft:#efe7dd;--brand-line:#d8cabb;--brand-text:#3f332b;--shadow-btn:0 10px 22px rgba(43,36,32,.32);--shadow-btn-h:0 14px 28px rgba(43,36,32,.4);--logo-bg:linear-gradient(135deg,#e3d6c5,#9a8774);--kicker-bg:rgba(255,255,255,.14);--kicker-ink:#efe3d2;--hero-deco:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,0) 70%);--img-bg:linear-gradient(160deg,#ddd2c4 0%,#b9a894 45%,#7f6d5c 100%);--focus:#9a8774;--ok:#4d7a62;--ok-soft:#e8f0ea;--ok-line:#c8dacd;--ok-hero:linear-gradient(135deg,#3c5d4c,#577965)}
 
 /* ---------- app ---------- */
 .app{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;min-height:100%;-webkit-font-smoothing:antialiased}
@@ -371,7 +375,14 @@ button{font:inherit}
 <script>
 // Design mockup only: fixed sample data, no server, no payments. The real screens keep CaseView, steps, actions,
 // permissions, the mode labels and the recovery texts from the server.
-const S = { theme: 'salon', screen: 'top', state: 0, lang: 'ja', width: 'phone', labels: true, busy: null };
+const S = { theme: 'salon', screen: 'top', state: 0, lang: 'ja', width: 'phone', labels: true, busy: null, palette: 'navy' };
+const PALETTES = [['green', '現在 緑×金'], ['navy', '1 ネイビー×金'], ['brown', '2 ブラウン×金'], ['espresso', '3 焦げ茶×セージ']];
+const PALETTE_NOTES = {
+  green: '組み込み済みの配色。完了・追加利益・進み具合の完了が緑、ボタンが金茶。',
+  navy: '緑をネイビーに替える。完了・追加利益・進み具合の完了がネイビー、ボタンは金茶のまま。紺と金は上質な組み合わせで、お金の画面の落ち着きも出る。',
+  brown: '緑を使わず、完了も焦げ茶と金のチェックで表す同系色。統一感は最も強いが、完了と途中の区別は色より文字と記号に頼る。',
+  espresso: '金茶をやめ、ボタンを焦げ茶に。完了は落ち着いたセージ（くすんだ緑）。シックで美容室らしいが、華やかさは控えめ。',
+};
 const THEMES = [['salon', '案1 上質サロン'], ['trust', '案2 安心の決済'], ['friendly', '案3 やさしいアプリ']];
 const SCREENS = [['top', 'トップ'], ['owner', 'お店'], ['a', 'A（予約済み）'], ['b', 'B（新規）'], ['kit', '部品一覧']];
 const STATES = { top: ['作成前', '作成後'], owner: ['承認前', '支払い確認中', '完了'], a: ['同意前', '確認中', '完了'], b: ['支払い前', '支払い確認中', '完了'], kit: [] };
@@ -582,6 +593,7 @@ function renderReview() {
   const st = STATES[S.screen];
   document.getElementById('review').innerHTML = `<h1>FlexSlot 画面イメージ案03</h1>
     <div class="rgroup"><span>デザイン</span>${seg('theme', THEMES, S.theme)}</div>
+    ${S.theme === 'salon' ? `<div class="rgroup"><span>配色（案1）</span>${seg('palette', PALETTES, S.palette)}</div>` : ''}
     <div class="rgroup"><span>画面</span>${seg('screen', SCREENS, S.screen)}</div>
     ${st.length ? `<div class="rgroup"><span>状態</span>${seg('state', st.map((n, i) => [i, n]), S.state)}</div>` : ''}
     <div class="rgroup"><span>幅</span>${seg('width', [['phone', 'スマホ'], ['pc', 'PC']], S.width)}</div>
@@ -596,15 +608,17 @@ const NOTES = {
 const COMMON = ['上段の見出しを画面ごとに「何の画面か」で表す（お店「振替の確認と承認」、A「ご予約の日時変更のお願い」、B「満席の時間のご予約」）。サービス名は左上のロゴだけにする。', '言語は右上の固定幅の切り替え（日本語｜EN）。押しても位置が動かない。', '主要ボタンは2行（何をするか＋押すと次に何が起きるか）。押下・処理中・無効を区別し、処理中は二重送信を止める（「デモを作成」の二度押し対策）。', 'スマホでは、判断のボタンが提案カードを読んでいる間は画面下に残る。', '画像は「画像枠」で場所・比率・大きさだけを決める。中身は、この案が決まった後にCodexが作る（部品一覧に枠の一覧）。', '模擬／Sandboxの表示、承認の状況、金額の内訳、処理の進み具合、停止中の表示は今の画面の意味のまま残す。', 'これは見た目の案で、表示は固定の見本。押すと次の状態に進むのは案の確認用。実際の画面はサーバーのデータで動く。'];
 function renderNotes() {
   const name = THEMES.find(([k]) => k === S.theme)[1];
-  document.getElementById('notes').innerHTML = `<h2>${name}の考え方</h2><ul>${NOTES[S.theme].map((x) => `<li>${x}</li>`).join('')}</ul><h3>3案に共通の改善（スマホでの所見への対応）</h3><ul>${COMMON.map((x) => `<li>${x}</li>`).join('')}</ul>`;
+  const pal = S.theme === 'salon' ? `<h3>配色：${PALETTES.find(([k]) => k === S.palette)[1]}</h3><p>${PALETTE_NOTES[S.palette]}</p>` : '';
+  document.getElementById('notes').innerHTML = `<h2>${name}の考え方</h2><ul>${NOTES[S.theme].map((x) => `<li>${x}</li>`).join('')}</ul>${pal}<h3>3案に共通の改善（スマホでの所見への対応）</h3><ul>${COMMON.map((x) => `<li>${x}</li>`).join('')}</ul>`;
 }
 function syncHash() {
-  const h = `#t=${S.theme}&s=${S.screen}&st=${S.state}&l=${S.lang}&w=${S.width}`;
+  const h = `#t=${S.theme}&p=${S.palette}&s=${S.screen}&st=${S.state}&l=${S.lang}&w=${S.width}`;
   if (location.hash !== h) history.replaceState(null, '', h);
 }
 function readHash() {
   const p = new URLSearchParams(location.hash.slice(1));
   if (THEMES.some(([k]) => k === p.get('t'))) S.theme = p.get('t');
+  if (PALETTES.some(([k]) => k === p.get('p'))) S.palette = p.get('p');
   if (SCREENS.some(([k]) => k === p.get('s'))) S.screen = p.get('s');
   const st = Number(p.get('st'));
   if (Number.isInteger(st) && st >= 0 && st < Math.max(1, STATES[S.screen].length)) S.state = st;
@@ -615,6 +629,7 @@ function render() {
   document.getElementById('device').className = `device ${S.width}`;
   const app = document.getElementById('app');
   app.dataset.theme = S.theme;
+  app.dataset.palette = S.palette;
   app.lang = S.lang;
   app.classList.toggle('hide-labels', !S.labels);
   app.innerHTML = { top: viewTop, owner: viewOwner, a: viewA, b: viewB, kit: viewKit }[S.screen]();
