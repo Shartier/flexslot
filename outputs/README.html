@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="bee62f04707690305d28e9af41c51bb49d340f2e3a94afc1ca340d564d3eceec"><title>FlexSlot | README</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="99d50924662e8842da48160ca97659ce5022f9152fcd9f3a79ec3284b60ec5c6"><title>FlexSlot | README</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -87,6 +87,39 @@ npm run dev
 </table></div>
 <p>Credentials stay on the server (Application Default Credentials); nothing is sent to the browser. Restart <code>npm run dev</code> after editing <code>.env</code>. The landing page then offers <em>Gemini on Vertex AI</em> and <em>PayPal Sandbox</em>; modes that are not configured cannot be chosen, and a failed AI call switches the person to a manual form — it never silently falls back to the mock.</p>
 <p>Other settings: <code>FLEXSLOT_PORT</code> (default <code>8787</code>), <code>FLEXSLOT_DATA_DIR</code> (default <code>data</code>).</p>
+<h2 id="preparing-a-hosted-mock-demo">Preparing a hosted mock demo</h2>
+<p>Hosting is prepared, not yet deployed. The public demo uses <strong>mock AI and mock payments only</strong>. Real Sandbox and Vertex checks are recorded separately; do not present the public demo as connected to those services.</p>
+<p>Run one Node process on a host with a <strong>persistent local disk</strong>. Put both <code>flexslot.sqlite</code> (including its WAL files) and <code>mock-paypal-state.json</code> in the same dedicated data directory. Do not copy your local connected database, <code>.env</code>, ADC or other credentials to the host. A public process refuses a database containing Sandbox or Vertex worlds.</p>
+<p>Configure these variables in the hosting environment, outside <code>.env</code>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Hosting value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FLEXSLOT_PUBLIC_ORIGIN</code></td>
+<td>The chosen HTTPS origin, with no path or query</td>
+</tr>
+<tr>
+<td><code>FLEXSLOT_HOST</code></td>
+<td><code>0.0.0.0</code> behind the host's HTTPS proxy; default remains <code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>FLEXSLOT_DATA_DIR</code></td>
+<td>A dedicated persistent directory, for example <code>/var/data</code></td>
+</tr>
+<tr>
+<td><code>PORT</code></td>
+<td>The host's HTTP port; used only in public mode unless <code>FLEXSLOT_PORT</code> overrides it</td>
+</tr>
+</tbody>
+</table></div>
+<p>Build with <code>npm ci</code> and <code>npm run build</code>; start with <code>npm start</code>. <code>/api/config</code> is a read-only health endpoint. With an explicit public origin, the server ignores <code>.env</code>, configures no Sandbox or Vertex adapter, and closes webhooks. Binding externally without a public origin and a data directory fails at startup. Keep one instance and one process; this SQLite design is not configured for horizontal scaling.</p>
+<p>New worlds are limited globally to ten in a rolling ten-minute window. The count comes from saved world records and survives process restarts. A rejected creation does not consume capacity. Existing worlds remain usable while creation is limited; the UI asks new visitors to wait. A world and its role links expire after fourteen days, so judges should create their own fresh demo. This is a small public demo guard, not a comprehensive abuse-prevention service.</p>
+<p>Before publishing, confirm the exact revision, URL, hosting charges and persistent disk with the owner. Verify a complete mock flow and the saved state after a real host restart. A local browser/proxy test is not verification of the hosting provider. Keep the demo available through the judging period and keep the local quick start as a fallback.</p>
 <h2 id="scripts">Scripts</h2>
 <div class="table-wrap"><table>
 <thead>

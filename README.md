@@ -60,6 +60,27 @@ Credentials stay on the server (Application Default Credentials); nothing is sen
 
 Other settings: `FLEXSLOT_PORT` (default `8787`), `FLEXSLOT_DATA_DIR` (default `data`).
 
+## Preparing a hosted mock demo
+
+Hosting is prepared, not yet deployed. The public demo uses **mock AI and mock payments only**. Real Sandbox and Vertex checks are recorded separately; do not present the public demo as connected to those services.
+
+Run one Node process on a host with a **persistent local disk**. Put both `flexslot.sqlite` (including its WAL files) and `mock-paypal-state.json` in the same dedicated data directory. Do not copy your local connected database, `.env`, ADC or other credentials to the host. A public process refuses a database containing Sandbox or Vertex worlds.
+
+Configure these variables in the hosting environment, outside `.env`:
+
+| Variable | Hosting value |
+| --- | --- |
+| `FLEXSLOT_PUBLIC_ORIGIN` | The chosen HTTPS origin, with no path or query |
+| `FLEXSLOT_HOST` | `0.0.0.0` behind the host's HTTPS proxy; default remains `127.0.0.1` |
+| `FLEXSLOT_DATA_DIR` | A dedicated persistent directory, for example `/var/data` |
+| `PORT` | The host's HTTP port; used only in public mode unless `FLEXSLOT_PORT` overrides it |
+
+Build with `npm ci` and `npm run build`; start with `npm start`. `/api/config` is a read-only health endpoint. With an explicit public origin, the server ignores `.env`, configures no Sandbox or Vertex adapter, and closes webhooks. Binding externally without a public origin and a data directory fails at startup. Keep one instance and one process; this SQLite design is not configured for horizontal scaling.
+
+New worlds are limited globally to ten in a rolling ten-minute window. The count comes from saved world records and survives process restarts. A rejected creation does not consume capacity. Existing worlds remain usable while creation is limited; the UI asks new visitors to wait. A world and its role links expire after fourteen days, so judges should create their own fresh demo. This is a small public demo guard, not a comprehensive abuse-prevention service.
+
+Before publishing, confirm the exact revision, URL, hosting charges and persistent disk with the owner. Verify a complete mock flow and the saved state after a real host restart. A local browser/proxy test is not verification of the hosting provider. Keep the demo available through the judging period and keep the local quick start as a fallback.
+
 ## Scripts
 
 | Command | What it does |

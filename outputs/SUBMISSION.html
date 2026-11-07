@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="7bcd5105994d723e1203446d00786b02ff71a83fb395b6326df694ca1c3d485f"><title>FlexSlot | 提出物の下書き</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="b1900af62e5d1dc02b0057fd417939df4eed7cd76c13632b81f510325c32665e"><title>FlexSlot | 提出物の下書き</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -47,7 +47,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>Five Sandbox scenarios, R1–R5, exercised interruption and recovery. Response loss and refund rejection were injected, and booking conflicts were introduced deliberately; these were not PayPal outages. Process stops were actual exits. The observed final bookings and expected payment resources matched, without duplicate captures or refunds in those runs.</li>
 <li>R5 paused at four intermediate states. The three screens did not show the swap or compensation as completed at those pauses. A separate viewing server kept the payment workflow paused.</li>
 <li>Real Sandbox webhook deliveries were signature-verified and deduplicated, and a tampered copy was rejected.</li>
-<li>The recorded automated check has <strong>390 tests</strong>, using mock or fake external services and local HTTP relay tests. It is separate from the real Sandbox and Vertex checks.</li>
+<li>The recorded automated check has <strong>402 tests</strong>, including the public-mode boundary checks, using mock or fake external services and local HTTP relay tests. It is separate from the real Sandbox and Vertex checks.</li>
 <li>Phone-width and desktop-width browser emulation, and startup from a clean clone in another folder on the same PC, were checked. These are not physical-phone or different-PC tests.</li>
 </ul>
 <h3 id="what-we-learned">What we learned</h3>
@@ -157,7 +157,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>Judging access</td>
-<td>Choose complete run instructions or a hosted demo. The README provides an account-free mock route and setup for connected modes; label their differences. Confirm how judges can evaluate the connected functionality without receiving the developer's private API keys</td>
+<td>The owner chose a public URL as well as the public repository and local quick start. Hosting provider, URL and deployment remain undecided/unverified. The intended public demo uses mock AI and mock payments only; the video demonstrates real Sandbox and Vertex operation. No developer credentials are provided to judges. Public-host preparation was locally tested by Codex, separately from the independent review of <code>impl-final-2</code></td>
 </tr>
 <tr>
 <td>Images and icons</td>

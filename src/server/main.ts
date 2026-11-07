@@ -1,5 +1,6 @@
 // FlexSlot server entry point: one process, one SQLite file, the HTTP API and screens, the send queue and recovery
-// (DESIGN 2). Listens on 127.0.0.1 only (no public exposure; DESIGN 11). Payment: PayPal Sandbox (if configured in
+// (DESIGN 2). Listens on 127.0.0.1 by default; an explicit public mock configuration can bind externally.
+// Payment: PayPal Sandbox (if configured in
 // .env) and the in-process mock; AI: Gemini on Vertex AI (if configured) and the mock rules. No Live PayPal code.
 // Logs never contain secrets, tokens, request ids or customer text.
 
@@ -24,26 +25,28 @@ import { createApp } from './app.ts';
 import { nodeHandler } from './http.ts';
 import { Runtime } from './runtime.ts';
 import { WebhookInbox } from '../app/webhooks.ts';
-import { parsePublicOrigin, publicGuard, PUBLIC_MAX_WORLDS } from './public-mode.ts';
+import { assertPublicData, parsePublicOrigin, publicGuard, PUBLIC_MAX_WORLDS, PUBLIC_WINDOW_MS } from './public-mode.ts';
+import { listenConfig } from './listen-config.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const log = (line: Record<string, unknown>) => console.log(JSON.stringify({ t: new Date().toISOString(), ...line }));
 
-// Public mode (public-mode.ts): a temporary tunnel's origin; then mock only — .env is not read and no Sandbox or
+// Public mode (public-mode.ts): an explicitly chosen HTTPS origin; then mock only — .env is not read and no Sandbox or
 // Vertex is configured, whatever the environment holds.
 const publicOrigin = parsePublicOrigin(process.env.FLEXSLOT_PUBLIC_ORIGIN);
 const envFile = join(ROOT, '.env');
 if (!publicOrigin && existsSync(envFile)) process.loadEnvFile(envFile);
 const env = process.env;
 
-const port = Number(env.FLEXSLOT_PORT ?? 8787);
+const { host, port } = listenConfig(env, publicOrigin);
 const dataDir = resolve(ROOT, env.FLEXSLOT_DATA_DIR ?? 'data');
 mkdirSync(dataDir, { recursive: true });
 const localOrigins = [`http://localhost:${port}`, `http://127.0.0.1:${port}`];
 // The first origin is used in invite links (and makes the session cookie Secure when it is https).
-const origins = publicOrigin ? [publicOrigin, ...localOrigins] : localOrigins;
+const origins = publicOrigin ? [publicOrigin] : localOrigins;
 const clock = systemClock;
 const db = openDatabase(join(dataDir, 'flexslot.sqlite'));
+if (publicOrigin) assertPublicData(db);
 
 // ---- payment: mock (always) and Sandbox (when .env has the credentials) --------------------------------------
 const mockStateFile = join(dataDir, 'mock-paypal-state.json');
@@ -67,7 +70,7 @@ const paypal: Partial<Record<PaymentMode, PayPalPort>> = {
 };
 let sandboxPayee: string | null = null;
 let webhookId: string | null = null;
-if (publicOrigin) log({ event: 'config', publicMode: 'mock only', publicOrigin, maxNewWorlds: PUBLIC_MAX_WORLDS, webhooks: 'closed' });
+if (publicOrigin) log({ event: 'config', publicMode: 'mock only', publicOrigin, maxNewWorlds: PUBLIC_MAX_WORLDS, windowMs: PUBLIC_WINDOW_MS, webhooks: 'closed' });
 else try {
   const cfg = loadPayPalConfig(env);
   paypal.SANDBOX = createSandboxPayPal(cfg, { clock, logger: paypalLogger });
@@ -115,11 +118,14 @@ runtimeRef.current = runtime;
 
 await runtime.startup();
 runtime.start();
-const server = createServer(nodeHandler(publicOrigin ? publicGuard(app.handle) : app.handle, log));
-server.listen(port, '127.0.0.1', () => {
+const server = createServer(nodeHandler(publicOrigin ? publicGuard(app.handle, PUBLIC_MAX_WORLDS, {
+  now: () => clock.now(),
+  recentCount: (since) => (db.prepare('SELECT count(*) AS n FROM worlds WHERE created_at > ?').get(since) as { n: number }).n,
+}) : app.handle, log));
+server.listen(port, host, () => {
   log({
     event: 'listening',
-    url: localOrigins[0],
+    url: publicOrigin ?? localOrigins[0],
     ...(publicOrigin ? { publicOrigin } : {}),
     payment: { sandbox: !!executors.SANDBOX, sandboxPayeeSet: sandboxPayee !== null, mock: true },
     ai: { vertexModel: ai.vertexModel, mockModel: ai.mockModel },

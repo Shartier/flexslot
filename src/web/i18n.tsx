@@ -421,6 +421,7 @@ const en = {
   recover: 'Recover (same amount)',
   // refusals
   errors: {
+    WORLD_LIMIT: 'The demo is busy. Please wait ten minutes before creating a new demo. Existing demos still work.',
     OWNER_FIRST: 'The shop has to approve first.',
     TERMS_CHANGED: 'The proposal changed. Please review it again.',
     OFFER_EXPIRED: 'This proposal has expired.',
@@ -812,6 +813,7 @@ const ja: Texts = {
   sentTimes: (n) => `・送信${n}回`,
   recover: '再実行（同じ金額）',
   errors: {
+    WORLD_LIMIT: 'ただいまデモが混み合っています。新しいデモの作成は10分ほど置いてお試しください。作成済みのデモはそのまま使えます。',
     OWNER_FIRST: '先にお店の承認が必要です。',
     TERMS_CHANGED: '提案の内容が変わりました。もう一度ご確認ください。',
     OFFER_EXPIRED: 'この提案は期限が切れました。',

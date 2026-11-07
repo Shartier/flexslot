@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="ded5ce3f360ad8ab1affaef0f7a907ade0995ae6cf92f9aa1d845eb537aef09e"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="1e0ab270d8e87638064a720444c1a1a5c4d2b48fdf557676571e0b774ecc203b"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -2035,4 +2035,14 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <p>実行結果：<code>npm run check</code>は33ファイル・390件成功（型検査を含む）、<code>npm run build</code>成功。模擬AI・模擬PayPalの一件を三画面で完了し、再読み込み後も維持。ブラウザのスクリプトエラーなし。新しいSandbox決済・返金、Vertexの呼び出しは実施していない。</p>
 <p>証拠：<code>outputs/codex-prep/final-review-1a235cf/</code> の <code>action-repro.json</code>、<code>check.log</code>、<code>build.log</code>、<code>release-inventory.json</code>、<code>secret-screening.json</code>（ローカルのレビュー資料）。対象履歴56コミット・534blobの限定的な秘密情報点検は検出0件。未知の過去の認証情報を網羅する保証ではない。</p>
 <p>判定：このレビューの指摘はクローズし、公開と提出の準備へ進める。残るのは、最終公開物と公開先の本人確認、審査員の入口の選択、初見の人の操作確認、録画・公開動画の確認、Devpost応募。公開リポジトリ・デプロイ・YouTube公開・応募の許可を、この技術レビューで代替しない。</p>
+<h2 id="codex2026-11-07-1">公開デモ準備の検証（Codex実装・自己検証、2026-11-07）</h2>
+<p>基点は上記の独立レビュー後の文書コミット <code>121b35cb86a73a0b4cda3e27f7bf1260e3eed138</code>。本人がCodexへの担当変更を承認したため、公開用の模擬モードに必要な設定境界と作成制限を変更した。公開先は比較中で、外部への送信・配備は行っていない。最終レビュー対象タグの付け替えなし。</p>
+<ul>
+<li><code>npm run check</code>：型検査成功、34ファイル・402件成功。新規12件は外部待受の拒否条件、実接続DBの拒否、制限の時間経過・同時要求・失敗・再起動後の件数を検証する。</li>
+<li><code>npm run build</code>：成功。</li>
+<li>実際のNodeプロセスとEdgeによるPC内検証：25項目成功。公開用HTTPS originへのブラウザ要求をループバックへ中継し、外部fetchを禁止。実接続モードの作成拒否、Webhook拒否、3つのSecure/HttpOnlyセッション、模擬一件の完了、10件上限、実プロセス再起動後の状態・セッション・件数を確認した。</li>
+<li>試験用スクリプトのWindows importパスと中継のCookie対象・再起動中の切断処理を直して再実行した。成功した最終記録は <code>outputs/codex-prep/public-demo-prep/browser-report.json</code>。その途中の試験側エラーを公開先の障害として扱わない。</li>
+<li>未確認：公開ホストのNode実行環境、実TLS証明書、永続ディスク、再配備時のデータ保持、審査期間の運用。これらは公開先決定・本人確認後に検証する。新しいSandbox・Vertex呼び出しはない。</li>
+</ul>
+<p>これはCodexが自ら実装した公開準備の検証記録であり、第三者による独立レビューの追加実施とは表示しない。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="e9f22b461a3e50acda88382163675cc28c4314457a62afe233e55bd97ac3f9ff"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="a05cf88c3c5415ca58187f07cdfd5d8f594deba3a7305ab6b9666715d9ce68da"><title>FlexSlot | 技術設計</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1434,4 +1434,9 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
+<h3 id="codex">15.6 公開用の模擬デモの準備（2026-11-07、Codex）</h3>
+<p>本人は審査用の公開URLも用意する方針を選び、必要な最小限の設定・コード修正をCodexへ引き継いだ。公開先は比較中であり、契約・デプロイは未実施。決済と振替の設計は変更しない。</p>
+<p>11章のローカル実接続とは別に、公開用プロセスはPayPal・AIとも模擬だけに固定する。<code>FLEXSLOT_PUBLIC_ORIGIN</code>を外部環境で明示し、<code>.env</code>を読み込まず、実接続アダプターとWebhookを無効にする。SandboxまたはVertexの案件を含むDBでは起動しない。既存の実接続データは公開用に流用しない。</p>
+<p>通常の待受は127.0.0.1。HTTPSプロキシ配下での明示的な公開設定に限り、<code>FLEXSLOT_HOST=0.0.0.0</code>とホスト指定の<code>PORT</code>を利用できる。専用の<code>FLEXSLOT_DATA_DIR</code>、永続ディスク、単一プロセスを前提にする。SQLiteと模擬PayPalの保存ファイルを同じ場所に置く。保存方式の異なるサービスへ、そのまま配備できるとは扱わない。</p>
+<p>新しいデモの作成は、従来のプロセス生涯10件から直近10分の10件へ変更。DBの作成記録で数え、再起動でも制限を維持し、処理中の要求にも枠を予約する。作成済みデモの閲覧・操作を止めない。制限時の待機案内は日英両方に用意する。公開ホストでの起動・再起動・三画面の一件完了は、配備後の別の確認とする。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
