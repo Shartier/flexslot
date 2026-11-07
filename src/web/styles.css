@@ -40,7 +40,6 @@
   --r-btn: 16px;
   --shadow-1: 0 1px 1px rgba(31, 28, 26, 0.04), 0 3px 8px rgba(31, 28, 26, 0.04), 0 14px 34px rgba(31, 28, 26, 0.07);
   --shadow-2: 0 2px 4px rgba(31, 28, 26, 0.08), 0 22px 50px rgba(31, 28, 26, 0.18);
-  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .32 0 0 0 0 .27 0 0 0 0 .22 0 0 0 .075 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   color-scheme: light;
 }
 
@@ -54,9 +53,21 @@ html,
 body {
   margin: 0;
 }
-body {
+html {
   background-color: var(--bg);
-  background-image: var(--grain);
+}
+/* Codex's handmade-paper tile, repeated faintly (14 %, as Codex checked it); it replaces the drawn grain. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url('./images/paper-texture.webp') repeat;
+  background-size: 512px 512px;
+  opacity: 0.14;
+  pointer-events: none;
+}
+body {
   color: var(--ink);
   font: 15px/1.7 var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -1463,29 +1474,31 @@ button.link {
   font-size: 30px;
   font-weight: 700;
 }
+/* The "paid" seal is pressed over the ticket's photo, never over the amount (Codex's note on the v4 copy). */
+.tk-media {
+  position: relative;
+}
 .tk-stamp {
   position: absolute;
-  right: 14px;
+  left: 50%;
   top: 50%;
-  width: 76px;
-  height: 76px;
+  width: 96px;
+  height: 96px;
   color: var(--a-lo);
-  opacity: 0.9;
-  transform: translateY(-50%) rotate(-10deg);
+  opacity: 0.95;
+  transform: translate(-50%, -50%) rotate(-10deg);
   animation: stamp2 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) both 0.3s;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.18));
 }
 @keyframes stamp2 {
   from {
     opacity: 0;
-    transform: translateY(-50%) scale(1.7) rotate(-26deg);
+    transform: translate(-50%, -50%) scale(1.7) rotate(-26deg);
   }
   to {
-    opacity: 0.9;
-    transform: translateY(-50%) scale(1) rotate(-10deg);
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1) rotate(-10deg);
   }
-}
-.ticket.done .tk-bottom .money {
-  opacity: 0.35;
 }
 
 /* ---- owner: figures and the profit bar ---------------------------------------------------------------------------- */

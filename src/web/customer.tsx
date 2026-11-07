@@ -309,15 +309,17 @@ function BCase({ api, c, refresh, tz, mode }: { api: Api; c: CaseView; refresh: 
             <p className="tz">{t.localTime(tz)}</p>
             <ServiceMeta service={c.bService ?? t.serviceFallback} stylist={c.stylist} />
           </div>
-          <div className="tk-thumb">
-            <Photo slot="service" />
+          <div className="tk-media">
+            <div className="tk-thumb">
+              <Photo slot="service" />
+            </div>
+            {done && <Seal className="tk-stamp" words="PAID · お支払い済み · PAID · " backdrop />}
           </div>
         </div>
         <div className="tk-sep" aria-hidden="true" />
         <div className="tk-bottom">
           <span className="lbl">{t.bTotal}</span>
           <Amount m={c.bPrice} />
-          {done && <Seal className="tk-stamp" words="PAID · お支払い済み · PAID · " />}
         </div>
       </section>
       <section className="card">

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="ae300e5c69123a998230c92f2e7712ebb40e5e4513ab25540776e75719c291cc"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="6929804b04b6f1b3a81bf9e9be0c21ac04bc7012a3f3c1632c4fa84552b2a0c6"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -2856,6 +2856,39 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>確認：<code>npm run check</code>は32ファイル・378件成功、<code>npm run build</code>成功。内蔵ブラウザで模擬AI・模擬決済のデモを一件最後まで通した（作成→A→B→お店→A→B→完了）。CSPの違反なし、4書体が同じ配信元から読み込まれることを確かめた。375px幅で、トップ・お店・A・Bを日英ともに横にはみ出さないことをスクリプトで確かめた（お店の画面で予約の状態の長い文がはみ出していたので、内訳の行で折り返すよう直した）。1360px幅でお店の三列を目視した。実機のスマートフォン、Sandbox・Vertexのモード、キーボードだけの操作の通しは未確認。</p>
+<h2 id="codex04impl-ui-6claude-code2026-11-07">Codexの案04の素材の組み込み（<code>impl-ui-6</code>、Claude Code、2026-11-07）</h2>
+<p>本人の指示（「PC画面で十分です、Codexに作成をお願いしたい」）で依頼文を渡し、Codexが<code>outputs/codex-prep/images-v4/</code>に7点（任意の表紙を含む）を納品した。アプリに6点を組み込んだ（記録は<code>IMAGES.md</code>末尾）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>照合</td>
+<td>6点のSHA-256がCodexの<code>SHA256SUMS.txt</code>と一致。寸法・容量はCodexの一覧どおり（WebP 6点の合計は約0.95MB）</td>
+</tr>
+<tr>
+<td>割り当て</td>
+<td>トップ：<code>salon-cover</code>、店舗カード：<code>salon-station</code>、A・Bの依頼と案内：<code>card-backdrop</code>、Bの予約券：<code>service-still</code>、完了：<code>done-backdrop</code>、背景：<code>paper-texture</code>（不透明度14%、描いた粒子は外した）</td>
+</tr>
+<tr>
+<td>印章の位置</td>
+<td>Codexの参考指摘どおり、実アプリでも「お支払い済み」の印章が支払合計に重なっていたため、予約券の写真の上へ移した（生成りの円つき）</td>
+</tr>
+<tr>
+<td>表示</td>
+<td>各画面の下部の説明に「写真はAI生成で、実在の店舗ではありません」を追加（Codexの利用条件の確認に沿う）</td>
+</tr>
+<tr>
+<td>外したもの</td>
+<td>以前の仮の写真<code>src/web/images/salon-detail.webp</code>（アプリでは使わなくなった。Git履歴とCodexのフォルダには残る）</td>
+</tr>
+</tbody>
+</table></div>
+<p>確認：<code>npm run check</code>は32ファイル・378件成功、<code>npm run build</code>成功。内蔵ブラウザのPC幅（1360px）で、トップ、Bの案内、Bの完了（印章・予約券・店舗カード）を目視し、写真がすべて新しいファイルから読み込まれること（原寸どおり）と、印章と金額の矩形が重ならないことをスクリプトで確かめた。本人の指示どおりスマホ実機の確認はしていない。Sandbox・Vertexのモードでは未確認。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -3295,7 +3328,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
 <li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（<code>impl-app-1-fix1</code>、Codexの再確認待ち）。</li>
 <li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。</li>
-<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。Codexの日本語レビューを反映した（<code>impl-ja-1</code>）。実機で再確認し、切り替え・上段のタイトル・写真・ボタンの所見を受けた。HTMLの画面イメージ案03を経て、凝った版の案04（差し色テラコッタ）を本人が選び、Codexへの素材の依頼を<code>IMAGES.md</code>にまとめ、案04をアプリに組み込んだ（<code>impl-ui-5</code>）。次は、Codexの画像の組み込み、実機での確認、初見の人の操作、提出前の確認。初見の人の操作、提出前の確認。</li>
+<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。Codexの日本語レビューを反映した（<code>impl-ja-1</code>）。実機で再確認し、切り替え・上段のタイトル・写真・ボタンの所見を受けた。HTMLの画面イメージ案03を経て、凝った版の案04（差し色テラコッタ）を本人が選び、Codexへの素材の依頼を<code>IMAGES.md</code>にまとめ、案04をアプリに組み込んだ（<code>impl-ui-5</code>）。Codexの素材6点を組み込んだ（<code>impl-ui-6</code>）。次は、初見の人の操作、提出前の確認（ライセンス、公開リポジトリ、動画、応募）。初見の人の操作、提出前の確認。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
 <h2 id="section-34">今後の検証記録の書式</h2>

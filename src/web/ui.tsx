@@ -320,13 +320,14 @@ export function Photo({ slot }: { slot: PhotoSlot }) {
 }
 
 /** The round seal pressed on completion: a ring of words and a check that draws itself. */
-export function Seal({ words, className }: { words: string; className: string }) {
+export function Seal({ words, className, backdrop }: { words: string; className: string; backdrop?: boolean }) {
   const id = `ring${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
     <svg className={className} viewBox="0 0 120 120" aria-hidden="true">
       <defs>
         <path id={id} d="M60,60 m-43,0 a43,43 0 1,1 86,0 a43,43 0 1,1 -86,0" />
       </defs>
+      {backdrop && <circle cx="60" cy="60" r="57" fill="rgba(255,253,249,0.82)" />}
       <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeWidth="2" />
       <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth=".8" />
       <circle cx="60" cy="60" r="33" fill="none" stroke="currentColor" strokeWidth="1.2" />
