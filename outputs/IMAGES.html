@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="667824cecf8ea3faea99ad6562aff64e51632490d7bb79ae8ee4fe85030ba516"><title>FlexSlot | 画像の指示書</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="ed515b796ba3582b253a01a5fa69f119d5b6c26c1ad242f6a30089842c7e694c"><title>FlexSlot | 画像の指示書</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,6 +8,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html" aria-current="page">画像の指示書</a></nav></header>
 <main><div class="meta">正本：IMAGES.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot-codexgpt-image">FlexSlot — 画像の指示書（Codex向け、GPT Image）</h1>
+<p><strong>最新の依頼は末尾の節「画面イメージ案03・案1『上質サロン』の画像」。</strong> それより前の節（旧8点、案02）は経緯の記録。</p>
 <p>作成：Claude Code、2026-11-07（日本時間）。本人の指示：画面をリッチにするため、画像はCodex側でGPT Image（2.5または2.6。Codex側で使えるもの）を使って生成する。Claude Codeからは画像生成のモデルを使えない。</p>
 <h2 id="section">進め方と置き場所</h2>
 <div class="table-wrap"><table>
@@ -150,4 +151,96 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>トップページ：heroをPCでは説明の右、スマホでは説明の下に置く。三画面の見出し：立場ごとの人物（PC 88px、スマホ 60px）。振替のカード：承認待ちの間はswap、結果の確認中・保留・返金待ちなど未確定の間はchecking、案件の完了（COMPLETED）のときだけdone。</li>
 <li>すべて飾りとして<code>alt=&quot;&quot;</code>・<code>aria-hidden</code>。意味は画面の文で伝える。寸法を指定し、カードの画像は遅延読み込み。画像がなくても画面は成り立つ。</li>
 </ul>
+<h2 id="section-4">画面イメージ案03・案1「上質サロン」の画像（最新の依頼、2026-11-07）</h2>
+<p>本人の進め方：先にHTMLで画面のイメージを固め、その後で画像をCodexに依頼する。Claudeが3つの方向のHTML案（<code>design/mockup-v3/index.html</code>）を作り、本人が**案1「上質サロン」**を選んだ。画像の場所・比率・大きさはHTML案の「画像枠」で決めてある（HTML案を開き、上の「デザイン」で案1、「画面」で部品一覧を選ぶと、枠の一覧が出る）。この節は、その枠の中身の依頼。</p>
+<p>本人の希望のモデル：GPT Image 2.6（使えなければ2.5）。<strong>実際に使ったモデル名と版は、ツールが返した値だけを記録する。</strong> ツールが返さない場合は「不明」と書き、2.6とは書かない。</p>
+<h3 id="section-5">案1の画面の雰囲気（画像を合わせる先）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>背景</td>
+<td>生成り色 #f6f1ea、カード #fffdfa</td>
+</tr>
+<tr>
+<td>文字・上段</td>
+<td>焦げ茶 #2b2420</td>
+</tr>
+<tr>
+<td>主色（ボタン）</td>
+<td>金茶のグラデーション #bd8f5e → #8a5c33、差し色 #e2c18f</td>
+</tr>
+<tr>
+<td>完了</td>
+<td>落ち着いた緑 #3d7c5a</td>
+</tr>
+<tr>
+<td>見出し</td>
+<td>明朝体（Noto Serif JP）、本文はゴシック</td>
+</tr>
+<tr>
+<td>印象</td>
+<td>小さく静かな、大人向けの日本の美容室。上質で落ち着いた午後の光。青い色味や派手な色は避ける</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-6">作ってほしい画像</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>枠</th>
+<th>ファイル名</th>
+<th>比率・サイズ</th>
+<th>使う場所</th>
+<th>内容（プロンプトの下書き、英語）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>画像枠1</td>
+<td><code>salon-hero.webp</code></td>
+<td>16:10、1600×1000</td>
+<td>トップページの見出しの横（PC）・下（スマホ）。角丸で表示、スマホでは幅約350px</td>
+<td>Interior of a small, quiet, upscale Japanese hair salon in soft afternoon light. Warm ivory walls, dark walnut wood, brushed brass details, one styling chair facing a round mirror, a small green plant, a window with sheer curtains. Calm, premium and uncluttered, with simple areas around the edges. Photorealistic, natural light, gentle depth of field. No people, no text, no letters, no numbers, no logos, no brand names.</td>
+</tr>
+<tr>
+<td>画像枠2</td>
+<td><code>salon-side.webp</code></td>
+<td>3:2、1200×800</td>
+<td>お店・A・Bの画面の右列（PC）・下（スマホ）の店舗カード</td>
+<td>A close detail of the same salon: a styling station with a brass-framed mirror, neatly arranged scissors and combs on a walnut shelf, a folded ivory towel, warm light from the side. Same colors and light as the interior. Photorealistic. No people, no text, no logos.</td>
+</tr>
+<tr>
+<td>画像枠3</td>
+<td><code>service-cut.webp</code></td>
+<td>1:1、800×800</td>
+<td>Bの予約券の小さな画像（表示は76px四方。小さくても形が分かること）</td>
+<td>Still life of professional hair-cutting scissors and a fine comb resting on a folded ivory towel, brushed brass accents, soft shadow, warm neutral background, simple and centered so it reads at a small size. Photorealistic. No people, no hands, no faces, no text, no logos.</td>
+</tr>
+<tr>
+<td>（任意）</td>
+<td><code>cover.webp</code></td>
+<td>16:9、1280×720</td>
+<td>Devpostの表紙・YouTubeのサムネイルの土台（文字は後で別に入れる）</td>
+<td>The same salon interior as salon-hero, wider, with a calm empty area on the left third for a title to be added later. No people, no text, no logos.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="section-7">全体の約束</h3>
+<ul>
+<li>画像の中に文字・数字・記号・ロゴを入れない。実在の会社・店・人物に似せない。人物は写さない（手も入れない）。</li>
+<li>3点（＋任意の表紙）で、同じ店・同じ光・同じ配色に見えること。1点目を作った後、それを参照して残りを作る。</li>
+<li>実在の美容室の写真に見えても、架空の店であることは画面の文で示す（画像に文字は入れない）。</li>
+<li>形式はWebP。各300KB以下を目安（<code>salon-hero.webp</code>は400KBまで可）。元の生成画像も残す。</li>
+<li>置き場所：<code>outputs/codex-prep/images-v3/</code>（Codexの作業場所）。Claudeが<code>src/web/images/</code>へ写して組み込む。Codexは<code>src/</code>を編集しない。</li>
+<li>記録してほしいこと：使ったツール、ツールが返したモデル名と版（返さなければ「不明」）、生成日、最終プロンプトの全文、生成後の加工（縮小・変換だけか）、各ファイルの寸法・バイト数・SHA-256。旧8点・案02と同じ形の記録でよい。</li>
+<li>公開リポジトリ・動画・表紙に使う前に、利用条件の確認結果も前回と同様に残す。</li>
+</ul>
+<h3 id="claude">Claude側の作業（並行）</h3>
+<p>画像を待つ間に、案1の配色・書体・ボタン・上段の見出し・言語の切り替えをアプリに組み込む。画像枠は、画像が届くまで案1の色の仮の面で表示し、届いたら差し替える。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
