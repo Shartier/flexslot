@@ -1,5 +1,5 @@
-/* FlexSlot screens, design 1 "salon" of the HTML mockup v3 (design/mockup-v3, chosen by the owner on 2026-11-07):
-   ivory background, dark brown and bronze, serif headings, two-line buttons with depth, the decision pinned on
+/* FlexSlot screens, design 1 "salon" of the HTML mockup v3 (design/mockup-v3, chosen by the owner on 2026-11-07),
+   palette 1 "navy x gold" (green replaced, owner's choice the same day): ivory background, dark brown and bronze, serif headings, two-line buttons with depth, the decision pinned on
    phones. Phone first; PC from 960px (side column, the owner's menu). Light theme only. No inline styles (CSP). */
 :root {
   --bg: #f6f1ea;
@@ -16,9 +16,11 @@
   --brand-line: #dcc2a2;
   --brand-text: #7a4e28;
   --gold: #e2c18f;
-  --ok: #3d7c5a;
-  --ok-soft: #e7f1ea;
-  --ok-line: #c3dccb;
+  /* done / positive: navy (palette 1). */
+  --ok: #2c4a72;
+  --ok-soft: #e6ecf5;
+  --ok-line: #c5d2e6;
+  --ok-hero: linear-gradient(135deg, #1c2e4a, #2f4d78);
   --wait: #93600f;
   --wait-soft: #fbf0dc;
   --wait-line: #ecd2a3;
@@ -209,8 +211,8 @@ a {
   vertical-align: 0;
 }
 .mode.live {
-  background: rgba(150, 210, 170, 0.18);
-  color: #d4efdc;
+  background: rgba(140, 170, 220, 0.2);
+  color: #d8e4f6;
 }
 .demo-seg {
   display: inline-flex;
@@ -370,7 +372,7 @@ main.center {
   pointer-events: none;
 }
 .hero.ok {
-  background: linear-gradient(135deg, #2f5a45, #447a5d);
+  background: var(--ok-hero);
 }
 .hero > * {
   position: relative;
