@@ -72,6 +72,8 @@ Claude Code supported implementation and testing; Codex provided independent rev
 
 The immediate work is to finish the remaining review fixes, test with a first-time user and a physical phone, and prepare reproducible judging access. Salon interviews have not been conducted, and demand is not validated. A future version could add this workflow to an existing booking system; that integration is outside this demo. Natural next steps for the workflow itself: an opt-in choice at booking time, sequential offers to several opted-in customers, and an optional priority fee for B that funds the compensation.
 
+Compensation could also become dynamic. In this demo it is a fixed USD 10.00 known at registration, which is easy to explain but could invite someone to book busy weekend slots just to collect it. A later version could set the amount per offer from demand, notice time and how long ago the booking was made, show it only when a real offer arrives (A still sees and accepts the exact amount before anything changes), and limit how often one customer can receive it. This is not implemented.
+
 ### Built with
 
 TypeScript, Node.js, SQLite, React, Vite, zod, PayPal Orders v2, PayPal Payments v2, PayPal Webhooks, Google Cloud Vertex AI, Gemini.
