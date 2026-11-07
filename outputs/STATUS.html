@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="702e1d4db4663706d2efc83c4e425173eec257701a557e8ac6ffc46ef794ffa0"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="30f94b9f5514bed4e4377a2b6e7158b288603578526558d63914f0b83adcdb56"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -2782,6 +2782,51 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <h2 id="section-30">配色の変更と「凝った作り」の方針（本人、2026-11-07）</h2>
 <p>本人の所見：「緑とゴールドでやや違和感がある」。HTML案に配色の比較（1 ネイビー×金、2 ブラウン×金、3 焦げ茶×セージ）を加え（<code>e806adf</code>）、本人が「色目はいいと思います」と答えた時点で表示していた<strong>1 ネイビー×金</strong>を採用した。アプリでは、完了・追加利益・進み具合の完了・完了の案内を緑からネイビー（#2c4a72）に替え、Sandbox・Vertexのモードの表示も緑系から青系に替えた。ボタンの金茶はそのまま。CSSの色の変更だけで、表示の内容は変えていない。内蔵ブラウザでBの完了画面を目視した。</p>
 <p>あわせて本人の方針：今の見た目は「HTMLで一度に出した」印象がある。Codexに画像を依頼する時点で、軽いHTMLに見えない凝った作りにしたい（今回のハッカソンで特にこだわる点）。そのため、<code>IMAGES.md</code>末尾の3点の依頼は、凝った版の設計で必要な素材を決めてから出し直す。</p>
+<h2 id="htmlclaude-code2026-11-07-1">画面イメージ案04（凝った版、HTML、Claude Code、2026-11-07）</h2>
+<p>本人の指示（「凝った版を作って。ただゴールドとネイビーもいまいち」）で、<code>design/mockup-v4/index.html</code>を作った（1ファイル。アイコンと仮の写真を埋め込み、書体はGoogle Fontsから読み込む）。アプリのコードは変えていない（アプリは配色1 ネイビー×金のまま）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>配色の考え方</td>
+<td>2色の組み合わせ（緑×金、紺×金）をやめ、生成り・グレージュの地に差し色1色。A チャコール（モノトーン）、B テラコッタ、C モーヴを切り替えて比べられる。金・緑・紺は使わない</td>
+</tr>
+<tr>
+<td>写真</td>
+<td>トップは全面写真に見出しを重ね、A・Bの案内は写真に暗い色を重ねたカード（内側に細い枠線、写真はゆっくり動く）。今は以前の美容室の画像を「仮の写真」として使い、画面上にもそう表示する</td>
+</tr>
+<tr>
+<td>質感・飾り</td>
+<td>画面全体と主要ボタンにうっすら紙の粒子、多層の影、英字の小見出し（PROPOSALなど）、斜体の番号（01・02）と罫線、上段の下に差し色の細線</td>
+</tr>
+<tr>
+<td>書体</td>
+<td>見出し：しっぽり明朝、本文：Zen角ゴシックNew、数字：Inter、英字の飾り：Cormorant Garamond（斜体）</td>
+</tr>
+<tr>
+<td>印章</td>
+<td>完了時に「予約確定」「変更完了」の印が押されるように現れ、チェックが描かれる。Bの予約券には「お支払い済み」の印</td>
+</tr>
+<tr>
+<td>お店の画面</td>
+<td>数字の帯（追加利益・承認・期限）、損益を帯グラフと点線の内訳で表示、承認者を丸い印で表示（あなたの番は脈打つ輪）</td>
+</tr>
+<tr>
+<td>動き</td>
+<td>カードが順に浮かぶ、進み具合の線・帯グラフが伸びる、金額が数え上がる、ボタンは光が流れ押すと沈む、処理中は下に光が走る。動きを減らす端末設定では止める</td>
+</tr>
+<tr>
+<td>素材一覧</td>
+<td>Codexへの依頼の元：写真5点（トップの店内16:10、店舗3:2、案内カードの背景3:2、施術の静物1:1、完了の背景3:2）、紙・リネンの質感、任意の表紙。印章・ロゴ・アイコン・罫線・グラフはコードで描く</td>
+</tr>
+</tbody>
+</table></div>
+<p>確認：内蔵ブラウザ（ローカルの静的サーバー127.0.0.1:8799）で、3配色×5画面×各状態×日英×スマホ・PCの144通りで横にはみ出さないことをスクリプトで確かめた。目視：トップ（チャコール・スマホ）、Aの依頼（チャコール・スマホ）、Bの完了（テラコッタ・スマホ）、お店（モーヴ・1400px幅）。お店の数字の帯で金額が縦に崩れていたのを直し、仮の写真の注記を印章と重ならない位置へ移した。主要ボタンの処理中の表示と、二度押しの無視を確かめた。実機のスマートフォンでは未確認。本人の差し色の選択待ち。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
