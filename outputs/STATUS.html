@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="be2aaf893395cba2b61a78f2f83cc0d75183471e43b5eb91cac88bfd2dc597c0"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="157ee0fdcccda4f8514701df2a86c0432fc4b169962cb7f7d746772026170ef9"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,15 +8,16 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a><a href="THIRD_PARTY_NOTICES.html">第三者の権利表示</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
-<p>更新日：2026-11-07（日本時間）/ 文書版：status-v0.17。</p>
+<p>更新日：2026-11-07（日本時間）/ 文書版：status-v0.18。</p>
 <h2 id="section">現在地</h2>
-<p><strong>公開準備の追加（2026-11-07、Codex）</strong>：本人は公開URLも用意する方針を選び、公開に必要な最小限の実装をCodexへ引き継いだ。公開先はRender・Google Cloud・Cloudflare・さくらを比較中。外部公開、契約、GitHubへの送信、YouTube公開、Devpost応募はいずれも未実施。</p>
+<p><strong>提出方針の変更（2026-11-07、本人の追加指示）</strong>：アプリの公開URLは見送り、公開リポジトリ＋英語READMEのローカル起動手順＋実接続を示す公開YouTube動画で提出準備を進める。ホスティングの契約・デプロイ・公開トンネルは行わない。公開用に準備したコードと検証記録は保存するが、今回の応募には使わない。GitHubとYouTubeの公開、Devpost応募はそれぞれ内容を本人確認後に行う。以下の公開先比較は、この変更前の経緯。</p>
+<p><strong>公開準備の記録（2026-11-07、Codex。公開URLはその後見送り）</strong>：本人の指示で公開に必要な最小限の実装をCodexへ引き継ぎ、Render・Google Cloud・Cloudflare・さくらを比較した。外部公開、契約、GitHubへの送信、YouTube公開、Devpost応募はいずれも未実施。</p>
 <ul>
 <li>公開用はAI・支払いとも模擬だけ。明示したHTTPS origin・専用データ領域がある場合のみ外部待受を許可し、実接続の案件を含むDBは起動時に拒否する。</li>
 <li>デモ作成制限を「直近10分で10件」にし、DBの記録で再起動後も維持。日英の待機案内を追加した。</li>
 <li><code>npm run check</code> は34ファイル・402件成功（既存390件＋公開境界12件）。<code>npm run build</code> 成功。新しい変更はCodexによる実装・自己検証であり、下記の独立レビューと区別する。</li>
 <li>Edgeと実際のNodeプロセスを使うPC内の確認は25項目成功。HTTPSとして動作するブラウザの要求をPC内のHTTPへ中継し、模擬の一件完了、3役のSecure/HttpOnly Cookie、プロセス再起動後の完了状態・セッション・作成上限を確認。外部APIを禁止した。公開ホストや実際のTLS証明書の確認ではない。</li>
-<li>証拠：<code>outputs/codex-prep/public-demo-prep/</code>（ローカルの補助資料）。公開先決定後に、永続ディスク・費用・URL・公開対象SHAを提示して本人確認を受け、配備後に実際の再起動と三画面を検証する。</li>
+<li>証拠：<code>outputs/codex-prep/public-demo-prep/</code>（ローカルの補助資料）。配備は見送り。将来再開する場合に限り、保存先・費用・公開内容を本人確認後、公開ホスト上で別途検証する。</li>
 </ul>
 <p><strong>最新の判定（2026-11-07、Codex）</strong>：<code>impl-final-2</code>（<code>1a235cfc263250d5e56afbf9a3572125a1e0fe03</code>）の再確認を完了。FR1-01・FR1-02は解消。FR1-03の提出文に残っていた古い今後の作業とレビュー待ちの記述は、この文書更新で整えた。アプリの追加修正は不要で、公開と提出の準備へ進める。</p>
 <ul>
@@ -3340,9 +3341,9 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>U09</td>
-<td>公開デモの置き場所と審査員のアクセス方法（Sandboxの買い手アカウントの共有方法を含む）</td>
-<td>未確定。第一候補はCompute Engine</td>
-<td>提出準備時、本人確認後</td>
+<td>審査員のアクセス方法</td>
+<td>方針確定（2026-11-07）：公開URLは見送り。公開リポジトリと英語の完全な起動手順で、アカウント不要の模擬モードを試せるようにする。実接続は動画と本人の認証情報で接続するREADME手順を用意する。開発者の秘密情報は共有しない</td>
+<td>最終公開リポジトリからの起動・説明の確認を提出前に行う</td>
 </tr>
 <tr>
 <td>U10</td>

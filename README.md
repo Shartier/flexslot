@@ -60,9 +60,11 @@ Credentials stay on the server (Application Default Credentials); nothing is sen
 
 Other settings: `FLEXSLOT_PORT` (default `8787`), `FLEXSLOT_DATA_DIR` (default `data`).
 
-## Preparing a hosted mock demo
+## Optional hosting support (not used for this submission)
 
-Hosting is prepared, not yet deployed. The public demo uses **mock AI and mock payments only**. Real Sandbox and Vertex checks are recorded separately; do not present the public demo as connected to those services.
+**There is no hosted demo for this submission.** Judges can use the account-free local quick start above. The submission video is intended to show real PayPal Sandbox and Vertex AI operation; it will be verified before publication. Connected-mode setup instructions are also provided above, using your own credentials.
+
+Hosting preparation is retained for possible future use and is not required for local judging. If enabled explicitly, it uses **mock AI and mock payments only**. It has not been deployed. The following notes describe that optional configuration, not an active public service.
 
 Run one Node process on a host with a **persistent local disk**. Put both `flexslot.sqlite` (including its WAL files) and `mock-paypal-state.json` in the same dedicated data directory. Do not copy your local connected database, `.env`, ADC or other credentials to the host. A public process refuses a database containing Sandbox or Vertex worlds.
 
