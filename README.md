@@ -90,8 +90,14 @@ The detailed specification, design, status and reviews are in `SPEC.md`, `DESIGN
 - Stopped items ("HOLD"): when FlexSlot cannot continue a payment step safely (for example a resend whose body no longer matches, the retry limit, or an order whose approval is still unconfirmed), the normal queue stops retrying that step and the owner sees it under "Stopped". Restarting the server can resume recovery: FlexSlot may query PayPal, resend the same operation with the same request ID, and carry out the recovery steps that follow from the result (for example an authorization release or a refund). This version has no button to release a stop; the owner checks the payment in PayPal and a developer resolves it. A refund that PayPal refused (a confirmed failure) is different: when "Recover" is offered in the payment records, the owner can retry it for the same amount.
 - Not yet done: checks on a real phone (phone widths were checked in a browser), a first-time user going through the screens, public hosting.
 - The screens are in English, or in Japanese when the browser's language is Japanese (the 日本語 | EN switch at the top right of every screen; the choice is remembered in that browser). Amounts are in USD on a US Sandbox business account.
-- License: not decided yet.
+- License: Apache License 2.0 (see below).
 
 ## Design and assets
 
 The screens use warm neutrals with one terracotta accent, photographs of a **fictional, AI-generated salon** (no people, text or logos; the screens say so), bundled fonts (SIL Open Font License 1.1) and code-drawn icons, seals and charts. Details and licences: `THIRD_PARTY_NOTICES.md`. Motion (cards rising, the progress line growing, amounts counting up) stops when the device asks for reduced motion.
+
+## License
+
+FlexSlot's original source code and documentation are licensed under the Apache License, Version 2.0. See `LICENSE`. Third-party software and fonts retain their own licences; see `THIRD_PARTY_NOTICES.md` and the licence files that the screens' build ships at `/assets/licenses/`.
+
+The salon images and paper texture are AI-generated and depict a fictional business. They are included under the same project licence to the extent the contributor holds rights that can be licensed. This does not claim that AI-generated output is copyright-protected in every jurisdiction. See `IMAGES.md` for provenance.

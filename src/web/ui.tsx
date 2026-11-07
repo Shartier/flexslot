@@ -11,6 +11,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode 
 import { explain, type Api } from './api.ts';
 import { ART, PHOTOS, type PhotoSlot } from './art.ts';
 import { loadDemo, type RoleSeg } from './demo-links.ts';
+import { runAction, type ActionLock } from './run-action.ts';
 import { showDate, useLang, useT } from './i18n.tsx';
 import type { Approval, CaseView, Conditions, Draft, Header, Money, Step, Window } from './types.ts';
 
@@ -192,6 +193,9 @@ export function Footer({ header }: { header?: Header }) {
       </div>
       {header && <DemoNote header={header} />}
       <p>{t.appFoot}</p>
+      <p>
+        <a href="/assets/licenses/README.txt">{t.licences}</a>
+      </p>
     </footer>
   );
 }
@@ -630,24 +634,23 @@ export function useAction(refresh: () => Promise<void>) {
   const [busy, setBusy] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const inFlight = useRef(false);
+  const lock = useRef<ActionLock>({ inFlight: false });
   const t = useT();
+  // FR1-01: locked until the refresh with the server's new state has finished (released on failure too).
   const run = async (fn: () => Promise<unknown>, key = 'main') => {
-    if (inFlight.current) return;
-    inFlight.current = true;
-    setBusy(true);
-    setBusyKey(key);
-    setError(null);
-    try {
-      await fn();
-    } catch (e) {
-      setError(explain(e, t));
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
-      setBusyKey(null);
-      await refresh();
-    }
+    await runAction(
+      lock.current,
+      {
+        setBusy: (k) => {
+          setBusy(k !== null);
+          setBusyKey(k);
+        },
+        setError: (e) => setError(e === null ? null : explain(e, t)),
+        refresh,
+      },
+      fn,
+      key,
+    );
   };
   return { busy, busyKey, error, run, setError };
 }

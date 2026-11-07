@@ -987,6 +987,19 @@ Codexの日本語レビュー（`outputs/codex-prep/JAPANESE_UI_REVIEW.md`、`d9
 
 確認：`npm run check`は32ファイル・378件成功、`npm run build`成功。内蔵ブラウザのPC幅（1360px）で、トップ、Bの案内、Bの完了（印章・予約券・店舗カード）を目視し、写真がすべて新しいファイルから読み込まれること（原寸どおり）と、印章と金額の矩形が重ならないことをスクリプトで確かめた。本人の指示どおりスマホ実機の確認はしていない。Sandbox・Vertexのモードでは未確認。
 
+## 最終レビューへの対応とApache-2.0の適用（`impl-final-1`、Claude Code、2026-11-07）
+
+本人がソースのライセンスにApache-2.0を選び、Codexが公式英文と第三者ライセンスを`outputs/codex-prep/apache-2.0/`に用意した。Codexの最終レビュー（対象`64eedd7..7ef911c`、指摘FR1-01〜03）に対応した。
+
+| 項目 | 対応 |
+| --- | --- |
+| Apache-2.0 | ルートに`LICENSE`（SHA-256がCodexの記録`cfc7749b…3d30`と一致）、`package.json`と`package-lock.json`に`Apache-2.0`、READMEに「License」の節（Codexの英文案どおり。AI生成画像の扱いを含む） |
+| FR1-02（P2） | 画面のビルドに、プロジェクトのLICENSEとReact・React DOM・SchedulerのMIT全文、4書体のOFL全文を無変更で同梱（`src/web/public/assets/licenses/` → `/assets/licenses/`、一覧の`README.txt`つき）。各画面の下部からリンク。サーバーの種類表に`.txt`を追加。ビルド後の9ファイルが元と一致し、HTTPで200・同一内容で取得できることを確かめた。THIRD_PARTY_NOTICES.mdの説明を実装に合わせた |
+| FR1-01（P2） | 二度押しの防止を、操作の後の状態の更新が終わるまで延ばした（`src/web/run-action.ts`の`runAction`、`useAction`から使う）。操作や更新が失敗しても解除される |
+| FR1-03（P3） | SUBMISSION.mdのPENDING（模擬・注入で確認済み、Sandboxの自然なPENDINGは未確認）、取消履歴・HOLDの旧指摘（`impl-wait-1-fix1`で修正済み）、英語のボタン名（*Pay USD 60.00*）、ライセンス、試験件数を現状に合わせた |
+
+試験：`tests/run-action-and-licences.test.ts`（12件）を追加。POSTが成功して状態の更新を待つ間の2回目の押下が無視されること、POST待ちの2回目の無視、操作の失敗・更新の失敗でも解除されること、同梱のライセンス8ファイルが元のファイルと一致すること、`package.json`のライセンス。`npm run check`は33ファイル・390件成功、`npm run build`成功。
+
 ## Claude Codeの確認（2026-11-03、第1区切り）
 
 | 項目 | 確認結果 |

@@ -172,6 +172,7 @@ const en = {
   ifYouMove: 'IF YOU MOVE',
   termsB: 'Terms',
   shopBadge: 'S',
+  licences: 'Licences (Apache-2.0; third-party software and fonts)',
   pageLead: {
     owner: 'Review the swap terms, the approvals and every payment and refund.',
     a: 'Check the new time and the refund, then choose.',
@@ -572,6 +573,7 @@ const ja: Texts = {
   ifYouMove: '変更した場合',
   termsB: '条件',
   shopBadge: '店',
+  licences: 'ライセンス（Apache-2.0、第三者のソフトウェアと書体）',
   pageLead: {
     owner: '振替の条件、承認、支払い・返金の状況をまとめて確認できます。',
     a: '変更先と返金額をご確認のうえ、お選びください。',

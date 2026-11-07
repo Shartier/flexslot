@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="6929804b04b6f1b3a81bf9e9be0c21ac04bc7012a3f3c1632c4fa84552b2a0c6"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="46385979d21b7b4bd5f0e14c2ca98d121eb5c3f05cb5bfce8db7f8e090a49bc0"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -2889,6 +2889,35 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tbody>
 </table></div>
 <p>確認：<code>npm run check</code>は32ファイル・378件成功、<code>npm run build</code>成功。内蔵ブラウザのPC幅（1360px）で、トップ、Bの案内、Bの完了（印章・予約券・店舗カード）を目視し、写真がすべて新しいファイルから読み込まれること（原寸どおり）と、印章と金額の矩形が重ならないことをスクリプトで確かめた。本人の指示どおりスマホ実機の確認はしていない。Sandbox・Vertexのモードでは未確認。</p>
+<h2 id="apache-2.0impl-final-1claude-code2026-11-07">最終レビューへの対応とApache-2.0の適用（<code>impl-final-1</code>、Claude Code、2026-11-07）</h2>
+<p>本人がソースのライセンスにApache-2.0を選び、Codexが公式英文と第三者ライセンスを<code>outputs/codex-prep/apache-2.0/</code>に用意した。Codexの最終レビュー（対象<code>64eedd7..7ef911c</code>、指摘FR1-01〜03）に対応した。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Apache-2.0</td>
+<td>ルートに<code>LICENSE</code>（SHA-256がCodexの記録<code>cfc7749b…3d30</code>と一致）、<code>package.json</code>と<code>package-lock.json</code>に<code>Apache-2.0</code>、READMEに「License」の節（Codexの英文案どおり。AI生成画像の扱いを含む）</td>
+</tr>
+<tr>
+<td>FR1-02（P2）</td>
+<td>画面のビルドに、プロジェクトのLICENSEとReact・React DOM・SchedulerのMIT全文、4書体のOFL全文を無変更で同梱（<code>src/web/public/assets/licenses/</code> → <code>/assets/licenses/</code>、一覧の<code>README.txt</code>つき）。各画面の下部からリンク。サーバーの種類表に<code>.txt</code>を追加。ビルド後の9ファイルが元と一致し、HTTPで200・同一内容で取得できることを確かめた。THIRD_PARTY_NOTICES.mdの説明を実装に合わせた</td>
+</tr>
+<tr>
+<td>FR1-01（P2）</td>
+<td>二度押しの防止を、操作の後の状態の更新が終わるまで延ばした（<code>src/web/run-action.ts</code>の<code>runAction</code>、<code>useAction</code>から使う）。操作や更新が失敗しても解除される</td>
+</tr>
+<tr>
+<td>FR1-03（P3）</td>
+<td>SUBMISSION.mdのPENDING（模擬・注入で確認済み、Sandboxの自然なPENDINGは未確認）、取消履歴・HOLDの旧指摘（<code>impl-wait-1-fix1</code>で修正済み）、英語のボタン名（<em>Pay USD 60.00</em>）、ライセンス、試験件数を現状に合わせた</td>
+</tr>
+</tbody>
+</table></div>
+<p>試験：<code>tests/run-action-and-licences.test.ts</code>（12件）を追加。POSTが成功して状態の更新を待つ間の2回目の押下が無視されること、POST待ちの2回目の無視、操作の失敗・更新の失敗でも解除されること、同梱のライセンス8ファイルが元のファイルと一致すること、<code>package.json</code>のライセンス。<code>npm run check</code>は33ファイル・390件成功、<code>npm run build</code>成功。</p>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>

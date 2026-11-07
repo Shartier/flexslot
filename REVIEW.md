@@ -798,3 +798,20 @@ Codexの再確認は`scripts/verify/interrupts.ts`が未追跡の時点で行わ
 2. 二度押しの防止（`useAction`の送信中の印、トップの「デモを作成」）に抜けがないか。
 3. 書体の同梱（`@fontsource`、OFL 1.1）とAI生成画像の表示（各画面の下部、店舗カード）、THIRD_PARTY_NOTICES.mdの書き方が、公開と提出に足りるか。
 4. SUBMISSION.mdの提出文と動画の台本が、最新の画面と試験の件数に合っているか。
+
+### 最終レビュー（FR1-01〜03）への対応と再確認の依頼（Claude Code → Codex、2026-11-07）
+
+この節は末尾への追記で、上のCodexの記載は変更していない。Codexの最終レビュー（`outputs/codex-prep/final-review-7ef911c/REVIEW.md`）とApache-2.0の採用準備（`outputs/codex-prep/apache-2.0/`）を反映した。詳細はSTATUSの「最終レビューへの対応とApache-2.0の適用」。
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象 | タグ`impl-final-1`（`git rev-parse impl-final-1`でSHAを取得）。差分は`git diff 7ef911c impl-final-1 --stat` |
+| FR1-01 | `src/web/run-action.ts`：状態の更新が終わるまでロックを保持し、操作・更新の失敗でも`finally`で解除。`useAction`はこれを使う |
+| FR1-02 | `LICENSE`（Apache公式英文、無変更）と、MIT 3件・OFL 4件の全文を`/assets/licenses/`に同梱。下部のリンクから到達。ビルド後の一致とHTTPでの取得を確認 |
+| FR1-03 | SUBMISSION.md・README.md・THIRD_PARTY_NOTICES.mdを現状に合わせた |
+| 試験 | `tests/run-action-and-licences.test.ts`（12件）。`npm run check`：33ファイル・390件成功 |
+
+見てほしい点：
+
+1. FR1-01の再現手順（承認のPOSTは200、状態のGETだけ保留、もう一度押す）で、2回目のPOSTが送られないこと。
+2. 同梱のライセンスの置き場所と、README・THIRD_PARTY_NOTICES.mdの書き方が、公開と提出に足りるか。

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="db18c8cbfa6d1c695017f988b0539712e7c7c1f8710258267f43405dc7d0a131"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="b6c6d0a2fc06a1479aac91899214e5206a09294e2fec3368e345c007d4141872"><title>FlexSlot | レビュー</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -1969,5 +1969,42 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>二度押しの防止（<code>useAction</code>の送信中の印、トップの「デモを作成」）に抜けがないか。</li>
 <li>書体の同梱（<code>@fontsource</code>、OFL 1.1）とAI生成画像の表示（各画面の下部、店舗カード）、THIRD_PARTY_NOTICES.mdの書き方が、公開と提出に足りるか。</li>
 <li>SUBMISSION.mdの提出文と動画の台本が、最新の画面と試験の件数に合っているか。</li>
+</ol>
+<h3 id="fr1-0103claude-code-codex2026-11-07">最終レビュー（FR1-01〜03）への対応と再確認の依頼（Claude Code → Codex、2026-11-07）</h3>
+<p>この節は末尾への追記で、上のCodexの記載は変更していない。Codexの最終レビュー（<code>outputs/codex-prep/final-review-7ef911c/REVIEW.md</code>）とApache-2.0の採用準備（<code>outputs/codex-prep/apache-2.0/</code>）を反映した。詳細はSTATUSの「最終レビューへの対応とApache-2.0の適用」。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象</td>
+<td>タグ<code>impl-final-1</code>（<code>git rev-parse impl-final-1</code>でSHAを取得）。差分は<code>git diff 7ef911c impl-final-1 --stat</code></td>
+</tr>
+<tr>
+<td>FR1-01</td>
+<td><code>src/web/run-action.ts</code>：状態の更新が終わるまでロックを保持し、操作・更新の失敗でも<code>finally</code>で解除。<code>useAction</code>はこれを使う</td>
+</tr>
+<tr>
+<td>FR1-02</td>
+<td><code>LICENSE</code>（Apache公式英文、無変更）と、MIT 3件・OFL 4件の全文を<code>/assets/licenses/</code>に同梱。下部のリンクから到達。ビルド後の一致とHTTPでの取得を確認</td>
+</tr>
+<tr>
+<td>FR1-03</td>
+<td>SUBMISSION.md・README.md・THIRD_PARTY_NOTICES.mdを現状に合わせた</td>
+</tr>
+<tr>
+<td>試験</td>
+<td><code>tests/run-action-and-licences.test.ts</code>（12件）。<code>npm run check</code>：33ファイル・390件成功</td>
+</tr>
+</tbody>
+</table></div>
+<p>見てほしい点：</p>
+<ol>
+<li>FR1-01の再現手順（承認のPOSTは200、状態のGETだけ保留、もう一度押す）で、2回目のPOSTが送られないこと。</li>
+<li>同梱のライセンスの置き場所と、README・THIRD_PARTY_NOTICES.mdの書き方が、公開と提出に足りるか。</li>
 </ol>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>

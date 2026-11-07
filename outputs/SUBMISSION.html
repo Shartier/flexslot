@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="720de2e07f3f0f49122f9f52e5d2910ccd273849a3b80ae2ce170d5d8bd47570"><title>FlexSlot | 提出物の下書き</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="4ff1887c6e28f75c74781a54c4acacd40f063dd61de9f12cb05ede9ac55496a7"><title>FlexSlot | 提出物の下書き</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -47,7 +47,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>Five Sandbox scenarios, R1–R5, exercised interruption and recovery. Response loss and refund rejection were injected, and booking conflicts were introduced deliberately; these were not PayPal outages. Process stops were actual exits. The observed final bookings and expected payment resources matched, without duplicate captures or refunds in those runs.</li>
 <li>R5 paused at four intermediate states. The three screens did not show the swap or compensation as completed at those pauses. A separate viewing server kept the payment workflow paused.</li>
 <li>Real Sandbox webhook deliveries were signature-verified and deduplicated, and a tampered copy was rejected.</li>
-<li>The recorded automated check has <strong>378 tests</strong>, using mock or fake external services and local HTTP relay tests. It is separate from the real Sandbox and Vertex checks.</li>
+<li>The recorded automated check has <strong>390 tests</strong>, using mock or fake external services and local HTTP relay tests. It is separate from the real Sandbox and Vertex checks.</li>
 <li>Phone-width and desktop-width browser emulation, and startup from a clean clone in another folder on the same PC, were checked. These are not physical-phone or different-PC tests.</li>
 </ul>
 <h3 id="what-we-learned">What we learned</h3>
@@ -93,7 +93,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>1:21–1:51</td>
-<td>B: <em>Pay US$60.00</em>; actual Sandbox approval; return; show the “Booked” seal, the booking change and A's refund</td>
+<td>B: <em>Pay USD 60.00</em>; actual Sandbox approval; return; show the “Booked” seal, the booking change and A's refund</td>
 <td>The new customer approves payment with PayPal Sandbox, using test money. FlexSlot authorizes, rechecks and captures the payment. It changes both bookings in one database transaction, then requests the ten-dollar partial refund from the existing customer's original payment. The payment and refund have separate progress indicators.</td>
 </tr>
 <tr>
@@ -118,7 +118,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>The times are an editing plan, not a measured finished video. Record the narration and adjust pauses so the final export stays between 2:40 and 2:50, and strictly below 3:00.</li>
 <li>For the recovery section, use saved R5 images only if those images actually exist and the relevant text can be read. The written R5 record alone is not video footage. A recreated interruption must be labelled with its actual mode, such as “mock recreation; Sandbox results checked separately.” Obtain the owner's approval before any additional Sandbox payment needed for recording.</li>
 <li>Do not include a broad claim that prompt injection is impossible, that all failures are covered, or that the app has already produced real salon profit.</li>
-<li>Fix the cancellation-history and HOLD wording findings before filming those areas. Do not show a report's PASS alone as proof; show the relevant state and the checked resource counts.</li>
+<li>The cancellation-history and HOLD wording findings were fixed in <code>impl-wait-1-fix1</code> (IR2-01, IR2-02, IWAI-01). Do not show a report's PASS alone as proof; show the relevant state and the checked resource counts.</li>
 <li>Before uploading, inspect the entire exported video, subtitles and visible URLs. Check that audio is understandable, the UI is legible, the actual duration is under three minutes and no sensitive values appear. Publication still requires the owner's confirmation.</li>
 </ul>
 <h2 id="internal-release-checklist-not-devpost-copy">3. Internal release checklist — not Devpost copy</h2>
@@ -145,7 +145,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>Recovery coverage</td>
-<td>Pending refunds and query timeouts need the agreed focused check of status and recovery. State when a scenario uses a mock or injected fault; do not repeat Sandbox payments just to obtain a naturally pending result</td>
+<td>PENDING captures and refunds and query timeouts are checked with the mock and injected faults (<code>tests/app-pending.test.ts</code>): no screen shows them as completed, no new capture or refund is created, and the case completes once. A naturally pending result on the Sandbox has not been observed; do not repeat Sandbox payments just to obtain one</td>
 </tr>
 <tr>
 <td>Clean startup</td>
@@ -153,7 +153,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 <tr>
 <td>Licence and repository</td>
-<td>The source licence is undecided and the public repository has not been prepared for owner approval. Audit tracked files and history without printing secrets, add the chosen licence, then prepare the exact publishable revision</td>
+<td>Apache License 2.0 (the owner's choice): <code>LICENSE</code>, <code>package.json</code>, README and THIRD_PARTY_NOTICES.md. The screens' build ships the project licence and the unchanged licences of React, React DOM, Scheduler and the four fonts at <code>/assets/licenses/</code> (linked from every screen's footer). Codex's limited history screening found nothing; a final check of the exact publishable revision and the public repository still need the owner's approval</td>
 </tr>
 <tr>
 <td>Judging access</td>

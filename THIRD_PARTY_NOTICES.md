@@ -1,6 +1,6 @@
 # FlexSlot — Third-party notices and generated assets
 
-This file lists material in this repository that FlexSlot's own source licence does not cover by itself. The source licence for the project has not been chosen yet; it will be added before the repository is made public.
+FlexSlot's own source code and documentation are licensed under the Apache License, Version 2.0 (`LICENSE`). This file lists material that keeps its own licence or needs its own notice. The screens' build ships these licence texts unchanged at `/assets/licenses/` (source: `src/web/public/assets/licenses/`), linked from the footer of every screen; a test checks that each copy equals the package's own licence file.
 
 ## Fonts (bundled into the screens)
 
@@ -13,7 +13,17 @@ The screens bundle these fonts from npm packages published by Fontsource. They a
 | Inter | `@fontsource/inter` 5.3.0 | SIL Open Font License 1.1 | Figures |
 | Cormorant Garamond | `@fontsource/cormorant-garamond` 5.3.0 | SIL Open Font License 1.1 | Small Latin captions |
 
-The licence text of each font is included in its package (`node_modules/@fontsource/<name>/LICENSE`) and is copied into the built files the fonts belong to. The fonts are not sold on their own.
+The font files keep their copyright notices and the licence URL in their metadata, and the full OFL text of each font is shipped with the screens (`fontsource-*-LICENSE.txt`). The fonts are not sold on their own.
+
+## Software bundled into the screens
+
+| Package | Version | Licence | Shipped licence file |
+| --- | --- | --- | --- |
+| react | 19.3.1 | MIT | `react-LICENSE.txt` |
+| react-dom | 19.3.1 | MIT | `react-dom-LICENSE.txt` |
+| scheduler | 0.28.0 | MIT | `scheduler-LICENSE.txt` |
+
+Their copyright notices are kept unchanged. Server-side dependencies are installed from npm with their own licence files and are not redistributed in the screens' build.
 
 ## AI-generated images
 

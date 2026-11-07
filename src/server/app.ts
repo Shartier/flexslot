@@ -89,6 +89,7 @@ const MIME: Record<string, string> = {
   '.woff': 'font/woff',
   '.ico': 'image/x-icon',
   '.json': 'application/json',
+  '.txt': 'text/plain; charset=utf-8',
 };
 
 const NOT_BUILT = `<!doctype html><meta charset="utf-8"><title>FlexSlot</title><p>The screens are not built yet. Run <code>npm run build</code>, then reload.</p>`;
