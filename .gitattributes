@@ -2,3 +2,5 @@
 *.md text eol=lf
 *.html text eol=lf
 *.ps1 text eol=lf
+LICENSE -text
+src/web/public/assets/licenses/** -text
