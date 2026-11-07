@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="1ea4a3e192678ee5e5c958ef16c9bbfbab8624c09fd071501482279f4a099064"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="0ad068e9dc2ed63be431b8b3a1ebd7dbadf6840502c782c19b30fb2ab31c0297"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -2685,6 +2685,38 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </table></div>
 <p>試験：<code>tests/app-ja-wording.test.ts</code>（5件）を追加した。偽のVertex（外部への接続なし）で、AIが質問を返さないときの日本語・英語の質問（B・A）、AI自身の質問がそのまま出ること、<code>US$</code>の表示、日本語の文言に「仮売上」「移動」「本番」「わかりません」と単独の「ドル」が残っていないことを確かめる。質問の言語の切り替えを戻すと3件が失敗することを確かめた。<code>tests/app-ja.test.ts</code>の金額の期待値を<code>US$</code>に更新した。<code>npm run check</code>は32ファイル・378件成功、<code>npm run build</code>も成功。</p>
 <p>画面：内蔵ブラウザで、模擬AI・模擬PayPalのデモを日本語で一件最後まで通した（トップページ、Aの支払いと条件の登録、Bの希望、店主の承認、Aの「予約変更に同意する」、Bの承認期限の表示、完了後の店主・A）。新しい日本語の例文は従来と同じ時間帯（11月12日 10:00〜12:00）に読み取られた。スマホ幅（375px）でAの完了画面に横スクロールが出ないことを確かめた。JA-01の経路（AIが質問を返さない）は模擬ルールでは起きないため、画面では確認しておらず、偽のVertexの試験だけで確かめた。実機のスマートフォンと実際のVertexの日本語の回答は未確認。</p>
+<h2 id="section-29">スマホ実機での再確認（模擬モードの一時公開、本人、2026-11-07）</h2>
+<p>本人の依頼（「スマホで確認するのでQRコードだして」）で、<code>impl-ja-1</code>の画面を前回と同じ方法（公開モード：模擬だけ、<code>.env</code>を読まない、Webhookは404、新しいデモは10件まで、127.0.0.1の8791番、cloudflared単体版2026.10.3のQuick Tunnel）で一時公開した。データは<code>data/phone-check-2</code>（Git対象外）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>公開の時間</td>
+<td>10:52〜11:01（日本時間、約9分）。開始直後に外から、ページが開く（200）・Sandboxのデモの作成は409（PAYMENT_MODE_UNAVAILABLE）・Webhookは404・設定はVertexなし／Sandboxなしであることを確かめた。終了後、公開URLは530、cloudflaredのプロセスなし、8791番の待ち受けなし</td>
+</tr>
+<tr>
+<td>記録（サーバーのログとDB）</td>
+<td>デモが2件、約2秒の間隔で作られた（二度押しの可能性）。店主・A・Bの画面を開いたが、案件は作られていない（条件の登録や支払いはしていない）。ログは問い合わせ文字列を残さないため、言語の切り替えの有無はログからは分からない</td>
+</tr>
+<tr>
+<td>本人の所見</td>
+<td>1. 日本語／英語の切り替えがあるが、日本語でしか表示されない。2. 日本語の画面の上段のタイトルが分かりづらい。3. 美容室の写真はいまひとつ。4. ボタンなどが質素すぎる。もっとリッチにしてよい</td>
+</tr>
+<tr>
+<td>切り替えの調査</td>
+<td>内蔵ブラウザでは、ボタンを押すと英語に切り替わり、選択も保存された。一方、スマホ幅では英語にすると上段のボタンが2行目へ移り、位置が変わる。内蔵ブラウザのスマホ表示は縮小されるため、タップの位置がずれ、実機と同じ条件の再現にはならなかった。原因の候補は、(a) 切り替え後のボタンの位置の移動、(b) 前回のようにスマホのブラウザが英語を自動翻訳して日本語に戻している、の2つ。未確定</td>
+</tr>
+<tr>
+<td>本人の提案</td>
+<td>フロントエンドは、先にHTMLで画面のイメージを固めてから強化する。HTMLで固めた後に、画像の作業をCodexに依頼する</td>
+</tr>
+</tbody>
+</table></div>
 <h2 id="claude-code2026-11-031">Claude Codeの確認（2026-11-03、第1区切り）</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -2794,7 +2826,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <p>以前の会話は取得できた範囲の確認であり、過去の全メッセージやPC全体を調査したという意味ではない。現在のユーザー指示を最新の合意とする。</p>
 <p>Gitのuser.name/user.emailは未登録だったため、初期文書コミットに限り一時的な作者 <code>Codex &lt;codex@local.invalid&gt;</code> を指定した。ユーザーのローカル/グローバルGit設定は変更していない。</p>
 <p>参照：<a href="https://paypalaihackathon.devpost.com/rules">公式規約</a>、<a href="https://developer.paypal.com/v5/checkout/auth-capture">PayPal決済</a>、<a href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/gcp-auth">Google Cloud認証</a>。</p>
-<h2 id="section-29">実行した確認とテスト</h2>
+<h2 id="section-30">実行した確認とテスト</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3029,7 +3061,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 </tr>
 </tbody>
 </table></div>
-<h2 id="section-30">未確認事項</h2>
+<h2 id="section-31">未確認事項</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -3116,7 +3148,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかと、匿名化した照合結果だけを確認する。</li>
 <li><strong>今後も本人が行うこと</strong>：Sandboxの買い手アカウントでの承認（ログインとパスワードの入力）。V8の受信経路の公開の承認。</li>
 </ol>
-<h2 id="section-31">次に行う作業</h2>
+<h2 id="section-32">次に行う作業</h2>
 <ol>
 <li>Codexによる修正版の再確認は2026-11-04に完了した（「Codexの再確認の結果」の節）。</li>
 <li>DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を修正した（タグ<code>impl-executor-1-fix1</code>）。Codexの再確認（REVIEWの最後の節）を待つ。</li>
@@ -3124,9 +3156,9 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>英語のREADMEと別環境での起動確認、Webhookの受信箱（模擬まで）を済ませた（「英語のREADMEとWebhookの受信箱」の節）。</li>
 <li>V8を2026-11-06に実施した（「V8の実施計画と結果」）。第2レビューの指摘を修正した（<code>impl-app-1-fix1</code>、Codexの再確認待ち）。</li>
 <li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。</li>
-<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。Codexの日本語レビューを反映した（<code>impl-ja-1</code>）。次は、実機での再確認、初見の人の操作、提出前の確認。</li>
+<li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。Codexの日本語レビューを反映した（<code>impl-ja-1</code>）。実機で再確認し、切り替え・上段のタイトル・写真・ボタンの所見を受けた。次は、HTMLで画面のイメージを固めてからフロントエンドを強化し、その後Codexに画像を依頼する。初見の人の操作、提出前の確認。</li>
 </ol>
 <p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
-<h2 id="section-32">今後の検証記録の書式</h2>
+<h2 id="section-33">今後の検証記録の書式</h2>
 <p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
