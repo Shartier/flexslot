@@ -1,27 +1,32 @@
-// The existing customer's screen (A) and the new customer's screen (B) (SPEC 3), design 1 "salon" of the HTML
-// mockup v3: a large card that says what is asked or what happened (the request, the offer, completion), then the
-// times and the amounts before the buttons, then the progress; the booking, the forms and the salon around it.
+// The existing customer's screen (A) and the new customer's screen (B) (SPEC 3), the crafted version of mockup v4
+// (terracotta): a large card on a photograph that says what is asked or what happened (with a seal on completion),
+// then the times and the amounts as a receipt before the buttons, then the progress; the booking, the forms and the
+// salon around it.
 
 import { useCallback, useEffect, useState } from 'react';
 import type { Api } from './api.ts';
 import { useT } from './i18n.tsx';
 import type { AState, Approval, BState, CaseView, Money } from './types.ts';
-import { PHOTOS } from './art.ts';
 import {
   ActionBar,
   ActionButton,
   Amount,
   ApprovalBox,
-  ApprovalChips,
+  CardHead,
   CaseProgress,
   CHECKING,
   ConditionsSummary,
   Events,
   Icon,
-  ImageSlot,
   IntakePanel,
+  Ledger,
   MoveCards,
   Notice,
+  People,
+  Photo,
+  PhotoHero,
+  Seal,
+  Sec,
   Section,
   ServiceMeta,
   Shell,
@@ -37,23 +42,20 @@ const decision = (c: CaseView) => ({ caseId: c.id, version: c.version, termsHash
 function Terms({ tz }: { tz: string }) {
   const t = useT();
   return (
-    <div className="terms">
-      <p className="terms-title">{t.termsTitle}</p>
-      <ul>
-        <li>
-          <Icon name="clock" />
-          {t.termLocal(tz)}
-        </li>
-        <li>
-          <Icon name="refund" />
-          {t.termOnce}
-        </li>
-        <li>
-          <Icon name="scissors" />
-          {t.termSame}
-        </li>
-      </ul>
-    </div>
+    <ul className="terms">
+      <li>
+        <Icon name="clock" />
+        {t.termLocal(tz)}
+      </li>
+      <li>
+        <Icon name="refund" />
+        {t.termOnce}
+      </li>
+      <li>
+        <Icon name="scissors" />
+        {t.termSame}
+      </li>
+    </ul>
   );
 }
 
@@ -89,7 +91,7 @@ export function AScreen({ api, state, refresh }: { api: Api; state: AState; refr
         <ACase key={c.id} api={api} c={c} refresh={refresh} paid={state.booking.price} refundNote={state.refundNote} />
       ))}
 
-      <Section title={t.yourBooking} aside={<StepChip step={pay.state === 'PAID' ? { state: 'DONE', text: pay.text } : pay} />}>
+      <Section k="YOUR BOOKING" title={t.yourBooking} aside={<StepChip step={pay.state === 'PAID' ? { state: 'DONE', text: pay.text } : pay} />}>
         <p className="booking-line">{t.bookingLine(state.booking.time, state.booking.service, state.booking.stylist, state.booking.price.text)}</p>
         {pay.state === 'UNPAID' && (
           <>
@@ -113,7 +115,7 @@ export function AScreen({ api, state, refresh }: { api: Api; state: AState; refr
         {act.error && <Notice kind="error">{act.error}</Notice>}
       </Section>
 
-      <Section title={t.whenMove}>
+      <Section k="WHEN YOU COULD MOVE" title={t.whenMove}>
         {state.preference && <ConditionsSummary c={state.preference} label={t.yourConditions} />}
         <IntakePanel
           api={api}
@@ -137,72 +139,49 @@ function ACase({ api, c, refresh, paid, refundNote }: { api: Api; c: CaseView; r
   return (
     <>
       {asked && (
-        <section className="hero">
-          <span className="kicker">
-            <Icon name="calendar" />
-            {t.aHero.kicker}
-          </span>
-          <h2>{t.aHero.title}</h2>
+        <PhotoHero slot="backdrop" icon="calendar" kicker={t.aHero.kicker} title={t.aHero.title}>
           <p>{t.aHero.body(c.origin)}</p>
-          <div className="hero-amt">
-            <span className="lbl">{t.aHero.refund}</span>
-            <Amount m={c.aCompensation} />
+          <div className="tag-amt">
+            <span className="lbl">
+              {t.ifYouMove}
+              <b>{t.aHero.refund}</b>
+            </span>
+            <Amount m={c.aCompensation} count />
           </div>
-        </section>
+        </PhotoHero>
       )}
       {done && (
-        <section className="hero ok">
-          <span className="kicker">
-            <Icon name="check" />
-            {t.aDone.kicker}
-          </span>
-          <h2>{t.aDone.title(c.destination)}</h2>
+        <PhotoHero slot="done" icon="check" kicker={t.aDone.kicker} title={t.aDone.title(c.destination)} done seal="FLEXSLOT · CHANGED · 変更完了 · ">
           <p>{t.aDone.body(c.aCompensation.text)}</p>
-        </section>
+        </PhotoHero>
       )}
       {c.approvals.A === 'APPROVED' && c.status === 'A_ACCEPTED' && (
-        <Notice kind="info" title={t.aAgreedTitle}>
+        <Notice kind="info" pending title={t.aAgreedTitle}>
           {t.youAgreed}
         </Notice>
       )}
       <section className="card" id="swap">
-        <div className="card-head">
-          <h2>{t.aChangeTitle}</h2>
-          {asked ? (
-            <span className="chip wait">
-              <Icon name="clock" />
-              {t.replyChip(c.offerExpiresAt)}
-            </span>
-          ) : (
-            <StatusChip c={c} />
-          )}
-        </div>
+        <CardHead
+          k="THE CHANGE"
+          title={t.aChangeTitle}
+          aside={asked ? <span className="chip wait">{t.replyChip(c.offerExpiresAt)}</span> : <StatusChip c={c} />}
+        />
         <MoveCards from={c.origin} to={c.destination} />
         <ServiceMeta service={t.sameService(c.aService)} stylist={t.sameStylist(c.stylist)} />
         {asked ? (
           <>
-            <p className="label">{t.refundTitle}</p>
-            <div className="rows">
-              <div className="row">
-                <span>{t.refundRows.paid}</span>
-                <Amount m={paid} />
-              </div>
-              <div className="row total">
-                <span>{t.refundRows.refund}</span>
-                <Amount m={c.aCompensation} />
-              </div>
-              <div className="row">
-                <span>{t.refundRows.to}</span>
-                <span>{t.refundRows.toValue}</span>
-              </div>
-              <div className="row">
-                <span>{t.refundRows.newCharge}</span>
-                <span>{t.refundRows.none}</span>
-              </div>
-            </div>
+            <Sec no="01">{t.refundTitle}</Sec>
+            <Ledger
+              rows={[
+                { k: t.refundRows.paid, v: <Amount m={paid} /> },
+                { k: t.refundRows.to, v: t.refundRows.toValue },
+                { k: t.refundRows.newCharge, v: t.refundRows.none },
+                { k: t.refundRows.refund, v: <Amount m={c.aCompensation} />, total: true },
+              ]}
+            />
             <p className="fine">{refundNote}</p>
-            <p className="label">{t.approvalsLabel}</p>
-            <ApprovalChips c={c} />
+            <Sec no="02">{t.approvalsLabel}</Sec>
+            <People c={c} me="A" />
             {c.status === 'AWAITING_APPROVAL' && c.approvals.OWNER !== 'APPROVED' && <p className="fine">{t.shopFirst}</p>}
             <ActionBar
               primary={
@@ -226,20 +205,21 @@ function ACase({ api, c, refresh, paid, refundNote }: { api: Api; c: CaseView; r
           </>
         ) : (
           <>
-            <p className="label">{t.progressTitle}</p>
+            <Sec no="01">{t.progressTitle}</Sec>
             <CaseProgress c={c} />
-            <div className="rows steps-rows">
-              <div className="row">
-                <span>{t.yourBookingLabel}</span>
-                <span className={`chip ${c.steps.bookingsChanged ? 'ok' : 'muted'}`}>{c.steps.bookingsChanged ? t.movedTo(c.destination) : t.notChanged}</span>
-              </div>
-              <div className="row">
-                <span>
-                  {t.yourCompensation} <Amount m={c.aCompensation} />
-                </span>
-                <StepChip step={c.steps.aRefund} />
-              </div>
-            </div>
+            <Ledger
+              rows={[
+                { k: t.yourBookingLabel, v: <span className={`chip ${c.steps.bookingsChanged ? 'ok' : 'muted'}`}>{c.steps.bookingsChanged ? t.movedTo(c.destination) : t.notChanged}</span> },
+                {
+                  k: (
+                    <>
+                      {t.yourCompensation} <Amount m={c.aCompensation} />
+                    </>
+                  ),
+                  v: <StepChip step={c.steps.aRefund} />,
+                },
+              ]}
+            />
             <Events c={c} />
           </>
         )}
@@ -266,7 +246,7 @@ export function BScreen({ api, state, refresh }: { api: Api; state: BState; refr
       {state.cases.map((c) => (
         <BCase key={c.id} api={api} c={c} refresh={refresh} tz={tz} mode={state.header.modes.payment} />
       ))}
-      <Section title={t.yourRequest}>
+      <Section k="YOUR REQUEST" title={t.yourRequest}>
         {state.request && <ConditionsSummary c={state.request} label={t.yourConfirmedRequest} />}
         {state.result &&
           !state.cases.some((c) => !['REJECTED', 'EXPIRED', 'COMPENSATED'].includes(c.status)) &&
@@ -306,24 +286,14 @@ function BCase({ api, c, refresh, tz, mode }: { api: Api; c: CaseView; refresh: 
   return (
     <>
       {open && (
-        <section className="hero">
-          <span className="kicker">
-            <Icon name="calendar" />
-            {t.bHero.kicker}
-          </span>
-          <h2>{t.bHero.title(c.bSlot)}</h2>
+        <PhotoHero slot="backdrop" icon="calendar" kicker={t.bHero.kicker} title={t.bHero.title(c.bSlot)}>
           <p>{c.approvals.A === 'APPROVED' ? t.aAgreed : t.aMayMove}</p>
-        </section>
+        </PhotoHero>
       )}
       {done && (
-        <section className="hero ok">
-          <span className="kicker">
-            <Icon name="check" />
-            {t.bDone.kicker}
-          </span>
-          <h2>{t.bDone.title}</h2>
+        <PhotoHero slot="done" icon="check" kicker={t.bDone.kicker} title={t.bDone.title} done seal="FLEXSLOT · BOOKED · 予約確定 · ">
           <p>{t.bDone.body}</p>
-        </section>
+        </PhotoHero>
       )}
       {CHECKING.includes(c.status) && (
         <Notice kind="info" pending title={t.checkingPay.title}>
@@ -331,42 +301,39 @@ function BCase({ api, c, refresh, tz, mode }: { api: Api; c: CaseView; refresh: 
         </Notice>
       )}
       <section className={`ticket${done ? ' done' : ''}`} id="swap">
-        <div className="ticket-top">
+        <div className="tk-top">
           <div>
+            <p className="tk-no">RESERVATION · FS-{c.id.slice(0, 4).toUpperCase()}</p>
             <p className="d">{date}</p>
             <p className="t num">{time}</p>
             <p className="tz">{t.localTime(tz)}</p>
             <ServiceMeta service={c.bService ?? t.serviceFallback} stylist={c.stylist} />
           </div>
-          <div className="ticket-thumb">
-            <ImageSlot shape="sq" icon="scissors" src={PHOTOS.service} />
+          <div className="tk-thumb">
+            <Photo slot="service" />
           </div>
         </div>
-        <div className="ticket-sep" aria-hidden="true" />
-        <div className="ticket-bottom">
+        <div className="tk-sep" aria-hidden="true" />
+        <div className="tk-bottom">
           <span className="lbl">{t.bTotal}</span>
           <Amount m={c.bPrice} />
+          {done && <Seal className="tk-stamp" words="PAID · お支払い済み · PAID · " />}
         </div>
       </section>
       <section className="card">
-        <div className="card-head">
-          <h2>{open ? t.offerTitle : t.progressTitle}</h2>
-          <StatusChip c={c} />
-        </div>
+        <CardHead k={open ? 'ACCEPT & PAY' : 'PROGRESS'} title={open ? t.offerTitle : t.progressTitle} aside={<StatusChip c={c} />} />
         {open && (
           <>
-            <p className="label">{t.approvalsLabel}</p>
-            <ApprovalChips c={c} />
-            <div className="rows">
-              <div className="row">
-                <span>{t.offerRows.validUntil}</span>
-                <span>{c.offerExpiresAt}</span>
-              </div>
-              <div className="row">
-                <span>{t.offerRows.how}</span>
-                <span>{t.offerRows[mode]}</span>
-              </div>
-            </div>
+            <Sec no="01">{t.approvalsLabel}</Sec>
+            <People c={c} me="B" />
+            <Sec no="02">{t.termsB}</Sec>
+            <Ledger
+              rows={[
+                { k: t.offerRows.validUntil, v: c.offerExpiresAt },
+                { k: t.offerRows.how, v: t.offerRows[mode] },
+                { k: t.bTotal, v: <Amount m={c.bPrice} />, total: true },
+              ]}
+            />
             {c.status === 'AWAITING_APPROVAL' && <p className="fine">{t.waitingShopA}</p>}
           </>
         )}
@@ -397,28 +364,14 @@ function BCase({ api, c, refresh, tz, mode }: { api: Api; c: CaseView; refresh: 
         {!open && (
           <>
             <CaseProgress c={c} />
-            <div className="rows steps-rows">
-              <div className="row">
-                <span>{t.payment}</span>
-                <StepChip step={c.steps.bPayment} />
-              </div>
-              {c.steps.authorizationRelease && (
-                <div className="row">
-                  <span>{t.authorization}</span>
-                  <StepChip step={c.steps.authorizationRelease} />
-                </div>
-              )}
-              {c.steps.bRefund && (
-                <div className="row">
-                  <span>{t.refundToYou}</span>
-                  <StepChip step={c.steps.bRefund} />
-                </div>
-              )}
-              <div className="row">
-                <span>{t.yourBookingLabel}</span>
-                <span className={`chip ${c.steps.bookingsChanged ? 'ok' : 'muted'}`}>{c.steps.bookingsChanged ? t.confirmedSlot(c.bSlot) : t.notConfirmedYet}</span>
-              </div>
-            </div>
+            <Ledger
+              rows={[
+                { k: t.payment, v: <StepChip step={c.steps.bPayment} /> },
+                ...(c.steps.authorizationRelease ? [{ k: t.authorization, v: <StepChip step={c.steps.authorizationRelease} /> }] : []),
+                ...(c.steps.bRefund ? [{ k: t.refundToYou, v: <StepChip step={c.steps.bRefund} /> }] : []),
+                { k: t.yourBookingLabel, v: <span className={`chip ${c.steps.bookingsChanged ? 'ok' : 'muted'}`}>{c.steps.bookingsChanged ? t.confirmedSlot(c.bSlot) : t.notConfirmedYet}</span> },
+              ]}
+            />
             <Events c={c} />
           </>
         )}

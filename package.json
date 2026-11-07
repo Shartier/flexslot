@@ -33,6 +33,10 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
+    "@fontsource/cormorant-garamond": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/shippori-mincho": "5.3.0",
+    "@fontsource/zen-kaku-gothic-new": "5.3.1",
     "@google/genai": "2.30.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",

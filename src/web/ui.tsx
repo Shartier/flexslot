@@ -1,13 +1,15 @@
-// Shared pieces of the three screens in design 1 "salon" of the HTML mockup v3 (design/mockup-v3, chosen by the
-// owner on 2026-11-07): the app bar (the screen named by what it is for, a fixed-width language switch, the modes and
-// the demo switcher), two-line action buttons with a busy state that refuses a second send, the swap's slot,
-// before/after, amounts, approvals and progress, notices, image slots, the PayPal approval box and the intake panel
-// (DESIGN 9). Texts come from i18n.tsx; the server sends its own wording in the same language. Everything shown comes
-// from the server's state; no inline styles (CSP).
+// Shared pieces of the three screens in the crafted version of the HTML mockup v4 (design/mockup-v4) with the
+// terracotta accent, both chosen by the owner on 2026-11-07: the app bar (the screen named by what it is for, a
+// fixed-width language switch, the modes and the demo switcher), photographs under a warm veil, seals, two-line action
+// buttons with a busy state that refuses a second send, the swap's slot, before/after, ledgers, approvals as people,
+// the growing progress line, the profit bar, notices, the PayPal approval box and the intake panel (DESIGN 9). Texts
+// come from i18n.tsx; the server sends its own wording in the same language. Everything shown comes from the server's
+// state. No inline style attributes (CSP): the few computed values (a line's width, a photo's framing) are set
+// through the style property, which React applies via the CSSOM.
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { explain, type Api } from './api.ts';
-import { ART, PHOTOS } from './art.ts';
+import { ART, PHOTOS, type PhotoSlot } from './art.ts';
 import { loadDemo, type RoleSeg } from './demo-links.ts';
 import { showDate, useLang, useT } from './i18n.tsx';
 import type { Approval, CaseView, Conditions, Draft, Header, Money, Step, Window } from './types.ts';
@@ -41,14 +43,37 @@ export function Icon({ name }: { name: IconName }) {
   );
 }
 
-/** An amount for display: "US$60.00" (amounts inside sentences keep the server's wording). */
-export function Amount({ m, sign }: { m: Money; sign?: '+' | '−' }) {
-  const n = (Math.abs(m.minor) / 100).toFixed(2);
+const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/** Counts a number up once when it first appears (not on every refresh); exact at once with reduced motion. */
+function useCountUp(target: number, on: boolean): number {
+  const [v, setV] = useState(on && !reduced() ? 0 : target);
+  useEffect(() => {
+    if (!on || reduced()) {
+      setV(target);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const step = (t: number) => {
+      const k = Math.min(1, (t - t0) / 900);
+      setV(target * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, on]);
+  return v;
+}
+
+/** An amount for display: "US$60.00" (amounts inside sentences keep the server's wording). `count` counts it up. */
+export function Amount({ m, sign, count = false }: { m: Money; sign?: '+' | '−'; count?: boolean }) {
+  const shown = useCountUp(Math.abs(m.minor) / 100, count);
   return (
     <span className="money num">
       {sign ?? (m.minor < 0 ? '−' : '')}
       <span className="cur">{m.currency === 'USD' ? 'US$' : `${m.currency} `}</span>
-      {n}
+      {shown.toFixed(2)}
     </span>
   );
 }
@@ -57,6 +82,16 @@ export function Amount({ m, sign }: { m: Money; sign?: '+' | '−' }) {
 export function splitSpan(span: string): [string, string] {
   const i = span.lastIndexOf(' ');
   return i < 0 ? [span, ''] : [span.slice(0, i), span.slice(i + 1)];
+}
+
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+/** The small calendar leaf: "11月" / "NOV" and the day, read from the server's date text. */
+function calParts(date: string): [string, string] | null {
+  const ja = /(\d{1,2})月(\d{1,2})日/.exec(date);
+  if (ja) return [`${ja[1]}月`, ja[2]!];
+  const en = /\d{4}-(\d{2})-(\d{2})/.exec(date);
+  if (en) return [MONTHS[Number(en[1]) - 1] ?? '', String(Number(en[2]))];
+  return null;
 }
 
 /** Two fixed-width choices: the switch never moves when the language changes (phone finding, 2026-11-07). */
@@ -102,26 +137,31 @@ export function DemoSwitcher({ worldId, current }: { worldId: string; current: R
 export function Wordmark() {
   return (
     <span className="brand">
-      <span className="logo" aria-hidden="true">
-        <Icon name="swap" />
-      </span>
-      FlexSlot
+      <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="29" height="29" rx="9" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M9 12.5h13l-3.2-3.2M23 19.5H10l3.2 3.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span className="wm">FlexSlot</span>
     </span>
   );
 }
 
+/** Small italic caption above a title (PROPOSAL, PROGRESS…): decoration, the same in both languages. */
+export const KICKER = { owner: 'FOR THE SHOP', a: 'FOR CUSTOMER A', b: 'FOR CUSTOMER B', landing: 'BOOKING SWAPS' } as const;
+
 /** The top of every screen: brand and language, the screen's title, then the modes and the demo switcher. */
-export function AppBar({ title, eyebrow, header, roleSeg }: { title: string; eyebrow: string; header?: Header; roleSeg?: RoleSeg }) {
+export function AppBar({ k, title, eyebrow, header, roleSeg }: { k: string; title: string; eyebrow: string; header?: Header; roleSeg?: RoleSeg }) {
   const t = useT();
   const m = header?.modes;
   return (
     <header className="appbar">
-      <div className="appbar-inner">
-        <div className="appbar-row">
+      <div className="appbar-in">
+        <div className="bar-row">
           <Wordmark />
           <LangSwitch />
         </div>
-        <div className="appbar-title">
+        <div className="titles">
+          <p className="k">{k}</p>
           <h1>{title}</h1>
           <p className="eyebrow">{eyebrow}</p>
         </div>
@@ -143,12 +183,25 @@ export function AppBar({ title, eyebrow, header, roleSeg }: { title: string; eye
   );
 }
 
+export function Footer({ header }: { header?: Header }) {
+  const t = useT();
+  return (
+    <footer className="foot">
+      <div className="orn">
+        <Wordmark />
+      </div>
+      {header && <DemoNote header={header} />}
+      <p>{t.appFoot}</p>
+    </footer>
+  );
+}
+
 /** The frame of a role screen: app bar, main column, side column; the owner gets in-page links (wide screens). */
 export function Shell({ header, roleSeg, title, side, children }: { header: Header; roleSeg: RoleSeg; title: string; side?: ReactNode; children: ReactNode }) {
   const t = useT();
   return (
     <>
-      <AppBar title={title} eyebrow={t.eyebrowRole[roleSeg](header.shop.name)} header={header} roleSeg={roleSeg} />
+      <AppBar k={KICKER[roleSeg]} title={title} eyebrow={t.eyebrowRole[roleSeg](header.shop.name)} header={header} roleSeg={roleSeg} />
       <div className={`layout${roleSeg === 'owner' ? ' has-rail' : ''}`}>
         {roleSeg === 'owner' && (
           <nav className="rail" aria-label={t.workspace}>
@@ -173,10 +226,7 @@ export function Shell({ header, roleSeg, title, side, children }: { header: Head
         <main className="content">{children}</main>
         {side && <aside className="side">{side}</aside>}
       </div>
-      <footer className="app-foot">
-        <DemoNote header={header} />
-        <p>{t.appFoot}</p>
-      </footer>
+      <Footer header={header} />
     </>
   );
 }
@@ -238,26 +288,97 @@ export function ActionBar({ primary, secondary, note, pinned = true }: { primary
   );
 }
 
+// ---- cards and photographs --------------------------------------------------------------------------------------
+
+/** A card's head: a small italic caption, the title, and something on the right (a status). */
+export function CardHead({ k, title, aside }: { k: string; title: ReactNode; aside?: ReactNode }) {
+  return (
+    <div className="ch">
+      <div>
+        <p className="ck">{k}</p>
+        <h2>{title}</h2>
+      </div>
+      {aside}
+    </div>
+  );
+}
+
+/** A numbered section inside a card, with a rule that fades out. */
+export function Sec({ no, children }: { no: string; children: ReactNode }) {
+  return (
+    <div className="sec">
+      <span className="sec-no">{no}</span>
+      <span>{children}</span>
+    </div>
+  );
+}
+
+/** A photograph filling its box (decorative). */
+export function Photo({ slot }: { slot: PhotoSlot }) {
+  const p = PHOTOS[slot];
+  return <img className="ph" src={p.src} alt="" aria-hidden="true" loading="lazy" style={{ objectPosition: p.pos }} />;
+}
+
+/** The round seal pressed on completion: a ring of words and a check that draws itself. */
+export function Seal({ words, className }: { words: string; className: string }) {
+  const id = `ring${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  return (
+    <svg className={className} viewBox="0 0 120 120" aria-hidden="true">
+      <defs>
+        <path id={id} d="M60,60 m-43,0 a43,43 0 1,1 86,0 a43,43 0 1,1 -86,0" />
+      </defs>
+      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth=".8" />
+      <circle cx="60" cy="60" r="33" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <text>
+        <textPath href={`#${id}`}>{words}</textPath>
+      </text>
+      <path className="chk" d="M45 61l10 10 21-23" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** A large card on a photograph: what is asked, or what happened (`done`, with a seal). */
+export function PhotoHero({ slot, kicker, icon, title, done, seal, children }: { slot: PhotoSlot; kicker: string; icon: IconName; title: ReactNode; done?: boolean; seal?: string; children?: ReactNode }) {
+  return (
+    <section className={`photo-hero${done ? ' done' : ''}`}>
+      <Photo slot={slot} />
+      <div className="veil" />
+      <div className="frame" />
+      {seal && <Seal className="seal" words={seal} />}
+      <div className="ph-body">
+        <span className="kicker">
+          <Icon name={icon} />
+          {kicker}
+        </span>
+        <h2>{title}</h2>
+        {children}
+      </div>
+    </section>
+  );
+}
+
 // ---- the swap ----------------------------------------------------------------------------------------------------
 
-/** The requested slot in large type, with the shop's local time zone. */
-export function SlotHeading({ label, span, tz }: { label: string; span: string; tz: string }) {
+/** The requested slot in large type with a calendar leaf, and the shop's local time zone. */
+export function SlotHeading({ span, tz }: { span: string; tz: string }) {
   const t = useT();
   const [date, time] = splitSpan(span);
+  const leaf = calParts(date);
   return (
-    <>
-      <p className="label">{label}</p>
-      <div className="big-slot">
-        <span className="cal" aria-hidden="true">
-          <Icon name="calendar" />
-        </span>
-        <div>
-          <p className="d">{date}</p>
-          <p className="t num">{time}</p>
-          <p className="tz">{t.localTime(tz)}</p>
+    <div className="big-slot">
+      {leaf ? (
+        <div className="cal" aria-hidden="true">
+          <b>{leaf[0]}</b>
+          <span>{leaf[1]}</span>
         </div>
+      ) : null}
+      <div>
+        <p className="d">{date}</p>
+        <p className="t num">{time}</p>
+        <p className="tz">{t.localTime(tz)}</p>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -288,7 +409,7 @@ export function MoveCards({ from, to }: { from: string; to: string }) {
         <span className="d">{fd}</span>
         <span className="t num">{ft}</span>
       </div>
-      <span className="move-arrow" aria-hidden="true">
+      <span className="mv" aria-hidden="true">
         <Icon name="arrow" />
       </span>
       <div className="slot to">
@@ -300,14 +421,15 @@ export function MoveCards({ from, to }: { from: string; to: string }) {
   );
 }
 
-/** Amounts in a row, shown before the buttons. */
-export function AmountGrid({ items }: { items: Array<{ label: string; m: Money; sign?: '+' | '−'; strong?: boolean }> }) {
+/** Label ······ value rows (a receipt). */
+export function Ledger({ rows }: { rows: Array<{ k: ReactNode; v: ReactNode; total?: boolean; key?: string }> }) {
   return (
-    <div className="tiles">
-      {items.map((it) => (
-        <div key={it.label} className={`tile${it.strong ? ' strong' : ''}`}>
-          <span className="tl">{it.label}</span>
-          <Amount m={it.m} {...(it.sign ? { sign: it.sign } : {})} />
+    <div className="ledger">
+      {rows.map((r, i) => (
+        <div key={r.key ?? i} className={`lg${r.total ? ' total' : ''}`}>
+          <span>{r.k}</span>
+          <i aria-hidden="true" />
+          <b>{r.v}</b>
         </div>
       ))}
     </div>
@@ -338,37 +460,53 @@ export function stagesOf(c: CaseView): StageState[] {
 export function CaseProgress({ c }: { c: CaseView }) {
   const t = useT();
   const states = stagesOf(c);
+  const reached = states.filter((s) => s === 'done').length;
+  const width = (Math.min(reached, 5) / 5) * 83.34;
   return (
     <ol className="stepper" aria-label={t.progressAria}>
+      <span className="fill" aria-hidden="true" style={{ '--w': `${width}%` } as CSSProperties} />
       {t.stages.map((label, i) => (
         <li key={label} className={`step ${states[i]}`} aria-current={states[i] === 'current' || states[i] === 'attention' ? 'step' : undefined}>
           <span className="dot" aria-hidden="true">
             {states[i] === 'done' ? <Icon name="check" /> : states[i] === 'attention' ? '!' : states[i] === 'ended' ? '–' : i + 1}
           </span>
-          <span className="sl">{label}</span>
+          <span>{label}</span>
         </li>
       ))}
     </ol>
   );
 }
 
-/** The owner's profit estimate: the result first, then each line. */
-export function ProfitCard({ profit }: { profit: { lines: Array<{ name: string; sign: number; amount: Money }>; additionalProfit: Money; note: string } }) {
+/** The owner's profit estimate: the result, a bar of where the extra revenue goes, then each line. */
+export function ProfitCard({ profit }: { profit: { lines: Array<{ name: string; sign: number; amount: Money }>; additionalRevenue: Money; additionalProfit: Money; note: string } }) {
   const t = useT();
+  const revenue = Math.max(1, profit.additionalRevenue.minor);
+  const parts = [
+    { name: t.kpiProfit, m: profit.additionalProfit, sign: '+' as const },
+    ...profit.lines.filter((l) => l.sign < 0).map((l) => ({ name: l.name, m: l.amount, sign: '−' as const })),
+  ];
   return (
-    <section className="card profit-card" aria-labelledby="profit-title">
-      <p className="label" id="profit-title">
-        {t.profitTitle}
+    <section className="card" aria-labelledby="profit-title">
+      <p className="ck">IF THIS SWAP GOES AHEAD</p>
+      <h2 id="profit-title">{t.profitHead}</h2>
+      <p className="amount-big">
+        <Amount m={profit.additionalProfit} sign="+" count />
       </p>
-      <p className="amount-big plus">
-        <Amount m={profit.additionalProfit} sign="+" />
-      </p>
-      <p className="fine">{t.profitKicker}</p>
-      <div className="rows">
-        {profit.lines.map((l, i) => (
-          <div key={i} className="row">
-            <span>{l.name}</span>
-            <Amount m={l.amount} sign={l.sign < 0 ? '−' : '+'} />
+      <p className="fine">{t.profitOf(profit.additionalRevenue.text)}</p>
+      <div className="pbar" aria-hidden="true">
+        {parts.map((p, i) => (
+          <span key={i} className={`seg${i}`} style={{ width: `${(Math.max(0, p.m.minor) / revenue) * 100}%` }} />
+        ))}
+      </div>
+      <div className="ledger legend">
+        {parts.map((p, i) => (
+          <div key={i} className="lg">
+            <span className={`key seg${i}`} aria-hidden="true" />
+            <span>{p.name}</span>
+            <i aria-hidden="true" />
+            <b>
+              <Amount m={p.m} sign={p.sign} />
+            </b>
           </div>
         ))}
       </div>
@@ -377,31 +515,21 @@ export function ProfitCard({ profit }: { profit: { lines: Array<{ name: string; 
   );
 }
 
-/** A place for a photo. Until Codex's images for design 1 arrive, a plain surface in the design's colours. */
-export function ImageSlot({ shape = 'photo', icon = 'store', src }: { shape?: 'photo' | 'wide' | 'sq'; icon?: IconName; src?: string | undefined }) {
-  return (
-    <figure className={`img-slot ${shape}`} aria-hidden="true">
-      {src ? (
-        <img src={src} alt="" loading="lazy" />
-      ) : (
-        <span className="img-ic">
-          <Icon name={icon} />
-        </span>
-      )}
-    </figure>
-  );
-}
-
-/** The salon: its picture, name and the terms of a change. */
+/** The salon: its picture, name and (on the customers' screens) the terms of a change. */
 export function ShopCard({ header, children }: { header: Header; children?: ReactNode }) {
   const t = useT();
   return (
-    <section className="card shop-card">
-      <ImageSlot src={PHOTOS.side} />
-      {PHOTOS.side && <p className="photo-credit">{t.photoCredit}</p>}
-      <p className="shop-name">{header.shop.name}</p>
-      <p className="fine">{t.shopSub(header.shop.stylists.join(', '))}</p>
-      {children}
+    <section className="card shop">
+      <div className="pic">
+        <Photo slot="station" />
+      </div>
+      <div className="shop-in">
+        <p className="ck">THE SALON</p>
+        <h3>{header.shop.name}</h3>
+        <p className="fine">{t.shopSub(header.shop.stylists.join(', '))}</p>
+        <p className="photo-credit">{t.photoCredit}</p>
+        {children}
+      </div>
     </section>
   );
 }
@@ -412,13 +540,10 @@ export function DemoNote({ header }: { header: Header }) {
   return <p className="demo-note">{t.demoNote(header.shop.name, header.shop.stylists.join(lang === 'ja' ? '、' : ', '), header.shop.hours, header.shop.timeZone, header.serverTime)}</p>;
 }
 
-export function Section({ title, children, aside, id }: { title: ReactNode; children: ReactNode; aside?: ReactNode; id?: string }) {
+export function Section({ k, title, children, aside, id }: { k: string; title: ReactNode; children: ReactNode; aside?: ReactNode; id?: string }) {
   return (
     <section className="card" id={id}>
-      <div className="card-head">
-        <h2>{title}</h2>
-        {aside}
-      </div>
+      <CardHead k={k} title={title} aside={aside} />
       {children}
     </section>
   );
@@ -432,28 +557,32 @@ export function StepChip({ step }: { step: Step }) {
 
 export function StatusChip({ c }: { c: CaseView }) {
   const cls = c.status === 'COMPLETED' ? 'ok' : ['REJECTED', 'EXPIRED', 'COMPENSATED'].includes(c.status) ? 'muted' : /FAILED|ATTENTION/.test(c.status) ? 'bad' : c.status === 'AWAITING_APPROVAL' || c.status === 'A_ACCEPTED' ? 'wait' : 'work';
-  const icon: IconName = cls === 'ok' ? 'circleCheck' : cls === 'bad' ? 'alert' : cls === 'muted' ? 'info' : 'clock';
-  return (
-    <span className={`badge ${cls}`}>
-      <Icon name={icon} />
-      {c.statusLabel}
-    </span>
-  );
+  return <span className={`chip ${cls}`}>{c.statusLabel}</span>;
 }
 
-/** The three approvals side by side. */
-export function ApprovalChips({ c }: { c: CaseView }) {
+/** The three approvals as people; `me` marks the viewer, whose pending turn pulses. */
+export function People({ c, me }: { c: CaseView; me: 'OWNER' | 'A' | 'B' }) {
   const t = useT();
-  const one = (label: string, v: string | null) => (
-    <div key={label} className={`ap ${v === 'APPROVED' ? 'ok' : v === 'REJECTED' ? 'no' : 'wait'}`}>
-      <span className="who">{label}</span>
-      <span className="st">
-        <Icon name={v === 'APPROVED' ? 'check' : v === 'REJECTED' ? 'close' : 'clock'} />
-        {v === 'APPROVED' ? t.apApproved : v === 'REJECTED' ? t.apDeclined : t.apWaiting}
-      </span>
-    </div>
-  );
-  return <div className="approvals">{[one(t.apShop, c.approvals.OWNER), one(t.apA, c.approvals.A), one(t.apB, c.approvals.B)]}</div>;
+  const one = (who: 'OWNER' | 'A' | 'B', badge: string, label: string) => {
+    const v = c.approvals[who];
+    const cls = v === 'APPROVED' ? 'ok' : v === 'REJECTED' ? 'no' : who === me ? 'you' : 'wait';
+    const status = v === 'APPROVED' ? (who === 'A' ? t.apAgreed : t.apApproved) : v === 'REJECTED' ? t.apDeclined : who === me ? t.apYou : t.apWaiting;
+    return (
+      <div key={who} className={`pp ${cls}`}>
+        <span className="av" aria-hidden="true">
+          {badge}
+          {v === 'APPROVED' && (
+            <span className="bdg">
+              <Icon name="check" />
+            </span>
+          )}
+        </span>
+        <b>{who === me ? `${label}（${t.you}）`.replace('（You）', ' (you)') : label}</b>
+        <small>{status}</small>
+      </div>
+    );
+  };
+  return <div className="people">{[one('OWNER', t.shopBadge, t.apShop), one('A', 'A', t.apA), one('B', 'B', t.apB)]}</div>;
 }
 
 export function Events({ c }: { c: CaseView }) {
@@ -476,10 +605,10 @@ export function Events({ c }: { c: CaseView }) {
 type NoticeKind = 'info' | 'wait' | 'warn' | 'error' | 'ok';
 const NOTICE_ICON: Record<NoticeKind, IconName> = { info: 'info', wait: 'clock', warn: 'alert', error: 'alert', ok: 'circleCheck' };
 
-/** A notice with an icon; `pending` shows a turning mark while something is being checked. */
+/** A notice with an accent edge and an icon; `pending` shows a turning mark while something is being checked. */
 export function Notice({ kind, title, pending, children }: { kind: NoticeKind; title?: ReactNode; pending?: boolean; children?: ReactNode }) {
   return (
-    <div className={`notice ${kind}`} role={kind === 'error' ? 'alert' : 'status'}>
+    <div className={`note ${kind}`} role={kind === 'error' ? 'alert' : 'status'}>
       <span className="nic" aria-hidden="true">
         {pending ? <span className="spin" /> : <Icon name={NOTICE_ICON[kind]} />}
       </span>

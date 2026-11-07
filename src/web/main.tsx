@@ -1,5 +1,5 @@
 // Entry of the screens: the landing page (create a demo world), the three role screens, and the PayPal return page.
-// Design 1 "salon" of the HTML mockup v3 (design/mockup-v3, chosen by the owner on 2026-11-07).
+// The crafted version of the HTML mockup v4 (design/mockup-v4) with the terracotta accent, chosen on 2026-11-07.
 
 import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -9,36 +9,36 @@ import { loadDemo, saveDemo, type DemoLinks, type RoleSeg } from './demo-links.t
 import { LangProvider, useLang, useT } from './i18n.tsx';
 import { OwnerScreen } from './owner.tsx';
 import type { AState, BState, OwnerState } from './types.ts';
-import { ActionBar, ActionButton, ActionLink, AppBar, Icon, ImageSlot, Notice } from './ui.tsx';
-import { PHOTOS } from './art.ts';
+import { ActionBar, ActionButton, ActionLink, AppBar, CardHead, Footer, Icon, KICKER, Notice, Photo, type IconName } from './ui.tsx';
 import { paypalReturnText } from './paypal-return.ts';
+// Bundled fonts (OFL-1.1, @fontsource): headings Shippori Mincho, text Zen Kaku Gothic New, figures Inter, Latin
+// captions Cormorant Garamond. Served from this origin (CSP: 'self'); only the subsets a page uses are downloaded.
+import '@fontsource/shippori-mincho/700.css';
+import '@fontsource/zen-kaku-gothic-new/400.css';
+import '@fontsource/zen-kaku-gothic-new/700.css';
+import '@fontsource/inter/latin-500.css';
+import '@fontsource/inter/latin-700.css';
+import '@fontsource/cormorant-garamond/latin-600.css';
+import '@fontsource/cormorant-garamond/latin-600-italic.css';
 import './styles.css';
 
 /** The three screens of a demo world: open here, or copy a link for another device. */
-function DemoLinksCard({ demo, title, created }: { demo: DemoLinks; title: string; created?: boolean }) {
+function DemoLinksCard({ demo, title, created, lift }: { demo: DemoLinks; title: string; created?: boolean; lift?: boolean }) {
   const t = useT();
   const roles: Array<[RoleSeg, string, string]> = [
-    ['owner', 'S', t.roleOwner],
+    ['owner', t.shopBadge, t.roleOwner],
     ['a', 'A', t.roleA],
     ['b', 'B', t.roleB],
   ];
   return (
-    <section className="card">
-      <div className="card-head">
-        <h2>{title}</h2>
-        {created && (
-          <span className="chip ok">
-            <Icon name="check" />
-            {t.createdChip}
-          </span>
-        )}
-      </div>
+    <section className={`card${lift ? ' lift' : ''}`}>
+      <CardHead k={created ? 'READY' : 'LAST DEMO'} title={title} aside={created ? <span className="chip ok">{t.createdChip}</span> : undefined} />
       {created && <p className="fine">{t.createdBody}</p>}
-      <div className="links3">
+      <div className="roles">
         {roles.map(([k, badge, label]) => (
           <div className="role" key={k}>
             <p className="rh">
-              <span className="badge-role" aria-hidden="true">
+              <span className="av" aria-hidden="true">
                 {badge}
               </span>
               {label}
@@ -54,14 +54,17 @@ function DemoLinksCard({ demo, title, created }: { demo: DemoLinks; title: strin
   );
 }
 
-function Option(p: { name: string; checked: boolean; disabled?: boolean; onChange: () => void; title: string; sub: string }) {
+function Option(p: { name: string; checked: boolean; disabled?: boolean; onChange: () => void; icon: IconName; title: string; sub: string }) {
   return (
     <label className={`opt${p.checked ? ' on' : ''}${p.disabled ? ' off' : ''}`}>
       <input type="radio" name={p.name} checked={p.checked} disabled={p.disabled} onChange={p.onChange} />
       <span className="radio" aria-hidden="true" />
+      <span className="oi" aria-hidden="true">
+        <Icon name={p.icon} />
+      </span>
       <span className="opt-text">
         <b>{p.title}</b>
-        <span>{p.sub}</span>
+        <small>{p.sub}</small>
       </span>
     </label>
   );
@@ -107,69 +110,72 @@ function Landing() {
       setBusy(false);
     }
   };
+  const how: IconName[] = ['calendar', 'person', 'check'];
   return (
     <>
-      <AppBar title={t.landingTitle} eyebrow={t.landingEyebrow} />
+      <AppBar k={KICKER.landing} title={t.landingTitle} eyebrow={t.landingEyebrow} />
+      <section className="cover">
+        <Photo slot="cover" />
+        <div className="veil" />
+        <div className="cover-in">
+          <span className="kicker">
+            <Icon name="swap" />
+            {t.landingKicker}
+          </span>
+          <h2 className="display">{t.heroTitle}</h2>
+          <p className="lead">{t.heroLead}</p>
+          <p className="glass">
+            <span>
+              <Icon name="store" />
+              {t.chipSalon}
+            </span>
+            <span>
+              <Icon name="receipt" />
+              {t.chipUsd}
+            </span>
+            <span>
+              <Icon name="lock" />
+              {t.chipTest}
+            </span>
+          </p>
+        </div>
+      </section>
       <div className="layout single">
         <main className="content">
-          <section className="top-hero">
-            <div>
-              <span className="kicker soft">
-                <Icon name="swap" />
-                {t.landingKicker}
-              </span>
-              <h2 className="display">{t.heroTitle}</h2>
-              <p className="lead">{t.heroLead}</p>
-              <p className="chips">
-                <span className="chip muted">
-                  <Icon name="store" />
-                  {t.chipSalon}
-                </span>
-                <span className="chip muted">
-                  <Icon name="receipt" />
-                  {t.chipUsd}
-                </span>
-                <span className="chip muted">
-                  <Icon name="lock" />
-                  {t.chipTest}
-                </span>
-              </p>
-            </div>
-            <ImageSlot shape="wide" src={PHOTOS.hero} />
-          </section>
-
           {world ? (
-            <DemoLinksCard demo={world} title={t.createdTitle} created />
+            <DemoLinksCard demo={world} title={t.createdTitle} created lift />
           ) : (
-            <section className="card">
-              <h2>{t.createTitle}</h2>
+            <section className="card lift">
+              <CardHead k="START" title={t.createTitle} />
               {!config ? (
                 <p>{t.loading}</p>
               ) : (
-                <div className="grid2">
+                <div className="opts">
                   <fieldset className="choice">
                     <legend>{t.aiLegend}</legend>
                     <Option
                       name="ai"
+                      icon="info"
                       checked={aiMode === 'VERTEX'}
                       disabled={!config.ai.vertex}
                       onChange={() => setAiMode('VERTEX')}
                       title="Gemini on Vertex AI"
                       sub={config.ai.vertex ? t.optVertexSub(config.ai.vertexModel) : t.notOnServer}
                     />
-                    <Option name="ai" checked={aiMode === 'MOCK'} onChange={() => setAiMode('MOCK')} title={t.optMockAi} sub={t.optMockAiSub} />
+                    <Option name="ai" icon="sliders" checked={aiMode === 'MOCK'} onChange={() => setAiMode('MOCK')} title={t.optMockAi} sub={t.optMockAiSub} />
                   </fieldset>
                   <fieldset className="choice">
                     <legend>{t.paymentLegend}</legend>
                     <Option
                       name="pay"
+                      icon="lock"
                       checked={paymentMode === 'SANDBOX'}
                       disabled={!config.payment.sandbox}
                       onChange={() => setPaymentMode('SANDBOX')}
                       title={t.optSandbox}
                       sub={config.payment.sandbox ? t.optSandboxSub : t.notOnServer}
                     />
-                    <Option name="pay" checked={paymentMode === 'MOCK'} onChange={() => setPaymentMode('MOCK')} title={t.optMockPay} sub={t.optMockPaySub} />
+                    <Option name="pay" icon="receipt" checked={paymentMode === 'MOCK'} onChange={() => setPaymentMode('MOCK')} title={t.optMockPay} sub={t.optMockPaySub} />
                   </fieldset>
                 </div>
               )}
@@ -184,16 +190,18 @@ function Landing() {
           {!world && last && <DemoLinksCard demo={last} title={t.lastDemoTitle} />}
 
           <section className="card">
-            <h2>{t.howTitle}</h2>
-            <ol className="steps3">
+            <CardHead k="HOW IT WORKS" title={t.howTitle} />
+            <ol className="how">
               {t.how.map(([title, body], i) => (
                 <li key={i}>
-                  <span className="n" aria-hidden="true">
-                    <Icon name={(['calendar', 'person', 'check'] as const)[i] ?? 'check'} />
+                  <span className="no" aria-hidden="true">
+                    {`0${i + 1}`}
                   </span>
                   <span>
-                    <b>{title}</b>
-                    <span>{body}</span>
+                    <b>
+                      <Icon name={how[i] ?? 'check'} /> {title}
+                    </b>
+                    <span className="how-text">{body}</span>
                   </span>
                 </li>
               ))}
@@ -201,9 +209,7 @@ function Landing() {
           </section>
         </main>
       </div>
-      <footer className="app-foot">
-        <p>{t.appFoot}</p>
-      </footer>
+      <Footer />
     </>
   );
 }

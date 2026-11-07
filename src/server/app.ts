@@ -85,9 +85,10 @@ const MIME: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.webp': 'image/webp',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
   '.ico': 'image/x-icon',
   '.json': 'application/json',
-  '.woff2': 'font/woff2',
 };
 
 const NOT_BUILT = `<!doctype html><meta charset="utf-8"><title>FlexSlot</title><p>The screens are not built yet. Run <code>npm run build</code>, then reload.</p>`;

@@ -1,7 +1,7 @@
-// The owner's screen (SPEC 3), design 1 "salon" of the HTML mockup v3: what needs the owner first (a notice), the
-// swap proposal (B's slot, A's before and after, the amounts, approvals and the decision), the profit estimate beside
-// it, then the money steps and records, bookings, the conditions with the program's verdict, items that need
-// attention, AI calls and the history.
+// The owner's screen (SPEC 3), the crafted version of mockup v4 (terracotta): what needs the owner first (a notice),
+// three figures (extra profit, approvals, deadline), the swap proposal (B's slot, A's before and after, the approvals
+// as people, the decision), the money steps and records; beside it the profit estimate as a bar and the salon. Then
+// items that need attention, bookings, the conditions with the program's verdict, AI calls and the history.
 
 import type { Api } from './api.ts';
 import { useT } from './i18n.tsx';
@@ -9,20 +9,24 @@ import type { OwnerCase, OwnerState } from './types.ts';
 import {
   ActionBar,
   ActionButton,
-  AmountGrid,
-  ApprovalChips,
+  Amount,
+  CardHead,
   CaseProgress,
   CHECKING,
   ConditionsSummary,
   Events,
+  Ledger,
   MoveCards,
   Notice,
+  People,
   ProfitCard,
+  Sec,
   Section,
   ServiceMeta,
   Shell,
   ShopCard,
   SlotHeading,
+  splitSpan,
   StatusChip,
   StepChip,
   useAction,
@@ -48,7 +52,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
       ))}
 
       {(state.stopped.length > 0 || state.needsAttentionObligations.length > 0) && (
-        <Section title={t.stoppedTitle} id="status">
+        <Section k="ATTENTION" title={t.stoppedTitle} id="status">
           <p className="small">{t.stoppedBody}</p>
           <ul className="history">
             {state.stopped.map((e, i) => (
@@ -63,7 +67,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
         </Section>
       )}
       {state.checking.length > 0 && (
-        <Section title={t.checkingTitle}>
+        <Section k="CHECKING" title={t.checkingTitle}>
           <p className="small">{t.checkingBody}</p>
           <ul className="history">
             {state.checking.map((e, i) => (
@@ -75,7 +79,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
         </Section>
       )}
 
-      <Section title={t.bookings} id="bookings">
+      <Section k="BOOKINGS" title={t.bookings} id="bookings">
         <div className="table-wrap">
           <table>
             <thead>
@@ -106,7 +110,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
         <p className="fine">{t.compRule(state.header.shop.compensation.text)}</p>
       </Section>
 
-      <Section title={t.conditions} id="conditions">
+      <Section k="CONDITIONS" title={t.conditions} id="conditions">
         <div className="grid2">
           {state.preference ? <ConditionsSummary c={state.preference} label={t.aCanMoveTo} /> : <p className="muted-text">{t.noPreference}</p>}
           {state.request ? <ConditionsSummary c={state.request} label={t.bCanOnlyCome} /> : <p className="muted-text">{t.noRequest}</p>}
@@ -130,7 +134,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
         )}
       </Section>
 
-      <Section title={t.aiCalls}>
+      <Section k="AI CALLS" title={t.aiCalls}>
         {state.aiUsage.length === 0 ? (
           <p className="muted-text">{t.noneYet}</p>
         ) : (
@@ -163,7 +167,7 @@ export function OwnerScreen({ api, state, refresh }: { api: Api; state: OwnerSta
         )}
       </Section>
 
-      <Section title={t.history} id="history">
+      <Section k="HISTORY" title={t.history} id="history">
         <ul className="history">
           {state.history.map((e, i) => (
             <li key={i}>
@@ -181,6 +185,7 @@ function OwnerCaseCard({ api, c, refresh, tz }: { api: Api; c: OwnerCase; refres
   const act = useAction(refresh);
   const decision = { caseId: c.id, version: c.version, termsHash: c.termsHash };
   const open = c.status === 'AWAITING_APPROVAL' || c.status === 'A_ACCEPTED';
+  const approved = [c.approvals.OWNER, c.approvals.A, c.approvals.B].filter((v) => v === 'APPROVED').length;
   return (
     <>
       {c.actions.approve && (
@@ -198,26 +203,32 @@ function OwnerCaseCard({ api, c, refresh, tz }: { api: Api; c: OwnerCase; refres
           {t.ownerDone.body(c.aCompensation.text)}
         </Notice>
       )}
-      <section className="card" id="swap">
-        <div className="card-head">
-          <h2>{t.proposalVersion(c.version)}</h2>
-          <StatusChip c={c} />
+      <div className="kpis">
+        <div className="kpi hl">
+          <span>{t.kpiProfit}</span>
+          <b>
+            <Amount m={c.profit.additionalProfit} sign="+" count />
+          </b>
         </div>
-        <SlotHeading label={t.bSlotLabel} span={c.bSlot} tz={tz} />
+        <div className="kpi">
+          <span>{t.kpiApprovals}</span>
+          <b>{approved} / 3</b>
+        </div>
+        <div className="kpi">
+          <span>{open ? t.kpiDue : t.kpiStatus}</span>
+          <b>{open ? splitSpan(c.offerExpiresAt)[1] : c.status === 'COMPLETED' ? t.kpiDone : '—'}</b>
+        </div>
+      </div>
+      <section className="card" id="swap">
+        <CardHead k={`PROPOSAL · No.${c.version}`} title={t.proposalTitle} aside={<StatusChip c={c} />} />
+        <Sec no="01">{t.bSlotLabel}</Sec>
+        <SlotHeading span={c.bSlot} tz={tz} />
         <ServiceMeta service={c.bService ?? t.serviceFallback} stylist={c.stylist} />
-        <p className="label">{t.ownerAChange}</p>
+        <Sec no="02">{t.ownerAChange}</Sec>
         <MoveCards from={c.origin} to={c.destination} />
-        <p className="label">{t.moneyGlance}</p>
-        <AmountGrid
-          items={[
-            { label: t.amtRevenue, m: c.bPrice, sign: '+' },
-            { label: t.amtComp, m: c.aCompensation, sign: '−' },
-            { label: t.amtProfit, m: c.profit.additionalProfit, sign: '+', strong: true },
-          ]}
-        />
         <p className="fine">{t.ownerComp(c.aCompensation.text)}</p>
-        <p className="label">{t.approvalsLabel}</p>
-        <ApprovalChips c={c} />
+        <Sec no="03">{t.approvalsLabel}</Sec>
+        <People c={c} me="OWNER" />
         {open && <p className="fine">{t.approvalsDue(c.offerExpiresAt)}</p>}
         {(c.actions.approve || c.actions.reject) && (
           <ActionBar
@@ -244,36 +255,17 @@ function OwnerCaseCard({ api, c, refresh, tz }: { api: Api; c: OwnerCase; refres
       </section>
 
       <section className="card">
-        <div className="card-head">
-          <h2>{t.moneyAndBookings}</h2>
-        </div>
+        <CardHead k="PROGRESS" title={t.moneyAndBookings} />
         <CaseProgress c={c} />
-        <div className="rows steps-rows">
-          <div className="row">
-            <span>{t.bPaymentLabel}</span>
-            <StepChip step={c.steps.bPayment} />
-          </div>
-          {c.steps.authorizationRelease && (
-            <div className="row">
-              <span>{t.authReleaseLabel}</span>
-              <StepChip step={c.steps.authorizationRelease} />
-            </div>
-          )}
-          <div className="row">
-            <span>{t.compRefundLabel}</span>
-            <StepChip step={c.steps.aRefund} />
-          </div>
-          {c.steps.bRefund && (
-            <div className="row">
-              <span>{t.bRefundLabel}</span>
-              <StepChip step={c.steps.bRefund} />
-            </div>
-          )}
-          <div className="row">
-            <span>{t.bookingsLabel}</span>
-            <span className={`chip ${c.steps.bookingsChanged ? 'ok' : 'muted'}`}>{c.steps.bookings}</span>
-          </div>
-        </div>
+        <Ledger
+          rows={[
+            { k: t.bPaymentLabel, v: <StepChip step={c.steps.bPayment} /> },
+            ...(c.steps.authorizationRelease ? [{ k: t.authReleaseLabel, v: <StepChip step={c.steps.authorizationRelease} /> }] : []),
+            { k: t.compRefundLabel, v: <StepChip step={c.steps.aRefund} /> },
+            ...(c.steps.bRefund ? [{ k: t.bRefundLabel, v: <StepChip step={c.steps.bRefund} /> }] : []),
+            { k: t.bookingsLabel, v: <span className={`chip ${c.steps.bookingsChanged ? 'ok' : 'muted'}`}>{c.steps.bookings}</span> },
+          ]}
+        />
         {c.obligations.length > 0 && (
           <details>
             <summary>{t.records}</summary>
