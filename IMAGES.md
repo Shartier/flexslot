@@ -1,6 +1,6 @@
 # FlexSlot — 画像の指示書（Codex向け、GPT Image）
 
-**最新の依頼は末尾の節「画面イメージ案03・案1『上質サロン』の画像」。** それより前の節（旧8点、案02）は経緯の記録。
+**最新の依頼は末尾の節「画面イメージ案04（凝った版）・差し色テラコッタの素材」。** それより前の節（旧8点、案02、案03）は経緯の記録で、案03の3点の依頼は送らずに置き換えた。
 
 作成：Claude Code、2026-11-07（日本時間）。本人の指示：画面をリッチにするため、画像はCodex側でGPT Image（2.5または2.6。Codex側で使えるもの）を使って生成する。Claude Codeからは画像生成のモデルを使えない。
 
@@ -58,7 +58,7 @@
 - トップページ：heroをPCでは説明の右、スマホでは説明の下に置く。三画面の見出し：立場ごとの人物（PC 88px、スマホ 60px）。振替のカード：承認待ちの間はswap、結果の確認中・保留・返金待ちなど未確定の間はchecking、案件の完了（COMPLETED）のときだけdone。
 - すべて飾りとして`alt=""`・`aria-hidden`。意味は画面の文で伝える。寸法を指定し、カードの画像は遅延読み込み。画像がなくても画面は成り立つ。
 
-## 画面イメージ案03・案1「上質サロン」の画像（最新の依頼、2026-11-07）
+## 画面イメージ案03・案1「上質サロン」の画像（2026-11-07。送らずに案04の依頼へ置き換え）
 
 本人の進め方：先にHTMLで画面のイメージを固め、その後で画像をCodexに依頼する。Claudeが3つの方向のHTML案（`design/mockup-v3/index.html`）を作り、本人が**案1「上質サロン」**を選んだ。画像の場所・比率・大きさはHTML案の「画像枠」で決めてある（HTML案を開き、上の「デザイン」で案1、「画面」で部品一覧を選ぶと、枠の一覧が出る）。この節は、その枠の中身の依頼。
 
@@ -97,3 +97,45 @@
 ### Claude側の作業（並行）
 
 画像を待つ間に、案1の配色・書体・ボタン・上段の見出し・言語の切り替えをアプリに組み込む。画像枠は、画像が届くまで案1の色の仮の面で表示し、届いたら差し替える。
+
+## 画面イメージ案04（凝った版）・差し色テラコッタの素材（最新の依頼、2026-11-07）
+
+経緯：本人の所見「緑とゴールド、ネイビーとゴールドもいまいち」「HTMLで一度に出した印象。軽いHTMLに見えない凝った作りにしたい（今回のハッカソンで特にこだわる点）」を受け、Claudeが凝った版のHTML案`design/mockup-v4/index.html`を作り、本人が差し色**B テラコッタ**を選んだ。HTML案を開き、上の「画面」で**素材一覧**を選ぶと、この節と同じ一覧が出る。今の写真は以前の美容室の画像を仮に使ったもので、この依頼の画像に差し替える。
+
+本人の希望のモデル：GPT Image 2.6（使えなければ2.5）。**実際に使ったモデル名と版は、ツールが返した値だけを記録する。** 返さない場合は「不明」と書き、2.6とは書かない。
+
+### 画面の雰囲気（画像を合わせる先）
+
+| 項目 | 値 |
+| --- | --- |
+| 地の色 | 生成り #f3efe9、カード #fffdf9、グレージュの線 #d2c7b9 |
+| 差し色（1色だけ） | テラコッタ #cb7552 → #9b4a2e |
+| 文字・上段 | 墨に近い焦げ茶 #1c1917 |
+| 写真の上に重ねる色 | 赤茶を帯びた暗い色（rgba(58,28,18,0.8)）を下から上へ薄く。写真の下側に白い文字が載る |
+| 印象 | 小さく静かな、大人向けの日本の美容室。午後のやわらかい自然光。生成り・グレージュ・明るいオーク材・素焼き（テラコッタ）の小物。金色・青・緑の強い色は入れない |
+| 写真の調子 | 雑誌の店舗写真のような、自然光・浅すぎない被写界深度・ごく弱いフィルムの粒子。どの写真も同じ店・同じ光・同じ色調に見えること |
+
+### 作ってほしい素材
+
+| 枠 | ファイル名 | 比率・サイズ | 使う場所 | 内容（プロンプトの下書き、英語） |
+| --- | --- | --- | --- | --- |
+| 画像1 | `salon-cover.webp` | 16:10、2400×1500 | トップの全面写真。左下に見出しと説明の白い文字が重なる | Wide interior photograph of a small, quiet, upscale Japanese hair salon in warm late-afternoon light. Limewashed greige walls, light oak wood, a single styling chair in soft clay-terracotta leather facing a large round mirror, a terracotta ceramic vase with dried pampas grass, linen curtains filtering the sun. The lower-left third is calm and even, with plain wall and floor, leaving room for a headline. 35mm lens, natural light, soft shadows, subtle film grain, editorial interior photography. No people, no hands, no text, no letters, no numbers, no logos, no brand names. |
+| 画像2 | `salon-station.webp` | 3:2、1200×800 | お店・A・Bの画面の店舗カード（PCは右列、スマホは下） | Three-quarter view of the same salon's styling station: a round mirror with a thin oak rim, an oak shelf with neatly arranged scissors, a comb and a small terracotta ceramic cup, a folded ivory linen towel. Same light and palette as the interior. Editorial interior photography, subtle film grain. No people, no hands, no text, no logos. |
+| 画像3 | `card-backdrop.webp` | 3:2、1600×1067 | A・Bの案内カード（「日時変更のお願い」「満席の時間のご案内」）の背景。上に暗い色と白い文字が重なる | Soft, low-contrast detail of the same salon: a limewashed greige wall with the shadow of a window frame and leaves, the edge of the terracotta chair at the right. The left two thirds are calm and even, suitable for white text over a dark terracotta-brown overlay. Natural light, subtle film grain. No people, no text, no logos. |
+| 画像4 | `service-still.webp` | 1:1、800×800 | Bの予約券の小さな写真（表示は84px四方。小さくても形が分かること） | Still life of professional hair-cutting scissors and a fine comb on a folded ivory linen towel, beside a small terracotta ceramic dish, warm side light, soft shadow, greige background, centered and simple so it still reads at 84 pixels. Editorial product photography. No people, no hands, no text, no logos. |
+| 画像5 | `done-backdrop.webp` | 3:2、1600×1067 | 完了の案内（「予約確定」「変更完了」、印章つき）の背景。右上に印章、下側に白い文字 | The same salon at the end of the day, tidied and calm: the chair turned slightly, a small fresh bouquet in the terracotta vase, warm low sunlight across the floor. Peaceful, finished feeling. Calm space at the bottom and top right. Natural light, subtle film grain. No people, no text, no logos. |
+| 画像6 | `paper-texture.webp` | 512×512、継ぎ目なしで敷き詰められること | 画面全体の背景にうっすら敷く質感（今はコードで描いた粒子で代用） | Seamless tileable texture of fine warm-white handmade paper, washi-like, with very subtle fibers, low contrast, even lighting, no shadows, no visible edges or seams. Base tone close to #f3efe9. |
+| （任意） | `cover.webp` | 16:9、1920×1080 | Devpostの表紙・動画のサムネイル（文字は後で別に入れる） | The same salon interior as salon-cover, wider, with a calm empty left third for a title to be added later. No people, no text, no logos. |
+
+### 全体の約束
+
+- 画像の中に文字・数字・記号・ロゴを入れない。実在の会社・店・人物に似せない。人物は写さない（手も入れない）。
+- 画像1を先に作り、それを参照して残りを作る（同じ店・同じ光・同じ色調）。
+- 印章（予約確定・変更完了・お支払い済み）、ロゴ、アイコン、罫線と番号、損益の帯グラフ、進み具合の線は**コードで描く**ので画像は不要。
+- 形式はWebP。目安：写真は各400KB以下（`salon-cover.webp`と`cover.webp`は600KBまで）、質感は120KB以下。元の生成画像も残す。
+- 置き場所：`outputs/codex-prep/images-v4/`（Codexの作業場所）。Claudeが`src/web/images/`へ写して組み込む。Codexは`src/`を編集しない。
+- 記録してほしいこと：使ったツール、ツールが返したモデル名と版（返さなければ「不明」）、生成日、最終プロンプトの全文、生成後の加工（縮小・変換だけか）、各ファイルの寸法・バイト数・SHA-256、利用条件の確認結果。旧8点・案02と同じ形の記録でよい。
+
+### Claude側の作業（並行）
+
+画像を待つ間に、案04をアプリに組み込む。写真の枠には、画像が届くまで以前の美容室の画像を仮に入れ、届いたら`src/web/art.ts`で差し替える。
