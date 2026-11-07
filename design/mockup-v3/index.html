@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FlexSlot 画面イメージ案03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Noto+Sans+JP:wght@400;500;700;800&family=Noto+Serif+JP:wght@600;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#e6e6ec;color:#1d1d24;font-family:"Noto Sans JP","Hiragino Sans","Yu Gothic UI",Meiryo,system-ui,sans-serif}
+button{font:inherit}
+
+/* ---------- review chrome (not part of the app) ---------- */
+.review{position:sticky;top:0;z-index:30;background:#18181f;color:#eee;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px}
+.review h1{font-size:14px;margin:0;font-weight:700;white-space:nowrap;margin-right:6px}
+.rgroup{display:flex;align-items:center;gap:6px}
+.rgroup>span{color:#9a9aa8;font-size:12px;white-space:nowrap}
+.rseg{display:inline-flex;flex-wrap:wrap;background:#2b2b35;border-radius:8px;padding:2px}
+.rseg button{border:0;background:transparent;color:#d8d8e2;font-size:12.5px;padding:6px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.rseg button[aria-pressed=true]{background:#fff;color:#18181f;font-weight:700}
+.stage{padding:24px 16px 40px;display:grid;justify-items:center;gap:20px}
+.device{width:100%;max-width:1200px;border-radius:14px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.18);container-type:inline-size;container-name:app;background:#fff}
+.device.phone{max-width:390px;height:820px;overflow-y:auto;border-radius:38px;border:10px solid #111;scrollbar-width:thin}
+.notes{max-width:920px;width:100%;background:#fff;border-radius:12px;padding:18px 22px;font-size:14px;line-height:1.75}
+.notes h2{font-size:16px;margin:0 0 6px}
+.notes h3{font-size:14px;margin:14px 0 4px}
+.notes ul{margin:0;padding-left:1.2em}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#18181f;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+@media (max-width:520px){
+  .device.phone{height:auto;border:0;border-radius:0;max-width:none;overflow:visible;box-shadow:none}
+  .stage{padding:0 0 24px}
+  .notes{border-radius:0}
+}
+
+/* ---------- themes: the three directions ---------- */
+.app[data-theme=salon]{
+  --bg:#f6f1ea;--surface:#fffdfa;--surface-2:#f4ede4;--ink:#2b2420;--ink-2:#4a3f37;--muted:#7c6f64;--line:#e7dccf;
+  --brand-hi:#bd8f5e;--brand-lo:#8a5c33;--on-brand:#fffaf2;--brand-soft:#f4e7d7;--brand-line:#dcc2a2;--brand-text:#7a4e28;
+  --ok:#3d7c5a;--ok-soft:#e7f1ea;--ok-line:#c3dccb;--wait:#9a6416;--wait-soft:#fbf0dc;--wait-line:#ecd2a3;--info-soft:#f4ede4;--info-line:#e3d4c2;--attn:#a5402d;--attn-soft:#fbe9e4;
+  --bar-bg:#2b2420;--bar-ink:#f6efe6;--bar-line:transparent;--seg-bg:rgba(255,255,255,.12);--seg-on:#f6efe6;--seg-on-ink:#2b2420;--mode-bg:rgba(255,255,255,.1);--mode-ink:#eadfce;
+  --logo-bg:linear-gradient(135deg,#e2c18f,#9b6c3e);--logo-ink:#2b2420;
+  --hero-bg:linear-gradient(135deg,#3b2f28 0%,#5c4434 100%);--hero-ink:#fbf4ea;--hero-deco:radial-gradient(circle,rgba(226,193,143,.35),rgba(226,193,143,0) 70%);--kicker-bg:rgba(226,193,143,.2);--kicker-ink:#ecd2a8;
+  --ok-hero:linear-gradient(135deg,#2f5a45,#447a5d);
+  --rail-bg:#2b2420;--rail-ink:#e9dccb;--rail-on:#f6efe6;--rail-on-ink:#2b2420;
+  --img-bg:linear-gradient(160deg,#d9c4a8 0%,#b69673 45%,#7d5f45 100%);
+  --r-card:18px;--r-btn:16px;--r-chip:999px;
+  --shadow-card:0 1px 2px rgba(60,40,20,.06),0 10px 28px rgba(60,40,20,.07);--shadow-btn:0 10px 22px rgba(138,92,51,.32);--shadow-btn-h:0 14px 28px rgba(138,92,51,.38);
+  --focus:#d6ad6f;
+  --font-head:"Noto Serif JP","Yu Mincho","Hiragino Mincho ProN",serif;--font-body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;--font-num:"Inter","Noto Sans JP",sans-serif;
+}
+.app[data-theme=trust]{
+  --bg:#edf2f8;--surface:#ffffff;--surface-2:#f2f6fb;--ink:#0e2236;--ink-2:#26405c;--muted:#5a6b7e;--line:#d8e2ee;
+  --brand-hi:#3a7ff5;--brand-lo:#1747b8;--on-brand:#ffffff;--brand-soft:#e2ecfe;--brand-line:#b4cbf6;--brand-text:#1747b8;
+  --ok:#0d8a5e;--ok-soft:#e3f5ed;--ok-line:#b9e3cf;--wait:#a15c00;--wait-soft:#fff3df;--wait-line:#f3d29b;--info-soft:#e8f0fb;--info-line:#c9daf3;--attn:#b4232c;--attn-soft:#fde8ea;
+  --bar-bg:linear-gradient(135deg,#0c2342 0%,#173f6e 100%);--bar-ink:#eaf2ff;--bar-line:transparent;--seg-bg:rgba(255,255,255,.12);--seg-on:#ffffff;--seg-on-ink:#0c2342;--mode-bg:rgba(255,255,255,.12);--mode-ink:#d4e3fb;
+  --logo-bg:linear-gradient(135deg,#63a1ff,#1747b8);--logo-ink:#fff;
+  --hero-bg:linear-gradient(135deg,#123257 0%,#1f5196 100%);--hero-ink:#fff;--hero-deco:radial-gradient(circle,rgba(99,161,255,.45),rgba(99,161,255,0) 70%);--kicker-bg:rgba(255,255,255,.14);--kicker-ink:#cfe0ff;
+  --ok-hero:linear-gradient(135deg,#0b6b4a,#13996a);
+  --rail-bg:#0c2342;--rail-ink:#c8d8f0;--rail-on:#ffffff;--rail-on-ink:#0c2342;
+  --img-bg:linear-gradient(160deg,#9bb7d8 0%,#5f82ad 50%,#2b4c74 100%);
+  --r-card:16px;--r-btn:12px;--r-chip:8px;
+  --shadow-card:0 1px 2px rgba(14,34,54,.05),0 10px 28px rgba(14,34,54,.07);--shadow-btn:0 10px 22px rgba(23,71,184,.32);--shadow-btn-h:0 14px 30px rgba(23,71,184,.4);
+  --focus:#7fb0ff;
+  --font-head:"Noto Sans JP","Hiragino Sans","Yu Gothic UI",sans-serif;--font-body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;--font-num:"Inter","Noto Sans JP",sans-serif;
+}
+.app[data-theme=friendly]{
+  --bg:#fdf6f2;--surface:#ffffff;--surface-2:#fdf0ec;--ink:#2f2a33;--ink-2:#4b4352;--muted:#7a7181;--line:#f1e2de;
+  --brand-hi:#ff8a6b;--brand-lo:#ef4a73;--on-brand:#ffffff;--brand-soft:#ffeae5;--brand-line:#ffc8bd;--brand-text:#d93a60;
+  --ok:#11977f;--ok-soft:#e0f6f1;--ok-line:#b2e6da;--wait:#b26a00;--wait-soft:#fff2db;--wait-line:#f6d59a;--info-soft:#f3efff;--info-line:#ddd3fb;--attn:#c62f45;--attn-soft:#ffe6ea;
+  --bar-bg:#ffffff;--bar-ink:#2f2a33;--bar-line:#f1e2de;--seg-bg:#f6ece9;--seg-on:#2f2a33;--seg-on-ink:#ffffff;--mode-bg:#f6ece9;--mode-ink:#6d6475;
+  --logo-bg:linear-gradient(135deg,#ffa07a,#ef4a73);--logo-ink:#fff;
+  --hero-bg:linear-gradient(135deg,#ffe4d8 0%,#ffd6e3 100%);--hero-ink:#3a2a33;--hero-deco:radial-gradient(circle,rgba(255,255,255,.75),rgba(255,255,255,0) 70%);--kicker-bg:#ffffff;--kicker-ink:#d93a60;
+  --ok-hero:linear-gradient(135deg,#d6f5ec,#c9eefc);
+  --rail-bg:#ffffff;--rail-ink:#6d6475;--rail-on:#2f2a33;--rail-on-ink:#ffffff;
+  --img-bg:linear-gradient(160deg,#ffd9c7 0%,#f7b4c6 55%,#c99ad6 100%);
+  --r-card:24px;--r-btn:999px;--r-chip:999px;
+  --shadow-card:0 2px 4px rgba(120,60,60,.04),0 12px 30px rgba(120,60,60,.07);--shadow-btn:0 10px 22px rgba(239,74,115,.32);--shadow-btn-h:0 14px 30px rgba(239,74,115,.4);
+  --focus:#ff9fb5;
+  --font-head:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic UI",sans-serif;--font-body:"Zen Maru Gothic","Noto Sans JP","Hiragino Sans","Yu Gothic UI",sans-serif;--font-num:"Inter","Zen Maru Gothic",sans-serif;
+}
+.app[data-theme=friendly]{background:radial-gradient(520px 260px at 100% 0,#ffe0d4 0,rgba(255,224,212,0) 70%),radial-gradient(420px 260px at 0 35%,#ffe6f0 0,rgba(255,230,240,0) 70%),var(--bg)}
+.app[data-theme=friendly] .hero.ok{color:#1f4a42}
+
+/* ---------- app ---------- */
+.app{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;min-height:100%;-webkit-font-smoothing:antialiased}
+.app h1,.app h2,.app h3{font-family:var(--font-head);letter-spacing:.01em}
+.ic{width:20px;height:20px;flex:none;vertical-align:-4px}
+.num,.money{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.money .cur{font-size:.62em;font-weight:700;margin-right:1px;opacity:.85}
+
+.appbar{background:var(--bar-bg);color:var(--bar-ink);padding:14px 16px 14px;border-bottom:1px solid var(--bar-line)}
+.appbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--font-num);font-weight:800;font-size:17px;letter-spacing:.01em}
+.logo{width:30px;height:30px;border-radius:10px;background:var(--logo-bg);color:var(--logo-ink);display:grid;place-items:center}
+.logo .ic{width:18px;height:18px}
+.lang-seg{display:inline-flex;padding:3px;border-radius:999px;background:var(--seg-bg);flex:none}
+.lang-seg button{width:62px;height:32px;border:0;border-radius:999px;background:transparent;color:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.lang-seg button[aria-pressed=true]{background:var(--seg-on);color:var(--seg-on-ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.lang-seg button:focus-visible,.demo-seg button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.appbar-title{margin-top:14px}
+.eyebrow{font-size:12px;letter-spacing:.05em;margin:0 0 2px;opacity:.78}
+.appbar h1{font-size:22px;line-height:1.35;margin:0;font-weight:700}
+.modes{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:12px;align-items:center}
+.mode{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:3px 9px;border-radius:999px;background:var(--mode-bg);color:var(--mode-ink)}
+.mode .ic{width:14px;height:14px;vertical-align:0}
+.demo-seg{display:inline-flex;align-items:center;gap:2px;padding:2px;border-radius:999px;background:var(--mode-bg);color:var(--mode-ink);font-size:11.5px;margin-left:auto}
+.demo-seg span{padding:0 6px 0 8px}
+.demo-seg button{border:0;background:transparent;color:inherit;font-size:12px;font-weight:700;min-width:40px;height:26px;border-radius:999px;cursor:pointer;padding:0 8px}
+.demo-seg button[aria-pressed=true]{background:var(--seg-on);color:var(--seg-on-ink)}
+
+.layout{padding:16px 14px 8px;display:block}
+.content,.side{display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr)}
+.side{margin-top:14px}
+.rail{display:none}
+.app-foot{padding:18px 16px 28px;font-size:12px;color:var(--muted);text-align:center}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:18px 16px}
+.card h2{font-size:17px;margin:0 0 12px;line-height:1.4}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-head h2{margin:0}
+.tag{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:var(--r-chip);background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.label{font-size:12.5px;font-weight:700;color:var(--muted);margin:16px 0 8px;letter-spacing:.03em}
+.label:first-child{margin-top:0}
+.fine{font-size:12px;color:var(--muted);margin:10px 0 0;line-height:1.6}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;color:var(--ink-2);margin-top:8px}
+.meta span{display:inline-flex;align-items:center;gap:5px}
+.meta .ic{width:17px;height:17px;color:var(--brand-text)}
+
+/* hero blocks */
+.hero{position:relative;overflow:hidden;border-radius:var(--r-card);padding:22px 18px 20px;background:var(--hero-bg);color:var(--hero-ink);box-shadow:var(--shadow-card)}
+.hero::after{content:"";position:absolute;right:-70px;top:-70px;width:220px;height:220px;border-radius:50%;background:var(--hero-deco);pointer-events:none}
+.hero.ok{background:var(--ok-hero)}
+.hero>*{position:relative;z-index:1}
+.kicker{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.06em;padding:4px 11px;border-radius:999px;background:var(--kicker-bg);color:var(--kicker-ink);margin-bottom:12px}
+.kicker .ic{width:15px;height:15px;vertical-align:0}
+.hero h2{font-size:21px;line-height:1.45;margin:0 0 8px}
+.hero p{margin:0;opacity:.93;font-size:14.5px}
+.hero-amt{display:flex;align-items:baseline;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.18)}
+.app[data-theme=friendly] .hero-amt{border-top-color:rgba(60,30,40,.12)}
+.hero-amt .lbl{font-size:13px;opacity:.85}
+.hero-amt .money{font-size:34px;font-weight:800;line-height:1}
+
+/* slots */
+.big-slot{display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;background:var(--brand-soft);border:1px solid var(--brand-line)}
+.big-slot .cal{width:52px;height:52px;border-radius:14px;background:var(--surface);display:grid;place-items:center;color:var(--brand-text);flex:none;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.big-slot .cal .ic{width:26px;height:26px}
+.big-slot .d{font-weight:700;font-size:15px}
+.big-slot .t{font-family:var(--font-num);font-weight:800;font-size:26px;line-height:1.15;letter-spacing:.01em}
+.big-slot .tz{font-size:11.5px;color:var(--muted)}
+.move{display:grid;grid-template-columns:1fr;gap:6px}
+.slot{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:12px;border-radius:14px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--line)}
+.slot .lbl{grid-row:span 2;font-size:11.5px;font-weight:700;color:var(--muted);writing-mode:horizontal-tb;width:52px}
+.slot .d{font-weight:700;font-size:14px}
+.slot .t{font-family:var(--font-num);font-weight:800;font-size:21px;line-height:1.2}
+.slot.from .t,.slot.from .d{color:var(--muted)}
+.slot.from .t{text-decoration:line-through;text-decoration-thickness:1.5px}
+.slot.to{background:var(--brand-soft);border-color:var(--brand-line)}
+.slot.to .lbl{color:var(--brand-text)}
+.move-arrow{justify-self:center;color:var(--brand-text);transform:rotate(90deg);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--line)}
+.move-arrow .ic{width:16px;height:16px;vertical-align:0}
+
+/* tiles and money rows */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.tile{border-radius:12px;padding:10px;background:var(--surface-2);border:1px solid var(--line)}
+.tile .tl{font-size:11px;color:var(--muted);font-weight:700;line-height:1.4}
+.tile .money{display:block;font-size:15px;font-weight:800;margin-top:4px;white-space:nowrap}
+.tile.strong{background:var(--ok-soft);border-color:var(--ok-line)}
+.tile.strong .money{color:var(--ok)}
+.amount-big{font-size:38px;font-weight:800;line-height:1.1;margin:4px 0 12px}
+.amount-big.plus{color:var(--ok)}
+.rows{display:grid;gap:0;border-top:1px solid var(--line)}
+.row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.row .money{font-weight:700;white-space:nowrap}
+.row.total{font-weight:700;font-size:15px}
+
+/* approvals and chips */
+.approvals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ap{border-radius:12px;padding:10px;background:var(--surface-2);border:1px solid var(--line);display:grid;gap:3px}
+.ap .who{font-size:11.5px;color:var(--muted);font-weight:700;line-height:1.35}
+.ap .st{font-size:12.5px;font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;line-height:1.35}
+.ap .st .ic{width:16px;height:16px;vertical-align:0}
+.ap.ok{background:var(--ok-soft);border-color:var(--ok-line)}.ap.ok .st{color:var(--ok)}
+.ap.wait .st{color:var(--wait)}
+.ap.you{background:var(--wait-soft);border-color:var(--wait-line)}.ap.you .st{color:var(--wait)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:var(--r-chip);white-space:nowrap}
+.chip .ic{width:15px;height:15px;vertical-align:0}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.wait{background:var(--wait-soft);color:var(--wait)}
+.chip.pending{background:var(--info-soft);color:var(--brand-text)}
+.chip.attn{background:var(--attn-soft);color:var(--attn)}
+.chip.muted{background:var(--surface-2);color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+
+/* banners */
+.banner{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;border:1px solid var(--info-line);background:var(--info-soft)}
+.banner .bic{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--brand-text)}
+.banner strong{display:block;font-size:15px;line-height:1.45}
+.banner p{margin:2px 0 0;font-size:13.5px;color:var(--ink-2)}
+.banner.wait{background:var(--wait-soft);border-color:var(--wait-line)}.banner.wait .bic{color:var(--wait)}
+.banner.ok{background:var(--ok-soft);border-color:var(--ok-line)}.banner.ok .bic{color:var(--ok)}
+.banner.attn{background:var(--attn-soft);border-color:#f2c4c8}.banner.attn .bic{color:var(--attn)}
+
+/* stepper */
+.stepper{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,1fr)}
+.step{display:grid;justify-items:center;gap:6px;text-align:center;font-size:11px;line-height:1.35;color:var(--muted);position:relative;word-break:keep-all;overflow-wrap:anywhere;padding:0 1px}
+.step::before{content:"";position:absolute;top:14px;right:50%;width:100%;height:3px;background:var(--line);z-index:0}
+.step:first-child::before{display:none}
+.step .dot{position:relative;z-index:1;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:2px solid var(--line);font-family:var(--font-num);font-weight:800;font-size:12px}
+.step .dot .ic{width:16px;height:16px;vertical-align:0}
+.step.done{color:var(--ink-2)}
+.step.done::before,.step.current::before{background:var(--ok)}
+.step.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.step.current{color:var(--ink);font-weight:700}
+.step.current .dot{background:var(--brand-lo);border-color:var(--brand-lo);color:var(--on-brand);box-shadow:0 0 0 5px var(--brand-soft)}
+
+/* buttons */
+.action-bar{display:grid;gap:10px;margin-top:18px;position:sticky;bottom:0;z-index:5;padding:12px 0 6px;background:linear-gradient(to bottom,rgba(255,255,255,0),var(--surface) 22%)}
+.action-bar.static{position:static;background:none;padding-top:0}
+.action-alt{display:grid;margin-top:8px}
+.btn{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:9px 16px 9px 10px;border-radius:var(--r-btn);cursor:pointer;text-align:left;transition:transform .12s ease,box-shadow .15s ease,background-color .15s ease,border-color .15s ease;overflow:hidden}
+.btn .bi{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.btn .bi .ic{width:20px;height:20px;vertical-align:0}
+.btn .bt{flex:1;display:grid;line-height:1.3;min-width:0}
+.btn .bl{font-size:16px;font-weight:800;letter-spacing:.01em;text-wrap:balance}
+.btn .bs{font-size:12px;font-weight:500;opacity:.88;margin-top:2px}
+.btn .ba{flex:none;display:grid;place-items:center;transition:transform .15s ease}
+.btn-primary{border:0;color:var(--on-brand);background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 0 rgba(0,0,0,.14),var(--shadow-btn)}
+.btn-primary::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.28) 45%,rgba(255,255,255,0) 60%);transform:translateX(-120%);transition:transform .6s ease;pointer-events:none}
+.btn-primary:hover,.btn-primary.is-hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 0 rgba(0,0,0,.14),var(--shadow-btn-h)}
+.btn-primary:hover::after,.btn-primary.is-hover::after{transform:translateX(120%)}
+.btn-primary:hover .ba,.btn-primary.is-hover .ba{transform:translateX(3px)}
+.btn-primary:active,.btn-primary.is-active{transform:translateY(1px);box-shadow:inset 0 3px 8px rgba(0,0,0,.25)}
+.btn:focus-visible,.btn.is-focus{outline:3px solid var(--focus);outline-offset:3px}
+.btn.is-loading{cursor:progress}
+.btn-primary.is-loading{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));opacity:.92}
+.btn[disabled]:not(.is-loading){background:var(--surface-2);color:var(--muted);box-shadow:none;border:1px dashed var(--line);cursor:not-allowed;transform:none}
+.btn[disabled]:not(.is-loading) .bi{background:var(--surface);box-shadow:none}
+.btn-secondary{min-height:50px;justify-content:center;padding:8px 16px;background:var(--surface);color:var(--brand-text);border:1.5px solid var(--brand-line);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.btn-secondary .bt{flex:none;text-align:center}
+.btn-secondary .bl{font-size:15px;font-weight:700}
+.btn-secondary:hover,.btn-secondary.is-hover{background:var(--brand-soft);border-color:var(--brand-hi)}
+.btn-secondary:active,.btn-secondary.is-active{transform:translateY(1px);background:var(--brand-soft)}
+.btn-ghost{min-height:44px;justify-content:center;background:transparent;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.btn-ghost .bt{flex:none}
+.btn-ghost .bl{font-size:14px;font-weight:600}
+.btn-ghost:hover{color:var(--ink)}
+.reason{display:flex;gap:6px;align-items:flex-start;font-size:12px;color:var(--muted);margin:6px 2px 0}
+.reason .ic{width:15px;height:15px;vertical-align:0;margin-top:2px}
+.spin{width:20px;height:20px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:rot .8s linear infinite;display:inline-block}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ticket */
+.ticket{position:relative;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-card);overflow:hidden}
+.ticket-top{padding:16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.ticket-top .d{font-weight:700;font-size:15px}
+.ticket-top .t{font-family:var(--font-num);font-size:28px;font-weight:800;line-height:1.15}
+.ticket-thumb{width:76px;height:76px;border-radius:14px;overflow:hidden}
+.ticket-sep{position:relative;border-top:2px dashed var(--line);margin:0 14px}
+.ticket-sep::before,.ticket-sep::after{content:"";position:absolute;top:-11px;width:20px;height:20px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.ticket-sep::before{left:-25px}.ticket-sep::after{right:-25px}
+.ticket-bottom{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ticket-bottom .lbl{font-size:12.5px;color:var(--muted);font-weight:700}
+.ticket-bottom .money{font-size:28px;font-weight:800}
+.ticket.done .ticket-top{background:var(--ok-soft)}
+
+/* image slots (contents are made by Codex after this HTML is fixed) */
+.img-slot{position:relative;margin:0;border-radius:var(--r-card);overflow:hidden;background:var(--img-bg);aspect-ratio:3/2;display:grid;place-items:center;color:rgba(255,255,255,.75)}
+.img-slot::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.07) 0 12px,rgba(255,255,255,0) 12px 24px)}
+.img-slot.sq{aspect-ratio:1/1;border-radius:14px}
+.img-slot.wide{aspect-ratio:16/10}
+.img-slot .img-ic{position:relative;display:grid;place-items:center}
+.img-slot .img-ic .ic{width:44px;height:44px;vertical-align:0;opacity:.8}
+.img-slot.sq .img-ic .ic{width:26px;height:26px}
+.img-label{position:absolute;left:10px;bottom:10px;right:10px;background:rgba(20,16,14,.62);color:#fff;font-size:11.5px;line-height:1.45;padding:7px 10px;border-radius:9px;backdrop-filter:blur(2px)}
+.img-slot.sq .img-label{display:none}
+.hide-labels .img-label{display:none}
+
+/* lists */
+.list{display:grid;gap:8px}
+.li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.li .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;background:var(--brand-soft);color:var(--brand-text)}
+.li .main{min-width:0}
+.li .main b{display:block;font-size:13.5px}
+.li .main span{font-size:12.5px;color:var(--muted)}
+.terms{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.terms li{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:13.5px;color:var(--ink-2)}
+.terms .ic{color:var(--brand-text);margin-top:2px;vertical-align:0}
+
+/* top page */
+.top-hero{display:grid;gap:16px}
+.display{font-size:30px;line-height:1.35;margin:4px 0 10px}
+.lead{font-size:15px;color:var(--ink-2);margin:0}
+.steps3{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.steps3 li{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:12px;border-radius:14px;background:var(--surface-2)}
+.steps3 .n{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:var(--on-brand)}
+.steps3 .n .ic{vertical-align:0}
+.steps3 b{display:block;font-size:14.5px}
+.steps3 span{font-size:13px;color:var(--muted)}
+.roles3{display:grid;gap:10px}
+.role{padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
+.role .rh{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:4px}
+.role .rb{font-size:13px;color:var(--muted);margin:0}
+.badge-role{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-num);font-weight:800;font-size:13px;background:var(--brand-soft);color:var(--brand-text)}
+.choice{display:grid;gap:8px;margin:0;padding:0;border:0}
+.choice legend{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:8px;padding:0}
+.opt{display:flex;gap:10px;align-items:center;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer}
+.opt.on{border-color:var(--brand-hi);background:var(--brand-soft)}
+.opt .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;background:var(--surface)}
+.opt.on .radio{border-color:var(--brand-lo)}
+.opt.on .radio::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--brand-lo)}
+.opt.off{opacity:.55;cursor:not-allowed}
+.opt b{display:block;font-size:14px}
+.opt span{font-size:12px;color:var(--muted)}
+.links3{display:grid;gap:10px}
+
+/* kit page */
+.kit-grid{display:grid;gap:12px}
+.kit-row{display:grid;gap:6px}
+.kit-row .cap{font-size:11.5px;color:var(--muted);font-weight:700}
+
+/* ---------- wider than a phone ---------- */
+@container app (min-width: 560px){
+  .move{grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+  .move-arrow{transform:none}
+  .slot{grid-template-columns:1fr;row-gap:2px}
+  .slot .lbl{grid-row:auto;width:auto}
+  .roles3,.links3{grid-template-columns:repeat(3,1fr)}
+  .action-bar{position:static;background:none;padding-top:0;max-width:560px}
+  .action-alt{display:flex}
+  .action-alt .btn-secondary{width:auto;padding:8px 26px}
+  .tile .money{font-size:18px}
+  .ap .st{font-size:13px}
+}
+@container app (min-width: 880px){
+  .appbar{padding:16px 28px}
+  .appbar-inner{max-width:1180px;margin:0 auto}
+  .appbar-title{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .appbar h1{font-size:24px}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;padding:24px 28px;max-width:1236px;margin:0 auto;align-items:start}
+  .layout.has-rail{grid-template-columns:210px minmax(0,1fr) 320px}
+  .side{margin-top:0}
+  .rail{display:grid;gap:4px;align-content:start;position:sticky;top:16px;padding:10px;border-radius:var(--r-card);background:var(--rail-bg);color:var(--rail-ink)}
+  .rail a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:inherit;text-decoration:none;font-size:14px;font-weight:600}
+  .rail a.on{background:var(--rail-on);color:var(--rail-on-ink)}
+  .rail a .cnt{margin-left:auto;font-family:var(--font-num);font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;background:var(--brand-lo);color:var(--on-brand)}
+  .top-hero{grid-template-columns:1.05fr 1fr;align-items:center;gap:28px}
+  .display{font-size:40px}
+  .hero{padding:26px 26px 24px}
+  .hero h2{font-size:25px}
+  .kit-grid{grid-template-columns:1fr 1fr}
+  .layout.single{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion: reduce){
+  .btn,.btn .ba,.btn-primary::after{transition:none}
+  .spin{animation-duration:2.4s}
+}
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><!-- FlexSlot original geometry, 2026-11-07. Decorative icons; labels must remain in HTML. --><defs><symbol id="fs-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4m8-4v4M4 11h16m-11 5h2m3 0h2"/></g></symbol><symbol id="fs-swap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h15m-4-4 4 4-4 4M20 17H5m4-4-4 4 4 4"/></g></symbol><symbol id="fs-arrow" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16m-6-6 6 6-6 6"/></g></symbol><symbol id="fs-chevron" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 7 7-7 7"/></g></symbol><symbol id="fs-down" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></g></symbol><symbol id="fs-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></g></symbol><symbol id="fs-circleCheck" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></g></symbol><symbol id="fs-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></g></symbol><symbol id="fs-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></g></symbol><symbol id="fs-receipt" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 5h6m-6 4h6m-6 4h3"/></g></symbol><symbol id="fs-person" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/></g></symbol><symbol id="fs-scissors" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="3"/><circle cx="5" cy="18" r="3"/><path d="m7.5 7.5 12 12m-12-3 12-12m-7 8 2 2"/></g></symbol><symbol id="fs-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></g></symbol><symbol id="fs-alert" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4a1.2 1.2 0 0 1 2 0l8 14a1.3 1.3 0 0 1-1 2H4a1.3 1.3 0 0 1-1-2l8-14Zm1 4v5m0 4v.1"/></g></symbol><symbol id="fs-close" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M6 18 18 6"/></g></symbol><symbol id="fs-refund" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/><path d="M12 7v5l3 2"/></g></symbol><symbol id="fs-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3m4 0h9M4 17h9m4 0h3"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></g></symbol><symbol id="fs-store" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v11h16V10M3 10l2-7h14l2 7M3 10c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0M9 21v-7h6v7"/></g></symbol></defs></svg>
+<div class="review" id="review"></div>
+<div class="stage">
+  <div class="device phone" id="device"><div class="app" id="app"></div></div>
+  <section class="notes" id="notes"></section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+// Design mockup only: fixed sample data, no server, no payments. The real screens keep CaseView, steps, actions,
+// permissions, the mode labels and the recovery texts from the server.
+const S = { theme: 'salon', screen: 'top', state: 0, lang: 'ja', width: 'phone', labels: true, busy: null };
+const THEMES = [['salon', '案1 上質サロン'], ['trust', '案2 安心の決済'], ['friendly', '案3 やさしいアプリ']];
+const SCREENS = [['top', 'トップ'], ['owner', 'お店'], ['a', 'A（予約済み）'], ['b', 'B（新規）'], ['kit', '部品一覧']];
+const STATES = { top: ['作成前', '作成後'], owner: ['承認前', '支払い確認中', '完了'], a: ['同意前', '確認中', '完了'], b: ['支払い前', '支払い確認中', '完了'], kit: [] };
+
+const L = (ja, en) => (S.lang === 'ja' ? ja : en);
+const ic = (n, cls = '') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#fs-${n}"/></svg>`;
+const usd = (v, sign = '') => `<span class="money">${sign}<span class="cur">US$</span>${v}</span>`;
+const dash = () => L('〜', '–');
+const FROM = () => ({ d: L('11月9日(月)', 'Mon, Nov 9, 2026'), t: `14:00${dash()}15:00` });
+const TO = () => ({ d: L('11月12日(木)', 'Thu, Nov 12, 2026'), t: `10:00${dash()}11:00` });
+const DUE = () => L('11月7日(土) 12:37', 'Sat, Nov 7, 12:37');
+
+// ---------- parts ----------
+function btn({ id, kind = 'primary', icon = 'check', label, sub = '', act = 'next', val = '', extra = '', disabled = false }) {
+  const busy = S.busy === id;
+  const cls = `btn btn-${kind}${busy ? ' is-loading' : ''} ${extra}`;
+  const lead = kind === 'primary' ? `<span class="bi">${busy ? '<span class="spin"></span>' : ic(icon)}</span>` : '';
+  const text = busy ? L('処理しています…', 'Working…') : label;
+  const subText = busy ? L('二重に送られないよう、ボタンを止めています', 'Locked so it cannot be sent twice') : sub;
+  const arrow = kind === 'primary' && !busy && !disabled ? `<span class="ba">${ic('arrow')}</span>` : '';
+  return `<button type="button" class="${cls}" data-act="${act}" data-id="${id}" data-val="${val}"${busy || disabled ? ' disabled' : ''}${busy ? ' aria-busy="true"' : ''}>${lead}<span class="bt"><span class="bl">${text}</span>${subText ? `<span class="bs">${subText}</span>` : ''}</span>${arrow}</button>`;
+}
+// Phone: only the main decision stays pinned at the bottom while the card is read; the other choice follows it.
+const actionBar = (primary, secondary = '', pinned = true) => `<div class="action-bar${pinned ? '' : ' static'}">${primary}</div>${secondary ? `<div class="action-alt">${secondary}</div>` : ''}`;
+const decline = (label) => btn({ id: 'decline', kind: 'secondary', label, act: 'toast', val: 'decline' });
+
+function banner(kind, title, body) {
+  const icon = kind === 'pending' ? '<span class="spin"></span>' : ic({ ok: 'check', wait: 'clock', attn: 'alert', info: 'info' }[kind] || 'info');
+  return `<div class="banner ${kind === 'pending' ? 'info' : kind}" role="status"><span class="bic">${icon}</span><div><strong>${title}</strong><p>${body}</p></div></div>`;
+}
+function stepper(cur) {
+  const names = L(['提案', '承認', 'お支払い', '予約の変更', '補償の返金', '完了'], ['Proposal', 'Approval', 'Payment', 'Booking', 'Refund', 'Done']);
+  return `<ol class="stepper" aria-label="${L('この振替の進み具合', 'Progress of this swap')}">${names
+    .map((s, i) => `<li class="step ${i < cur ? 'done' : i === cur ? 'current' : ''}"${i === cur ? ' aria-current="step"' : ''}><span class="dot">${i < cur ? ic('check') : i + 1}</span><span>${s}</span></li>`)
+    .join('')}</ol>`;
+}
+function moveCards() {
+  const f = FROM(), t = TO();
+  return `<div class="move"><div class="slot from"><span class="lbl">${L('変更前', 'Before')}</span><span class="d">${f.d}</span><span class="t">${f.t}</span></div><span class="move-arrow">${ic('arrow')}</span><div class="slot to"><span class="lbl">${L('変更後', 'After')}</span><span class="d">${t.d}</span><span class="t">${t.t}</span></div></div>`;
+}
+function bigSlot() {
+  const f = FROM();
+  return `<div class="big-slot"><span class="cal">${ic('calendar')}</span><div><div class="d">${f.d}</div><div class="t">${f.t}</div><div class="tz">${L('店舗の現地時間（日本時間）', 'Shop local time (Japan, UTC+9)')}</div></div></div>`;
+}
+function approvals(list) {
+  const st = { ok: [ic('check'), L('承認済み', 'Approved')], agreed: [ic('check'), L('同意済み', 'Agreed')], wait: [ic('clock'), L('返事待ち', 'Waiting')], you: [ic('clock'), L('あなたの承認待ち', 'Your turn')] };
+  return `<div class="approvals">${list.map(([who, s]) => `<div class="ap ${s === 'agreed' ? 'ok' : s}"><span class="who">${who}</span><span class="st">${st[s][0]}${st[s][1]}</span></div>`).join('')}</div>`;
+}
+function imgSlot(n, label, cls = '', icon = 'store') {
+  return `<figure class="img-slot ${cls}" data-img="${n}"><span class="img-ic">${ic(icon)}</span><figcaption class="img-label"><b>${L('画像枠', 'Image slot')} ${n}</b>　${label}</figcaption></figure>`;
+}
+function shopCard() {
+  return `<section class="card">${imgSlot(2, L('店舗の写真（横長 3:2・900×600以上）。確定後にCodexが作成', 'Salon photo (3:2, 900×600+). Made by Codex after this design is fixed'))}
+    <h2 style="margin:14px 0 2px">${L('フレックスサロン', 'Flex Salon')}</h2><p class="fine" style="margin:0 0 12px">${L('架空の美容室・担当 ミカ', 'Fictional salon · stylist Mika')}</p>
+    <ul class="terms"><li>${ic('clock')}<span>${L('表示時刻は店舗の現地時間（日本時間）', "Times are the shop's local time (Japan)")}</span></li><li>${ic('refund')}<span>${L('補償は1つの予約につき1回。金額は条件の登録時に固定', 'Compensation once per booking, fixed when registered')}</span></li><li>${ic('scissors')}<span>${L('担当者と施術は変わりません', 'Same stylist and same service')}</span></li></ul></section>`;
+}
+const modes = () => `<span class="mode">${ic('sliders')}${L('AI：模擬ルール', 'AI: mock rules')}</span><span class="mode">${ic('lock')}${L('決済：模擬（PayPalなし）', 'Payment: mock (no PayPal)')}</span>`;
+const langSeg = () => `<div class="lang-seg" role="group" aria-label="${L('表示言語', 'Language')}"><button type="button" data-act="lang" data-val="ja" aria-pressed="${S.lang === 'ja'}" lang="ja">日本語</button><button type="button" data-act="lang" data-val="en" aria-pressed="${S.lang === 'en'}" lang="en">EN</button></div>`;
+const demoSeg = () => `<div class="demo-seg" role="group" aria-label="${L('デモ用の画面切り替え', 'Demo screen switcher')}"><span>${L('デモ用', 'Demo')}</span>${[['owner', L('お店', 'Shop')], ['a', 'A'], ['b', 'B']].map(([k, n]) => `<button type="button" data-act="go" data-val="${k}" aria-pressed="${S.screen === k}">${n}</button>`).join('')}</div>`;
+
+function shell({ eyebrow, title, rail = false, single = false, main, side = '', switcher = true }) {
+  const railNav = rail
+    ? `<nav class="rail" aria-label="${L('お店のメニュー', 'Shop menu')}">${[['swap', L('予約の振替', 'Swaps'), 1], ['calendar', L('予約一覧', 'Bookings')], ['sliders', L('登録済みの条件', 'Conditions')], ['receipt', L('支払い・返金', 'Payments')], ['clock', L('履歴', 'History')]]
+        .map(([i, n, c], k) => `<a href="#" class="${k === 0 ? 'on' : ''}">${ic(i)}${n}${c ? `<span class="cnt">${c}</span>` : ''}</a>`).join('')}</nav>`
+    : '';
+  return `<header class="appbar"><div class="appbar-inner"><div class="appbar-row"><div class="brand"><span class="logo">${ic('swap')}</span>FlexSlot</div>${langSeg()}</div>
+    <div class="appbar-title"><h1>${title}</h1><p class="eyebrow">${eyebrow}</p></div>
+    <div class="modes">${modes()}${switcher ? demoSeg() : ''}</div></div></header>
+    <div class="layout${rail ? ' has-rail' : ''}${single ? ' single' : ''}">${railNav}<main class="content">${main}</main>${side ? `<aside class="side">${side}</aside>` : ''}</div>
+    <footer class="app-foot">${L('架空の美容室を使ったデモです。金額は米ドル表示、決済はテスト用です。', 'A demo with a fictional salon. Amounts in US dollars; payments are test-only.')}</footer>`;
+}
+
+// ---------- screens ----------
+function viewTop() {
+  const created = S.state === 1;
+  const start = created
+    ? `<section class="card"><div class="card-head"><h2>${L('デモができました', 'Your demo is ready')}</h2><span class="chip ok">${ic('check')}${L('作成済み', 'Created')}</span></div>
+        <p class="fine" style="margin:0 0 12px">${L('3つの画面を、この端末で切り替えて使えます。上部の「デモ用」からも切り替えられます。', 'Switch between the three screens on this device, also from “Demo” at the top.')}</p>
+        <div class="links3">${[['owner', 'S', L('お店', 'Shop'), L('振替を確認して承認する', 'Review and approve')], ['a', 'A', L('予約済みのお客さま', 'Existing customer'), L('日時の変更に同意する', 'Agree to the change')], ['b', 'B', L('新しいお客さま', 'New customer'), L('案内を承諾して支払う', 'Accept and pay')]]
+          .map(([k, b, n, d]) => `<div class="role"><div class="rh"><span class="badge-role">${b}</span>${n}</div><p class="rb">${d}</p><div style="margin-top:10px">${btn({ id: 'open-' + k, kind: 'secondary', label: L('この画面を開く', 'Open this screen'), act: 'go', val: k })}</div></div>`).join('')}</div></section>`
+    : `<section class="card"><h2>${L('デモを始める', 'Start a demo')}</h2>
+        <fieldset class="choice"><legend>${L('自由入力を読み取るAI', 'AI for free text')}</legend>
+          <div class="opt on"><span class="radio"></span><div><b>${L('模擬ルール', 'Mock rules')}</b><span>${L('オフラインで動く規則。本物のAIではありません', 'Offline rules, not a real AI')}</span></div></div>
+          <div class="opt off"><span class="radio"></span><div><b>Gemini on Vertex AI</b><span>${L('この公開版では使えません', 'Not available in this public version')}</span></div></div></fieldset>
+        <fieldset class="choice" style="margin-top:14px"><legend>${L('支払い', 'Payment')}</legend>
+          <div class="opt on"><span class="radio"></span><div><b>${L('模擬の支払い', 'Mock payment')}</b><span>${L('PayPalを使わずに流れを確かめます', 'Walk through without PayPal')}</span></div></div>
+          <div class="opt off"><span class="radio"></span><div><b>PayPal Sandbox</b><span>${L('テスト用のPayPal。この公開版では使えません', 'Test PayPal. Not available in this public version')}</span></div></div></fieldset>
+        ${actionBar(btn({ id: 'create', icon: 'swap', label: L('デモを作成', 'Create the demo'), sub: L('お店・A・Bの3つの画面ができます', 'Creates the shop, A and B screens') }), '', false)}
+        <p class="fine">${L('モードはデモごとに固定され、すべての画面の上部に表示されます。', 'The modes are fixed per demo and shown at the top of every screen.')}</p></section>`;
+  const main = `<section class="top-hero"><div><span class="kicker" style="background:var(--brand-soft);color:var(--brand-text)">${ic('swap')}${L('予約の振替サービス（デモ）', 'Booking swap service (demo)')}</span>
+      <h2 class="display">${L('満席の時間に、<br>新しい選択肢を。', 'A fully booked time,<br>one more option.')}</h2>
+      <p class="lead">${L('予約を変更できるお客さまと、満席の時間に来たいお客さまをつなぎます。全員が同意したら、お支払い・予約の変更・補償の返金まで、FlexSlotが順に進めます。', 'FlexSlot connects a customer who can move with a customer who needs that fully booked time. Once everyone agrees, it runs the payment, the booking change and the compensation refund in order.')}</p>
+      <div class="chips" style="margin-top:14px"><span class="chip muted">${ic('store')}${L('架空の美容室', 'Fictional salon')}</span><span class="chip muted">${ic('receipt')}${L('米ドル表示', 'US dollars')}</span><span class="chip muted">${ic('lock')}${L('テスト決済のみ', 'Test payments only')}</span></div></div>
+      ${imgSlot(1, L('店内の雰囲気（横長 16:10・1600×1000以上）。人物なし', 'Salon interior (16:10, 1600×1000+). No people'), 'wide')}</section>
+    ${start}
+    <section class="card"><h2>${L('しくみ', 'How it works')}</h2><ol class="steps3">
+      <li><span class="n">${ic('calendar')}</span><div><b>${L('Aさんが「変更してもよい日時」を登録', 'A registers when they could move')}</b><span>${L('変更に応じると、補償として一部を返金', 'If they move, part of their payment is refunded')}</span></div></li>
+      <li><span class="n">${ic('person')}</span><div><b>${L('Bさんが満席の時間を希望', 'B asks for the fully booked time')}</b><span>${L('FlexSlotが条件に合う振替を見つけて提案', 'FlexSlot finds a matching swap and proposes it')}</span></div></li>
+      <li><span class="n">${ic('check')}</span><div><b>${L('お店とAさんが承認、Bさんが支払い', 'The shop and A approve, B pays')}</b><span>${L('支払いの確認後に予約を変更し、Aさんへ返金', 'After the payment is confirmed: booking change, then the refund')}</span></div></li></ol></section>`;
+  return shell({ eyebrow: L('満席の予約枠を、お客さま同士の振替で活かすデモ', 'A demo: fill a fully booked slot by swapping bookings'), title: L('予約の振替（デモ）', 'Booking swaps (demo)'), single: true, main, switcher: false });
+}
+
+function viewOwner() {
+  const st = S.state;
+  const top = [
+    banner('wait', L('あなたの承認が必要です', 'Your approval is needed'), L(`期限：${DUE()}。承認すると、Aさまに日時変更の確認を依頼します。`, `Due by ${DUE()}. Approving asks customer A to confirm the change.`)),
+    banner('pending', L('PayPalにお支払いの結果を確認しています', 'Checking the payment result with PayPal'), L('Bさまのお支払いが確認できてから、予約の変更とAさまへの返金を行います。', "The bookings change and A's refund follow once B's payment is confirmed.")),
+    banner('ok', L('振替が完了しました', 'Swap completed'), L('予約を変更し、Aさまへ US$10.00 を返金しました。', 'Bookings changed and US$10.00 refunded to customer A.')),
+  ][st];
+  const aps = [
+    [[L('お店', 'Shop'), 'you'], [L('予約済み A', 'Existing A'), 'wait'], [L('新規 B', 'New B'), 'wait']],
+    [[L('お店', 'Shop'), 'ok'], [L('予約済み A', 'Existing A'), 'agreed'], [L('新規 B', 'New B'), 'ok']],
+    [[L('お店', 'Shop'), 'ok'], [L('予約済み A', 'Existing A'), 'agreed'], [L('新規 B', 'New B'), 'ok']],
+  ][st];
+  const proposal = `<section class="card"><div class="card-head"><h2>${L('振替の提案', 'Swap proposal')}</h2><span class="tag">${L('第1版', 'Version 1')}</span></div>
+    <p class="label">${L('新しいお客さま（B）の希望', "New customer B's request")}</p>${bigSlot()}
+    <div class="meta"><span>${ic('scissors')}${L('カット', 'Cut')}</span><span>${ic('person')}${L('担当 ミカ', 'Stylist Mika')}</span></div>
+    <p class="label">${L('予約済みのお客さま（A）の変更', "Existing customer A's change")}</p>${moveCards()}
+    <p class="label">${L('お金の見込み', 'Money at a glance')}</p>
+    <div class="tiles"><div class="tile"><span class="tl">${L('追加売上', 'Extra revenue')}</span>${usd('60.00', '+')}</div><div class="tile"><span class="tl">${L('Aへの補償', 'To A')}</span>${usd('10.00', '−')}</div><div class="tile strong"><span class="tl">${L('追加利益（試算）', 'Extra profit (est.)')}</span>${usd('20.50', '+')}</div></div>
+    <p class="label">${L('承認の状況', 'Approvals')}</p>${approvals(aps)}
+    ${st === 0 ? actionBar(btn({ id: 'approve', label: L('この振替を承認する', 'Approve this swap'), sub: L('次に、Aさまへ日時変更の確認を依頼します', 'Next, customer A is asked to confirm') }), decline(L('見送る', 'Decline'))) : ''}</section>`;
+  const money = `<section class="card"><h2>${L('お金と予約の動き', 'Money and bookings')}</h2><div class="rows">
+    <div class="row"><span>${L('Bさまのお支払い', "B's payment")}</span><span>${usd('60.00')} ${[`<span class="chip muted">${L('未開始', 'Not started')}</span>`, `<span class="chip pending">${L('確認中', 'Checking')}</span>`, `<span class="chip ok">${L('支払い済み', 'Paid')}</span>`][st]}</span></div>
+    <div class="row"><span>${L('予約の変更', 'Booking change')}</span><span>${st === 2 ? `<span class="chip ok">${L('変更済み', 'Changed')}</span>` : `<span class="chip muted">${L('支払いの確認後', 'After payment')}</span>`}</span></div>
+    <div class="row"><span>${L('Aさまへの補償の返金', 'Refund to A')}</span><span>${usd('10.00')} ${st === 2 ? `<span class="chip ok">${L('返金済み', 'Refunded')}</span>` : `<span class="chip muted">${L('予約変更の後', 'After booking')}</span>`}</span></div></div>
+    <p class="label">${L('進み具合', 'Progress')}</p>${stepper([1, 2, 6][st])}</section>`;
+  const bookings = `<section class="card"><h2>${L('予約一覧', 'Bookings')}</h2><div class="list">
+    <div class="li"><span class="av">A</span><div class="main"><b>${L('お客さまA', 'Customer A')}${st === 2 ? `<span class="chip ok" style="margin-left:6px">${L('変更', 'Moved')}</span>` : ''}</b><span>${st === 2 ? `${TO().d} ${TO().t}` : `${FROM().d} ${FROM().t}`}・${L('カット', 'Cut')}</span></div>${usd('60.00')}</div>
+    ${st === 2 ? `<div class="li"><span class="av">B</span><div class="main"><b>${L('お客さまB', 'Customer B')}</b><span>${FROM().d} ${FROM().t}・${L('カット', 'Cut')}</span></div>${usd('60.00')}</div>` : `<div class="li"><span class="av">B</span><div class="main"><b>${L('お客さまB', 'Customer B')}</b><span>${L('振替の成立後に予約が入ります', 'Booked once the swap goes through')}</span></div><span class="chip muted">${L('未確定', 'Pending')}</span></div>`}</div></section>`;
+  const profit = `<section class="card"><p class="label">${L('この振替が成立した場合の追加利益（試算）', 'Extra profit if this swap goes ahead (estimate)')}</p><div class="amount-big plus">${usd('20.50', '+')}</div><div class="rows">
+    <div class="row"><span>${L('追加売上（Bの料金）', "Extra revenue (B's price)")}</span>${usd('60.00', '+')}</div>
+    <div class="row"><span>${L('Aへの補償（返金）', 'Compensation to A (refund)')}</span>${usd('10.00', '−')}</div>
+    <div class="row"><span>${L('追加の施術原価（仮定）', 'Extra service cost (assumed)')}</span>${usd('15.00', '−')}</div>
+    <div class="row"><span>${L('決済などの手数料（仮定）', 'Payment fees (assumed)')}</span>${usd('2.50', '−')}</div>
+    <div class="row"><span>${L('変更先の枠の機会損失（仮定）', 'Opportunity loss at the new slot (assumed)')}</span>${usd('12.00', '−')}</div></div>
+    <p class="fine">${L('架空の仮定による試算です。実際の実績ではありません。', 'An estimate on fictional assumptions, not actual results.')}</p></section>`;
+  return shell({ eyebrow: L('フレックスサロン｜お店の管理画面', 'Flex Salon · Shop dashboard'), title: L('振替の確認と承認', 'Review and approve swaps'), rail: true, main: top + proposal + money + bookings, side: profit + shopCard() });
+}
+
+function viewA() {
+  const st = S.state;
+  const head = [
+    `<section class="hero"><span class="kicker">${ic('calendar')}${L('日時変更のお願い', 'A request to change your time')}</span>
+      <h2>${L('ご予約の日時を変更していただけませんか？', 'Could you move your booking?')}</h2>
+      <p>${L('11月9日(月) 14:00に、どうしても来たいお客さまがいます。変更にご協力いただくと、お支払い済みの代金から返金します。', 'Another customer can only come on Mon, Nov 9 at 14:00. If you move, part of what you paid is refunded.')}</p>
+      <div class="hero-amt"><span class="lbl">${L('返金額', 'Refund')}</span>${usd('10.00')}</div></section>`,
+    banner('pending', L('同意を受け付けました', 'Thanks, you agreed'), L('いまは新しいお客さまのお支払いを確認しています。確認が取れるまで、ご予約は11月9日(月) 14:00〜のままです。', "The new customer's payment is being checked. Until then your booking stays on Mon, Nov 9 at 14:00.")),
+    `<section class="hero ok"><span class="kicker">${ic('check')}${L('変更が完了しました', 'Change complete')}</span><h2>${L('ご予約を11月12日(木) 10:00〜に変更しました', 'Your booking moved to Thu, Nov 12 at 10:00')}</h2><p>${L('ご協力ありがとうございました。US$10.00を、お支払いに使ったPayPalアカウントへ返金しました。', 'Thank you. US$10.00 was refunded to the PayPal account you paid with.')}</p></section>`,
+  ][st];
+  const change = `<section class="card"><div class="card-head"><h2>${L('変更の内容', 'The change')}</h2>${st === 2 ? `<span class="chip ok">${ic('check')}${L('変更済み', 'Changed')}</span>` : `<span class="chip wait">${ic('clock')}${L(`期限 ${DUE()}`, `Reply by ${DUE()}`)}</span>`}</div>
+    ${moveCards()}<div class="meta"><span>${ic('person')}${L('担当 ミカ（同じ）', 'Stylist Mika (same)')}</span><span>${ic('scissors')}${L('カット（同じ）', 'Cut (same)')}</span></div>
+    ${st === 0 ? `<p class="label">${L('返金について', 'About the refund')}</p><div class="rows">
+      <div class="row"><span>${L('お支払い済み', 'You paid')}</span>${usd('60.00')}</div>
+      <div class="row total"><span>${L('返金額（変更した場合）', 'Refund if you move')}</span>${usd('10.00')}</div>
+      <div class="row"><span>${L('返金先', 'Refunded to')}</span><span>${L('お支払いに使ったPayPal', 'The PayPal you paid with')}</span></div>
+      <div class="row"><span>${L('新たな請求', 'New charges')}</span><span>${L('ありません', 'None')}</span></div></div>
+      ${actionBar(btn({ id: 'agree', label: L('予約変更に同意する', 'Agree to move'), sub: L('確定すると11月12日(木) 10:00〜に変わります', 'Once confirmed: Thu, Nov 12 at 10:00') }), decline(L('今の予約のままにする', 'Keep my booking')))}
+      <p class="fine">${L('全員の同意と、新しいお客さまのお支払いの確認が済んでから、予約の変更と返金を行います。', "The booking changes and the refund is sent only after everyone agrees and the new customer's payment is confirmed.")}</p>` : ''}</section>`;
+  const prog = `<section class="card"><h2>${L('進み具合', 'Progress')}</h2>${stepper([1, 2, 6][st])}${st > 0 ? `<div class="rows" style="margin-top:14px"><div class="row"><span>${L('ご予約', 'Your booking')}</span>${st === 2 ? `<span class="chip ok">${L('変更済み', 'Moved')}</span>` : `<span class="chip muted">${L('まだ変わっていません', 'Not changed yet')}</span>`}</div><div class="row"><span>${L('返金', 'Refund')} ${usd('10.00')}</span>${st === 2 ? `<span class="chip ok">${L('返金済み', 'Refunded')}</span>` : `<span class="chip muted">${L('予約変更の後', 'After the change')}</span>`}</div></div>` : ''}</section>`;
+  return shell({ eyebrow: L('フレックスサロン｜お客さまA様', 'Flex Salon · Customer A'), title: L('ご予約の日時変更のお願い', 'Request to change your booking'), main: head + change + prog, side: shopCard() });
+}
+
+function viewB() {
+  const st = S.state;
+  const head = [
+    `<section class="hero"><span class="kicker">${ic('calendar')}${L('満席の時間のご案内', 'A fully booked time, offered')}</span><h2>${L('11月9日(月) 14:00〜15:00に、ご予約いただけます', 'You can book Mon, Nov 9, 14:00–15:00')}</h2><p>${L('この時間に予約していたお客さまが日時の変更に同意し、お店も承認しました。', 'The customer who held this time agreed to move, and the shop approved.')}</p></section>`,
+    banner('pending', L('PayPalにお支払いの結果を確認しています', 'Checking your payment with PayPal'), L('ご予約はまだ確定していません。もう一度お支払いいただく必要はありません。この画面は自動で更新されます。', 'Your booking is not confirmed yet. Please do not pay again; this screen updates by itself.')),
+    `<section class="hero ok"><span class="kicker">${ic('check')}${L('予約確定', 'Booked')}</span><h2>${L('ご予約が確定しました', 'Your booking is confirmed')}</h2><p>${L('当日はそのままお越しください。お支払いは完了しています。', 'See you then. Your payment is complete.')}</p></section>`,
+  ][st];
+  const f = FROM();
+  const ticket = `<section class="ticket${st === 2 ? ' done' : ''}"><div class="ticket-top"><div><div class="d">${f.d}</div><div class="t">${f.t}</div><div class="meta"><span>${ic('scissors')}${L('カット', 'Cut')}</span><span>${ic('person')}${L('担当 ミカ', 'Stylist Mika')}</span></div></div>
+      <div class="ticket-thumb">${imgSlot(3, '', 'sq', 'scissors')}</div></div><div class="ticket-sep"></div>
+      <div class="ticket-bottom"><span class="lbl">${L('お支払い合計', 'Total')}</span><span>${usd('60.00')}</span></div></section>`;
+  const decide = st === 0
+    ? `<section class="card"><p class="label">${L('承認の状況', 'Approvals')}</p>${approvals([[L('お店', 'Shop'), 'ok'], [L('予約済みのお客さま', 'Existing customer'), 'agreed'], [L('あなた', 'You'), 'wait']])}
+      <div class="rows" style="margin-top:14px"><div class="row"><span>${L('このご案内の期限', 'Offer valid until')}</span><span>${DUE()}</span></div><div class="row"><span>${L('お支払いの方法', 'How you pay')}</span><span>${L('PayPal（テスト用）', 'PayPal (test)')}</span></div></div>
+      ${actionBar(btn({ id: 'pay', icon: 'lock', label: L('US$60.00を支払う', 'Pay US$60.00'), sub: L('承諾して、PayPalでの承認に進みます', 'Accept and continue to PayPal') }), decline(L('辞退する', 'Decline')))}
+      <p class="fine">${L('お支払いを始めると、条件が確定します（このデモでは、その後の取り消しはできません）。PayPalで承認した後、条件を再確認し、問題がなければお支払いを確定します。', 'Starting the payment fixes the terms (this demo has no cancellation after that). After you approve on PayPal, FlexSlot checks the terms again and, if they still hold, completes the payment.')}</p></section>`
+    : `<section class="card"><h2>${L('進み具合', 'Progress')}</h2>${stepper([1, 2, 6][st])}<div class="rows" style="margin-top:14px"><div class="row"><span>${L('お支払い', 'Payment')} ${usd('60.00')}</span>${st === 2 ? `<span class="chip ok">${L('支払い済み', 'Paid')}</span>` : `<span class="chip pending">${L('確認中', 'Checking')}</span>`}</div><div class="row"><span>${L('ご予約', 'Booking')}</span>${st === 2 ? `<span class="chip ok">${L('確定', 'Confirmed')}</span>` : `<span class="chip muted">${L('まだ確定していません', 'Not confirmed yet')}</span>`}</div></div></section>`;
+  return shell({ eyebrow: L('フレックスサロン｜お客さまB様', 'Flex Salon · Customer B'), title: L('満席の時間のご予約', 'Booking a fully booked time'), main: head + ticket + decide, side: shopCard() });
+}
+
+function viewKit() {
+  const states = [['', L('通常', 'Normal')], ['is-hover', L('ホバー', 'Hover')], ['is-active', L('押下', 'Pressed')], ['is-focus', L('キーボードの焦点', 'Keyboard focus')]];
+  const prim = states.map(([c, n]) => `<div class="kit-row"><span class="cap">${n}</span>${btn({ id: 'k' + c, label: L('この振替を承認する', 'Approve this swap'), sub: L('次に、Aさまへ確認を依頼します', 'Next, A is asked to confirm'), extra: c, act: 'none' })}</div>`).join('');
+  const busyBtn = `<div class="kit-row"><span class="cap">${L('処理中（二重送信を止める）', 'Working (no double send)')}</span>${(() => { const b = S.busy; S.busy = 'kbusy'; const h = btn({ id: 'kbusy', label: '' }); S.busy = b; return h; })()}</div>`;
+  const dis = `<div class="kit-row"><span class="cap">${L('無効（理由を近くに書く）', 'Disabled (reason nearby)')}</span>${btn({ id: 'kdis', label: L('承諾して支払う', 'Accept and pay'), sub: L('お店とAさまの返事待ち', 'Waiting for the shop and A'), disabled: true, act: 'none' })}<p class="reason">${ic('info')}${L('ほかの承認がそろうと押せるようになります。', 'Available once the other approvals are in.')}</p></div>`;
+  const sec = `<div class="kit-row"><span class="cap">${L('補助（枠線）と控えめ（文字）', 'Secondary and quiet')}</span>${btn({ id: 'ks', kind: 'secondary', label: L('今の予約のままにする', 'Keep my booking'), act: 'none' })}${btn({ id: 'kg', kind: 'ghost', label: L('詳しい内訳を見る', 'See the details'), act: 'none' })}</div>`;
+  const main = `<section class="card"><h2>${L('主操作のボタン', 'Primary button')}</h2><div class="kit-grid">${prim}${busyBtn}${dis}</div></section>
+    <section class="card"><h2>${L('補助の操作', 'Other buttons')}</h2>${sec}</section>
+    <section class="card"><h2>${L('状態の表示', 'Status chips')}</h2><div class="chips"><span class="chip ok">${ic('check')}${L('承認済み', 'Approved')}</span><span class="chip wait">${ic('clock')}${L('返事待ち', 'Waiting')}</span><span class="chip pending">${ic('info')}${L('確認中', 'Checking')}</span><span class="chip attn">${ic('alert')}${L('お店の対応が必要', 'Needs the shop')}</span><span class="chip muted">${L('不成立', 'Not completed')}</span></div></section>
+    <section class="card"><h2>${L('お知らせ', 'Notices')}</h2><div class="kit-grid">${banner('wait', L('あなたの承認が必要です', 'Your approval is needed'), L('期限までにお返事ください。', 'Please reply by the deadline.'))}${banner('pending', L('PayPalに結果を確認しています', 'Checking with PayPal'), L('結果が分かるまで次の処理に進みません。', 'Nothing moves on until the result is known.'))}${banner('ok', L('完了しました', 'Done'), L('予約の変更と返金が済みました。', 'Bookings changed and refund sent.'))}${banner('attn', L('お店の対応が必要です', 'The shop needs to act'), L('自動の再試行を止めています。', 'Automatic retries are paused.'))}</div></section>
+    <section class="card"><h2>${L('日時と金額', 'Times and amounts')}</h2>${bigSlot()}<div style="height:12px"></div>${moveCards()}<div style="height:12px"></div><div class="tiles"><div class="tile"><span class="tl">${L('追加売上', 'Revenue')}</span>${usd('60.00', '+')}</div><div class="tile"><span class="tl">${L('補償', 'Comp.')}</span>${usd('10.00', '−')}</div><div class="tile strong"><span class="tl">${L('追加利益', 'Profit')}</span>${usd('20.50', '+')}</div></div></section>
+    <section class="card"><h2>${L('進み具合', 'Progress')}</h2>${stepper(2)}</section>`;
+  const side = `<section class="card"><h2>${L('画像枠の一覧（Codexへの依頼の元）', 'Image slots (for the Codex request)')}</h2>
+    ${imgSlot(1, L('トップ：店内の雰囲気 16:10・1600×1000以上', 'Top: interior 16:10, 1600×1000+'), 'wide')}<div style="height:10px"></div>
+    ${imgSlot(2, L('各画面の右列：店舗の写真 3:2・900×600以上', 'Side column: salon photo 3:2, 900×600+'))}<div style="height:10px"></div>
+    <div style="display:flex;gap:10px;align-items:center"><div style="width:76px">${imgSlot(3, '', 'sq', 'scissors')}</div><p class="fine" style="margin:0">${L('画像枠3：Bの予約券の小さな画像 1:1・400×400以上（施術の雰囲気。人物の顔なし）', 'Slot 3: small square on B’s ticket, 1:1, 400×400+ (the service mood, no faces)')}</p></div></section>`;
+  return shell({ eyebrow: L('ボタン・状態・金額・画像枠', 'Buttons, states, amounts, image slots'), title: L('部品一覧', 'Components'), main, side, switcher: false });
+}
+
+// ---------- review chrome ----------
+function seg(key, opts, cur) {
+  return `<div class="rseg">${opts.map(([v, label]) => `<button type="button" data-set="${key}" data-val="${v}" aria-pressed="${String(cur) === String(v)}">${label}</button>`).join('')}</div>`;
+}
+function renderReview() {
+  const st = STATES[S.screen];
+  document.getElementById('review').innerHTML = `<h1>FlexSlot 画面イメージ案03</h1>
+    <div class="rgroup"><span>デザイン</span>${seg('theme', THEMES, S.theme)}</div>
+    <div class="rgroup"><span>画面</span>${seg('screen', SCREENS, S.screen)}</div>
+    ${st.length ? `<div class="rgroup"><span>状態</span>${seg('state', st.map((n, i) => [i, n]), S.state)}</div>` : ''}
+    <div class="rgroup"><span>幅</span>${seg('width', [['phone', 'スマホ'], ['pc', 'PC']], S.width)}</div>
+    <div class="rgroup"><span>言語</span>${seg('lang', [['ja', '日本語'], ['en', 'English']], S.lang)}</div>
+    <div class="rgroup"><span>画像枠の説明</span>${seg('labels', [['1', '表示'], ['0', '隠す']], S.labels ? '1' : '0')}</div>`;
+}
+const NOTES = {
+  salon: ['生成り色の背景に焦げ茶と金茶。見出しは明朝体で、美容室の上質さと落ち着きを出す。', '主要ボタンは金茶のグラデーションと立体感。押すと沈み、処理中は回転する印。', '写真を大きく使う前提。画像の質が仕上がりを左右する（画像枠1・2が重要）。', '向いている印象：高級店・大人の顧客。注意：金額や状態の色が控えめになりやすい。'],
+  trust: ['紺と鮮やかな青。お金を扱う画面としての安心感を最優先（現在の案02の発展形）。', '金額・承認・確認中を、色と記号ではっきり区別する。ボタンは青のグラデーションと影。', '画像がなくても成り立つ。写真は補助（画像枠2は小さくてもよい）。', '向いている印象：審査員・米国の利用者。注意：美容室らしさは弱め。'],
+  friendly: ['やわらかい桃色の背景、丸みの強いカード、コーラルの丸いボタン。スマホアプリのような親しみ。', '書体は丸ゴシック。一般のお客さま（A・B）に話しかける調子に合う。', '画像はやさしい色調の写真か、イラスト寄りでもよい。', '向いている印象：日本の一般のお客さま。注意：お店の管理画面には甘すぎる印象もある。'],
+};
+const COMMON = ['上段の見出しを画面ごとに「何の画面か」で表す（お店「振替の確認と承認」、A「ご予約の日時変更のお願い」、B「満席の時間のご予約」）。サービス名は左上のロゴだけにする。', '言語は右上の固定幅の切り替え（日本語｜EN）。押しても位置が動かない。', '主要ボタンは2行（何をするか＋押すと次に何が起きるか）。押下・処理中・無効を区別し、処理中は二重送信を止める（「デモを作成」の二度押し対策）。', 'スマホでは、判断のボタンが提案カードを読んでいる間は画面下に残る。', '画像は「画像枠」で場所・比率・大きさだけを決める。中身は、この案が決まった後にCodexが作る（部品一覧に枠の一覧）。', '模擬／Sandboxの表示、承認の状況、金額の内訳、処理の進み具合、停止中の表示は今の画面の意味のまま残す。', 'これは見た目の案で、表示は固定の見本。押すと次の状態に進むのは案の確認用。実際の画面はサーバーのデータで動く。'];
+function renderNotes() {
+  const name = THEMES.find(([k]) => k === S.theme)[1];
+  document.getElementById('notes').innerHTML = `<h2>${name}の考え方</h2><ul>${NOTES[S.theme].map((x) => `<li>${x}</li>`).join('')}</ul><h3>3案に共通の改善（スマホでの所見への対応）</h3><ul>${COMMON.map((x) => `<li>${x}</li>`).join('')}</ul>`;
+}
+function syncHash() {
+  const h = `#t=${S.theme}&s=${S.screen}&st=${S.state}&l=${S.lang}&w=${S.width}`;
+  if (location.hash !== h) history.replaceState(null, '', h);
+}
+function readHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (THEMES.some(([k]) => k === p.get('t'))) S.theme = p.get('t');
+  if (SCREENS.some(([k]) => k === p.get('s'))) S.screen = p.get('s');
+  const st = Number(p.get('st'));
+  if (Number.isInteger(st) && st >= 0 && st < Math.max(1, STATES[S.screen].length)) S.state = st;
+  if (p.get('l') === 'en' || p.get('l') === 'ja') S.lang = p.get('l');
+  if (p.get('w') === 'pc' || p.get('w') === 'phone') S.width = p.get('w');
+}
+function render() {
+  document.getElementById('device').className = `device ${S.width}`;
+  const app = document.getElementById('app');
+  app.dataset.theme = S.theme;
+  app.lang = S.lang;
+  app.classList.toggle('hide-labels', !S.labels);
+  app.innerHTML = { top: viewTop, owner: viewOwner, a: viewA, b: viewB, kit: viewKit }[S.screen]();
+  renderReview();
+  renderNotes();
+  syncHash();
+}
+let toastTimer;
+function toast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+document.addEventListener('click', (e) => {
+  const set = e.target.closest('[data-set]');
+  if (set) {
+    const k = set.dataset.set;
+    let v = set.dataset.val;
+    if (k === 'state') v = Number(v);
+    if (k === 'labels') v = v === '1';
+    S[k] = v;
+    if (k === 'screen') S.state = 0;
+    S.busy = null;
+    render();
+    return;
+  }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  if (a.tagName === 'A') e.preventDefault();
+  if (a.disabled) return;
+  const { act, val } = a.dataset;
+  if (act === 'lang') { S.lang = val; render(); }
+  else if (act === 'go') { if (S.screen === 'top') S.state = 0; S.screen = val; render(); }
+  else if (act === 'next') {
+    if (S.busy) return;
+    S.busy = a.dataset.id;
+    render();
+    setTimeout(() => { S.busy = null; S.state = Math.min(S.state + 1, STATES[S.screen].length - 1); render(); }, 1100);
+  } else if (act === 'toast') toast(L('デザイン案のため、辞退した後の画面は省略しています。', 'The screen after declining is left out of this mockup.'));
+});
+document.addEventListener('click', (e) => { if (e.target.closest('.rail a')) e.preventDefault(); });
+readHash();
+render();
+</script>
+</body>
+</html>
