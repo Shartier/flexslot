@@ -815,3 +815,5 @@ Codexの再確認は`scripts/verify/interrupts.ts`が未追跡の時点で行わ
 
 1. FR1-01の再現手順（承認のPOSTは200、状態のGETだけ保留、もう一度押す）で、2回目のPOSTが送られないこと。
 2. 同梱のライセンスの置き場所と、README・THIRD_PARTY_NOTICES.mdの書き方が、公開と提出に足りるか。
+
+追記：再確認の対象は`impl-final-2`にしてほしい（`impl-final-1`に、ライセンス本文の改行をWindowsでの取得時にも変えない`.gitattributes`の設定を加えたもの。新しい複製で`LICENSE`と同梱ファイルのSHA-256が元と一致することを確認）。
