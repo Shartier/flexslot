@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="e158798465c04366c71ac6170c3c38a9d0d2bf123a45dfbea349f92bb2506532"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="source-sha256" content="8e69d55078c43758bf244583eec093a2102ceeeb9a1ded50fb6c68f7e26847f8"><title>FlexSlot | 進捗</title><style>:root{color-scheme:light;--ink:#182c3a;--muted:#526878;--accent:#006c76;--line:#d9e3e8;--paper:#fff;--wash:#eff4f6}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:16px;line-height:1.85}
 .top{background:#102f3e;color:white;padding:24px max(24px,calc((100vw - 1100px)/2));}.brand{font-size:24px;font-weight:750;letter-spacing:.04em}.subtitle{font-size:13px;color:#c5dce3;margin:4px 0 16px}nav{display:flex;gap:8px;flex-wrap:wrap}nav a{color:#e5f6f8;text-decoration:none;border:1px solid #547582;padding:5px 14px;border-radius:7px;font-size:14px}nav a[aria-current=page]{background:#e0f6f4;color:#123c43;border-color:#e0f6f4}
 main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:36px 44px;box-shadow:0 6px 22px #16334b08;min-width:0}.meta{color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);padding-bottom:16px;overflow-wrap:anywhere}h1{font-size:30px;line-height:1.45;margin:24px 0}h2{font-size:22px;border-left:4px solid var(--accent);padding:6px 0 6px 14px;margin:42px 0 18px}h3{font-size:18px;margin-top:28px}p,li{overflow-wrap:anywhere}p{margin:14px 0}a{color:var(--accent);text-underline-offset:3px}li{padding-left:3px;margin:8px 0}ul,ol{padding-left:26px}
@@ -8,7 +8,11 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 @media print{body{background:white}.top{background:white;color:#182c3a;padding:0}.subtitle,nav{display:none}main{border:0;box-shadow:none;max-width:none;margin:0;padding:12px 0}.table-wrap{overflow:visible}table{min-width:0;font-size:10px}h2,h3{break-after:avoid}tr{break-inside:avoid}a{color:inherit}}</style></head>
 <body><header class="top"><div class="brand">FlexSlot</div><div class="subtitle">PayPal AI Hackathon · 開発引き継ぎ · 2026-11-03</div><nav aria-label="引き継ぎ文書"><a href="README.html">README</a><a href="AGENTS.html">共同作業ルール</a><a href="SPEC.html">仕様</a><a href="DESIGN.html">技術設計</a><a href="STATUS.html" aria-current="page">進捗</a><a href="REVIEW.html">レビュー</a><a href="CLAUDE_START.html">Claudeへの依頼</a><a href="SUBMISSION.html">提出物の下書き</a><a href="IMAGES.html">画像の指示書</a><a href="THIRD_PARTY_NOTICES.html">第三者の権利表示</a></nav></header>
 <main><div class="meta">正本：STATUS.md / Markdownと同内容のHTML版</div><article><h1 id="flexslot">FlexSlot — 状況と次の作業</h1>
-<p>更新日：2026-11-08（日本時間）/ 文書版：status-v0.20。</p>
+<p>更新日：2026-11-08（日本時間）/ 文書版：status-v0.21。</p>
+<h2 id="devpost2026-11-08codex">最新状態：Devpost応募完了（2026-11-08、Codex確認）</h2>
+<p>本人が最終規約に同意してSubmit projectを実行し、Codexが「Project submitted!」の表示を確認した。応募ページは <a href="https://devpost.com/software/flexslot">https://devpost.com/software/flexslot</a>、提出IDは1287759。英語本文、公開ソース・動画、英語キャプション付きの画面5枚、サムネイル、技術説明とアカウント不要のローカル起動手順を保存して提出した。</p>
+<p>応募時の公開リポジトリは<code>93b0adf</code>。録画したアプリ本体は初回公開版<code>bc90a53</code>と同じで、その後の公開変更は文書のみ。Apache-2.0を採用し、公開動画は <a href="https://youtu.be/S93QUPCj82o">https://youtu.be/S93QUPCj82o</a>（2分17秒）。本人が個人応募・日本在住・チームメンバーなし・参加資格を確認した。</p>
+<p>提出確認の画面とJSON、Claude向け共有文はローカルの提出用セットに保存した。今回の応募・文書更新ではアプリの試験、Sandbox決済、Vertex APIを再実行していない。審査期間中はソース・動画・起動手順を維持する。以下は各見出しの日付・確認時点における開発記録であり、「未提出」等の過去の予定はこの最新状態で更新する。</p>
 <h2 id="section">現在地</h2>
 <p><strong>提出方針の変更（2026-11-07、本人の追加指示）</strong>：アプリの公開URLは見送り、公開リポジトリ＋英語READMEのローカル起動手順＋実接続を示す公開YouTube動画で提出準備を進める。ホスティングの契約・デプロイ・公開トンネルは行わない。公開用に準備したコードと検証記録は保存するが、今回の応募には使わない。GitHubとYouTubeの公開、Devpost応募はそれぞれ内容を本人確認後に行う。以下の公開先比較は、この変更前の経緯。</p>
 <p><strong>公開準備の記録（2026-11-07、Codex。公開URLはその後見送り）</strong>：本人の指示で公開に必要な最小限の実装をCodexへ引き継ぎ、Render・Google Cloud・Cloudflare・さくらを比較した。外部公開、契約、GitHubへの送信、YouTube公開、Devpost応募はいずれも未実施。</p>
@@ -3395,8 +3399,8 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <tr>
 <td>U10</td>
 <td>OSSライセンス、Devpost登録・参加資格</td>
-<td>未確定</td>
-<td>本人、提出準備</td>
+<td>解消。Apache-2.0を採用。本人が登録・参加資格を確認し、2026-11-08に最終応募。Codexが提出完了表示を確認</td>
+<td>─</td>
 </tr>
 <tr>
 <td>U11</td>
@@ -3414,7 +3418,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li><strong>確認しないこと</strong>：Claudeは認証情報の値を表示・保存・送信しない。設定されたかどうかと、匿名化した照合結果だけを確認する。</li>
 <li><strong>今後も本人が行うこと</strong>：Sandboxの買い手アカウントでの承認（ログインとパスワードの入力）。V8の受信経路の公開の承認。</li>
 </ol>
-<h2 id="section-33">次に行う作業</h2>
+<h2 id="section-33">作業の経過（各時点の予定を含む）</h2>
 <ol>
 <li>Codexによる修正版の再確認は2026-11-04に完了した（「Codexの再確認の結果」の節）。</li>
 <li>DESIGN 14章の3は実装し、模擬PayPalで試験した（タグ<code>impl-executor-1</code>）。Codexのレビューの指摘IE1-01〜03を修正した（タグ<code>impl-executor-1-fix1</code>）。Codexの再確認（REVIEWの最後の節）を待つ。</li>
@@ -3424,7 +3428,7 @@ main{max-width:1100px;margin:28px auto 64px;background:var(--paper);border:1px s
 <li>2026-11-07、Sandboxでの中断・障害回復（R1〜R4）を確かめた（「Sandboxでの中断・障害回復の確認」）。Codexの再確認で第2レビューが合格し、求められた証拠の区分に合わせて記録と検査を補った。停止中の三画面もSandboxで確かめた（R5）。回答待ちの間に、HOLDの扱いの明示、スマホ幅の確認、別フォルダからの起動、提出物の下書きを済ませた。</li>
 <li>2026-11-07、スマホ実機で模擬モードを一時公開して確かめ、日本語の画面と画面の切り替えを加えた（<code>d9416ee</code>）。CodexのR1〜R5と回答待ちの作業の確認結果（IR2-01・IR2-02・IWAI-01）を修正した（<code>impl-wait-1-fix1</code>、Codexの再確認待ち）。続けて、PENDINGと照会のタイムアウトを三画面で確かめた（模擬・注入）。画面の見た目を改善し、日本語の三画面を目視した。Codexの画像を組み込んだ後、本人の方向修正でデザイン案02に置き換えた。Codexの日本語レビューを反映した（<code>impl-ja-1</code>）。実機で再確認し、切り替え・上段のタイトル・写真・ボタンの所見を受けた。HTMLの画面イメージ案03を経て、凝った版の案04（差し色テラコッタ）を本人が選び、Codexへの素材の依頼を<code>IMAGES.md</code>にまとめ、案04をアプリに組み込んだ（<code>impl-ui-5</code>）。Codexの素材6点を組み込んだ（<code>impl-ui-6</code>）。Apache-2.0とCodexの最終レビューの指摘を反映した（<code>impl-final-2</code>）。本人がソースを公開し（<a href="https://github.com/Shartier/flexslot">https://github.com/Shartier/flexslot</a>、<code>main</code>＝<code>bc90a53</code>）、動画を公開した（<a href="https://youtu.be/S93QUPCj82o">https://youtu.be/S93QUPCj82o</a>、2分17秒）。次は、Devpostへの転記と本人による応募（目標11月11日、締切11月13日05:00 JST）。初見の人の操作は未確認。</li>
 </ol>
-<p>11月9日機能固定、11月11日提出目標。11月13日05:00 JST締切。接続準備が遅れても、実接続条件を黙って完成条件から外さない。</p>
+<p>2026-11-08に応募を完了した。従来の提出目標は11月11日、公式締切は11月13日05:00 JST。以後は審査用の公開ソース・動画・起動手順を維持し、主催者から本人への連絡があれば確認する。</p>
 <h2 id="section-34">今後の検証記録の書式</h2>
 <p>各節目で対象コミットSHA、作業ツリー差分、実行日時・環境・モード、コマンド、終了コード、結果、匿名化した証拠の保存先、未実行範囲を追記する。ブラウザで動作を見ただけの確認と、DB・外部APIの整合性確認を区別する。提出用の成功主張は確認できた範囲に限定する。</p>
 </article><footer>FlexSlot · ローカル開発資料。実装・接続・テストの状態はSTATUSを参照。</footer></main></body></html>
