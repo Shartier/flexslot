@@ -1,8 +1,10 @@
-# FlexSlot — submission text and video script (draft)
+# FlexSlot — submission description and verification
 
-Draft revised by Codex on 7 November 2026 (JST) from `impl-wait-1` (`9b212d3`) and the recorded reviews (`outputs/codex-prep/SUBMISSION_REVISED.md`), adopted here by Claude Code on the same day with the changes since then: the review fixes IR2-01, IR2-02 and IWAI-01, the Japanese screens and the current test count (Section 3). **Status on 8 November 2026:** the source is public at <https://github.com/Shartier/flexslot> (`main` = `bc90a5388b09ca931c7c731582f61f20d46afffc`, Apache-2.0) and the video is public at <https://youtu.be/S93QUPCj82o> (2:17). **The Devpost entry is not submitted yet.** The final English entry text, field list, captions and evidence are in Codex's submission pack (`outputs/codex-prep/submission-pack/`, starting with `START_HERE.md` and `DEVPOST_EN.md`; not part of the public repository). Section 1 below is the earlier draft that pack was built from; Section 2 is the recording plan as it was before filming; Section 3 is the internal release checklist, updated.
+Updated 8 November 2026 (JST). The [source repository](https://github.com/Shartier/flexslot) is public under Apache-2.0, and the [2:17 English demo video](https://youtu.be/S93QUPCj82o) is public. **The Devpost entry has not yet been submitted.** The application code used for the recording and initial public release is `bc90a5388b09ca931c7c731582f61f20d46afffc`; the later changes described here update submission documents only.
 
-## 1. Proposed Devpost copy
+Section 1 contains the current English submission description so it can be read directly from this public repository. Section 2 preserves the earlier recording plan, clearly marked as superseded. Section 3 records the evidence and remaining actions. Additional local working files are not required to run or assess the project.
+
+## 1. Devpost submission text
 
 ### Project name and tagline
 
@@ -24,7 +26,7 @@ The demo uses one fictional salon, one stylist, two services and one swap betwee
 4. The shop, A and B approve the specific terms. B then approves payment through PayPal Sandbox.
 5. FlexSlot authorizes B's payment, rechecks the conditions, captures the payment and confirms both booking changes in one database transaction. It then requests the agreed partial refund against A's original captured payment.
 
-The owner and the two customers have separate screens, in English or Japanese (a Japanese browser gets Japanese written for a salon booking service, not a machine translation). Booking status, B's payment and A's compensation have separate progress indicators. Mock and connected modes are labelled throughout. All PayPal payments in this project use **Sandbox test money**.
+The owner and the two customers have separate screens, in English or Japanese. Booking status, B's payment and A's compensation have separate progress indicators. Mock and connected modes are labelled throughout. All PayPal payments in this project use **Sandbox test money**.
 
 ### Why compensation instead of a general discount?
 
@@ -38,7 +40,7 @@ Compensation does not increase while a customer waits, and each booking can rece
 
 - **Money always flows between a customer and the shop.** B pays the shop the normal price; the shop refunds a fixed part of A's own original payment. Customers never pay each other, which avoids person-to-person money transfer and keeps one merchant responsible for every payment and refund.
 - **A opts in before anyone asks.** A registers when they could move, and the fixed compensation is set at that moment. Only people who agreed in advance are ever asked, the program can check a swap at once, and nobody negotiates the amount.
-- **One existing customer is asked at a time.** In this demo, one matching A receives the proposal. A later version would offer it to opted-in customers one after another with a deadline, never to several at once, so two people cannot both accept the same slot.
+- **One existing customer is asked at a time.** This demo handles one matching A and one B. Multiple-customer chains and competing offers are outside its scope.
 - **B pays last.** The shop approves, then A agrees, then B approves the payment. FlexSlot authorizes first, checks the terms again, and only then captures; if the check fails, it releases the authorization instead of charging.
 
 ### How it is built
@@ -53,11 +55,11 @@ Compensation does not increase while a customer waits, and each booking can rece
 
 The hardest part was recovering from an uncertain payment result without treating a missing response as a failed payment. We separated obligations, attempts and API operations, and tested the boundaries around payment capture, the booking commit and compensation.
 
-- One complete booking move was operated through the three screens using PayPal Sandbox and Vertex AI; database records matched subsequent Sandbox queries.
+- The final 2:17 English video records a new complete booking move using PayPal Sandbox and Vertex AI, at the same commit as the published source. A and B each approved a USD 60 Sandbox payment; A received a USD 10 partial refund against A's original capture. Both real Vertex requests succeeded. A read-only reconciliation of the database and fresh Sandbox queries passed all 21 checks.
 - Five Sandbox scenarios, R1–R5, exercised interruption and recovery. Response loss and refund rejection were injected, and booking conflicts were introduced deliberately; these were not PayPal outages. Process stops were actual exits. The observed final bookings and expected payment resources matched, without duplicate captures or refunds in those runs.
-- R5 paused at four intermediate states. The three screens did not show the swap or compensation as completed at those pauses. A separate viewing server kept the payment workflow paused.
+- The earlier R5 scenario paused at four intermediate states. The three screens did not show the swap or compensation as completed at those pauses. A separate viewing server kept the payment workflow paused. Its stored final reconciliation report passed 14 checks. This earlier scenario used mock AI and is shown in the video as a labelled evidence summary, separate from the new real Vertex demonstration.
 - Real Sandbox webhook deliveries were signature-verified and deduplicated, and a tampered copy was rejected.
-- The recorded automated check has **402 tests**, including the public-mode boundary checks, using mock or fake external services and local HTTP relay tests. It is separate from the real Sandbox and Vertex checks.
+- The most recent recorded automated check passed **402 tests**, including the public-mode boundary checks, using mock or fake external services and local HTTP relay tests. That check predates this submission packaging; it was not rerun for the video. It is separate from the real Sandbox and Vertex checks.
 - Phone-width and desktop-width browser emulation, and startup from a clean clone in another folder on the same PC, were checked. These are not physical-phone or different-PC tests.
 
 ### What we learned
@@ -70,9 +72,7 @@ Claude Code supported implementation and testing; Codex provided independent rev
 
 ### What is next
 
-The immediate work is first-time usability testing and final submission preparation. The final design was checked at desktop and phone widths in a browser; physical-phone testing of this design remains future work. Salon interviews have not been conducted, and demand is not validated. A future version could add this workflow to an existing booking system; that integration is outside this demo. Natural next steps for the workflow itself: an opt-in choice at booking time, sequential offers to several opted-in customers, and an optional priority fee for B that funds the compensation.
-
-Compensation could also become dynamic. In this demo it is a fixed USD 10.00 known at registration, which is easy to explain but could invite someone to book busy weekend slots just to collect it. A later version could set the amount per offer from demand, notice time and how long ago the booking was made, show it only when a real offer arrives (A still sees and accepts the exact amount before anything changes), and limit how often one customer can receive it. This is not implemented.
+The next steps are first-time usability testing, physical-phone testing and short salon interviews. Demand and real business outcomes have not been validated. A future version could add this consent-and-payment workflow to an existing booking system; that integration is outside this demo. The submitted scope keeps compensation fixed and handles one swap between one existing customer and one new customer.
 
 ### Built with
 
@@ -80,7 +80,15 @@ TypeScript, Node.js, SQLite, React, Vite, zod, PayPal Orders v2, PayPal Payments
 
 ### How judges can try it
 
-No hosted service is provided. The public source repository includes the complete English README and an account-free local demo. Install Node.js 24.22.1 or a later 24.x release, download or clone the repository, open its folder in a terminal, run `npm ci` and `npm run dev`, then open `http://localhost:8787`. With no `.env`, choose the mock AI and mock payment modes and follow the README through all three screens. These modes do not call PayPal or Google. The video is intended to demonstrate real PayPal Sandbox and Vertex AI operation; the README also explains how to configure those integrations with your own credentials.
+Public demo video: [Watch FlexSlot on YouTube](https://youtu.be/S93QUPCj82o).
+
+Public source and README: [Shartier/flexslot](https://github.com/Shartier/flexslot).
+
+No hosted service is provided. The public source repository includes the complete English README and an account-free local demo. Install Node.js 24.22.1 or a later 24.x release, download or clone the repository, open its folder in a terminal, run `npm ci` and `npm run dev`, then open `http://localhost:8787`. With no `.env`, choose the mock AI and mock payment modes and follow the README through all three screens. These modes do not call PayPal or Google. The completed English video demonstrates real PayPal Sandbox and Vertex AI operation with test money. Login and waiting time are omitted, and retained screen footage and narration play at normal speed; the README also explains how to configure those integrations with your own credentials.
+
+### Demo and asset disclosures
+
+The video is 2 minutes 17 seconds, with English screens, English narration and burned-in English subtitles. Historical recovery evidence is labelled separately from the recorded transaction. All salon names, customers, costs and business results are fictional. Salon images are AI-generated. English narration was generated with HeyGen Voice (Annie - Lifelike; returned engine: Orca). Third-party notices and image provenance are included in the source repository.
 
 ## 2. Video plan — target 2:47 (superseded by the published 2:17 video)
 
@@ -116,18 +124,18 @@ Prepare the demo dates using the app's current sample text. Do not hard-code exp
 | Item | Current evidence or next action |
 | --- | --- |
 | Review basis | Codex rechecked `impl-final-2` (`1a235cfc263250d5e56afbf9a3572125a1e0fe03`) on 7 November 2026: 390 tests passed, the browser prevented a second POST while state refresh was pending, the mock flow completed, and shipped licence texts matched. FR1-01 and FR1-02 are closed; the remaining FR1-03 editorial wording was aligned in this documentation update. This was not a new Sandbox or Vertex run. Earlier R1–R5 evidence applies to those recorded scenarios |
-| Final copy | Update the reviewed tag, test count and limitations after fixes. Do not describe an earlier API run as a new run of the final code |
+| Final copy | Section 1 is aligned with the completed recording and published video. The new recorded transaction passed 21 read-only reconciliation checks. The earlier 402-test automated result is recorded separately; it was not rerun for these documentation updates |
 | Physical phone and first-time user | The owner chose to judge the final design on a PC screen; phone widths were checked in a browser only. A first-time user has not tried the final screens yet |
 | Recovery coverage | PENDING captures and refunds and query timeouts are checked with the mock and injected faults (`tests/app-pending.test.ts`): no screen shows them as completed, no new capture or refund is created, and the case completes once. A naturally pending result on the Sandbox has not been observed; do not repeat Sandbox payments just to obtain one |
 | Clean startup | Another folder on the same PC has been checked. Different-PC startup has not. Keep the exact English commands and prerequisites usable from the final public repository |
-| Licence and repository | Apache License 2.0 (the owner's choice): `LICENSE`, `package.json`, README and THIRD_PARTY_NOTICES.md. The screens' build ships the project licence and the unchanged licences of React, React DOM, Scheduler and the four fonts at `/assets/licenses/` (linked from every screen's footer). Codex's limited history screening found nothing; a final check of the exact publishable revision and the public repository still need the owner's approval |
-| Judging access | The owner decided to forgo a hosted URL. Provide the public repository and complete English local setup/run instructions, including an account-free mock flow. The intended video demonstrates real Sandbox and Vertex operation; connected-mode setup uses the tester's own credentials. Never publish the developer's private keys. Hosting support remains unused and is not a submission requirement |
-| Images and icons | 18 code-drawn SVG icons. Earlier images (eight illustrations, the design-v2 photo) are no longer used in the app. Codex's v4 `cover.webp` (16:9) can serve as the Devpost and video thumbnail base. The owner confirms the images' use in the public repository and the video before publishing (IMAGES.md, THIRD_PARTY_NOTICES.md) |
+| Licence and repository | Apache License 2.0 (the owner's choice): `LICENSE`, `package.json`, README and THIRD_PARTY_NOTICES.md. The screens' build ships the project licence and the unchanged licences of React, React DOM, Scheduler and the four fonts at `/assets/licenses/` (linked from every screen's footer). The owner approved the initial source publication on 7 November. Its 165 files were anonymously retrieved and compared with the approved revision. Limited history screening reported no matches for the credential values and formats checked; this is not an exhaustive security guarantee |
+| Judging access | The owner decided to forgo a hosted URL. Provide the public repository and complete English local setup/run instructions, including an account-free mock flow. The published video demonstrates real Sandbox and Vertex operation; connected-mode setup uses the tester's own credentials. Never publish the developer's private keys. Hosting support remains unused and is not a submission requirement |
+| Images and icons | 18 code-drawn SVG icons. Earlier images (eight illustrations, the design-v2 photo) are no longer used in the app. Codex's v4 `cover.webp` (16:9) can serve as the Devpost and video thumbnail base. The published source and video use the v4 salon imagery. Provenance and the reported model/version limits are documented in IMAGES.md and THIRD_PARTY_NOTICES.md |
 | Design and fonts | The screens follow the crafted mockup v4 with a terracotta accent (owner's choice, 7 November 2026). Photos and the paper texture: Codex's v4 set (six images in the app plus an optional cover; OpenAI's built-in image tool, 7 November 2026; the tool did not report the model or version, so none is claimed); the screens say the photos are AI-generated and not a real business. Fonts are bundled from @fontsource and served from the app's own origin: Shippori Mincho, Zen Kaku Gothic New, Inter and Cormorant Garamond, all under the SIL Open Font License 1.1 (listed in THIRD_PARTY_NOTICES.md). Seals, the logo, the progress line and the profit bar are drawn in code |
-| Video | Published by the owner: <https://youtu.be/S93QUPCj82o>, 2:17 (under three minutes). Codex checked anonymously that it is public (not private, not unlisted) and plays without signing in; a full listening check and a byte comparison after YouTube's re-encoding were not done. Evidence: `submission-pack/EVIDENCE.md`, `fresh-reconciliation.json`, `youtube-public-check.json` |
-| Devpost | Not submitted. Next: copy `submission-pack/DEVPOST_EN.md` and the field list into the Devpost form, and the owner confirms registration, eligibility, team details and the final entry before submitting (target 11 November; deadline 13 November 05:00 JST) |
+| Video | Published by the owner: <https://youtu.be/S93QUPCj82o>, 2:17 (under three minutes). Codex checked anonymously that it is public (not private, not unlisted) and plays without signing in; a full listening check and a byte comparison after YouTube's re-encoding were not done. The check covered public visibility, title, duration, description and sampled playback. Local evidence records were retained by the creator |
+| Devpost | Not submitted. Next: copy Section 1, the public source URL and the public video URL into the Devpost form, and the owner confirms registration, eligibility, team details and the final entry before submitting (target 11 November; deadline 13 November 05:00 JST) |
 
-### Official submission requirements checked on 7 November
+### Official submission requirements checked on 8 November
 
 Provide public source with an open-source licence, English submission materials, a functional demo accessible through setup instructions or a hosted URL, and a public YouTube video shorter than three minutes. Maintain free judging access through the end of judging. The submission deadline is **13 November 2026, 05:00 JST**; judging ends **16 December 2026, 01:00 JST**. These times convert the official Pacific dates. Confirm the chosen access method and all public links before submission. [Official PayPal AI Hackathon rules](https://paypalaihackathon.devpost.com/rules)
 

@@ -8,6 +8,12 @@ Free-text conditions ("I can only come on Nov 7 in the afternoon") are structure
 
 > Scope of this version: one fictional salon, one stylist, two services, one swap between one existing and one new customer. **PayPal Sandbox only — test money, never real payments.** There is no Live PayPal code or setting.
 
+## Demo video and submission
+
+[Watch the 2:17 English demo on YouTube](https://youtu.be/S93QUPCj82o) — real PayPal Sandbox test money and Gemini on Vertex AI, with English narration and subtitles. Earlier recovery-test evidence is labelled separately. The video uses the application code at `bc90a5388b09ca931c7c731582f61f20d46afffc`; subsequent submission-document updates do not change that code.
+
+[Read the submission description](SUBMISSION.md#1-devpost-submission-text). There is no hosted application; the quick start below runs an account-free local mock demo. The connected-mode instructions use your own Sandbox and Google Cloud credentials.
+
 ## Quick start (no accounts needed)
 
 Requirements: **Node.js 24.22.1 or later 24.x** (`.nvmrc`; `node:sqlite` and running `.ts` files directly need Node 24) and npm.
