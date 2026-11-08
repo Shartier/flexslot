@@ -68,7 +68,7 @@ Other settings: `FLEXSLOT_PORT` (default `8787`), `FLEXSLOT_DATA_DIR` (default `
 
 ## Optional hosting support (not used for this submission)
 
-**There is no hosted demo for this submission.** Judges can use the account-free local quick start above. The submission video is intended to show real PayPal Sandbox and Vertex AI operation; it will be verified before publication. Connected-mode setup instructions are also provided above, using your own credentials.
+**There is no hosted demo for this submission.** Judges can use the account-free local quick start above. The published [2:17 English video](https://youtu.be/S93QUPCj82o) shows real PayPal Sandbox and Vertex AI operation, with earlier recovery-test evidence labelled separately. Connected-mode setup instructions are also provided above, using your own credentials.
 
 Hosting preparation is retained for possible future use and is not required for local judging. If enabled explicitly, it uses **mock AI and mock payments only**. It has not been deployed. The following notes describe that optional configuration, not an active public service.
 
